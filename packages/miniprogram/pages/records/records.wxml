@@ -1,0 +1,80 @@
+<view class="container">
+  <!-- Top Tabs -->
+  <view class="tab-header">
+    <view class="tab-list">
+      <view class="tab-item {{activeTab === 'all' ? 'active' : ''}}" bindtap="switchTab" data-id="all">全部</view>
+      <view class="tab-item {{activeTab === 'ongoing' ? 'active' : ''}}" bindtap="switchTab" data-id="ongoing">进行中</view>
+      <view class="tab-item {{activeTab === 'finished' ? 'active' : ''}}" bindtap="switchTab" data-id="finished">已结束</view>
+    </view>
+    <view class="action-icons">
+      <view class="icon-btn">🔍</view>
+      <view class="icon-btn">🗑️</view>
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="record-list">
+    <!-- Stats Card -->
+    <view class="stats-card">
+      <view class="stats-header">
+        <text class="stats-count">当前筛选共计 4 条记录</text>
+        <view class="stats-detail-btn">查看战绩榜 📊</view>
+      </view>
+      <view class="stats-grid">
+        <view class="stats-item">
+          <text class="value">0</text>
+          <text class="label">赢局</text>
+        </view>
+        <view class="stats-item">
+          <text class="value">0</text>
+          <text class="label">总赢</text>
+        </view>
+        <view class="stats-item">
+          <text class="value color-neg">-143</text>
+          <text class="label">总输</text>
+        </view>
+      </view>
+      <view class="stats-footer">
+        <text>输局: 2</text>
+        <text>平局: 2</text>
+        <text>总和: -143</text>
+      </view>
+    </view>
+
+    <!-- Game Cards -->
+    <view class="game-card">
+        <view class="game-header">
+          <view class="flex-row">
+            <text class="game-type">多人记分桌</text>
+            <text class="game-status status-active">进行中</text>
+          </view>
+          <view class="game-actions">
+            <text class="icon">📊</text>
+            <text class="icon">🏷️</text>
+            <text class="icon">🔌</text>
+            <text class="icon">🗑️</text>
+          </view>
+        </view>
+        <view class="game-players">
+          <view class="player-item">
+            <view class="avatar-wrapper">
+              <image class="avatar" src="../../assets/stitch/avatars/avatar-b.png" />
+              <text class="badge">桌主</text>
+            </view>
+            <text class="player-name">君の名...</text>
+            <text class="score score-neg">-20</text>
+          </view>
+          <view class="player-item">
+            <image class="avatar" src="../../assets/stitch/avatars/avatar-c.png" />
+            <text class="player-name">Y.</text>
+            <text class="score score-pos">20</text>
+          </view>
+        </view>
+        <view class="game-footer">
+          <text class="game-time">26-03-02 11:28 开始</text>
+          <text class="game-duration">已进行0分钟</text>
+        </view>
+    </view>
+
+    <!-- Additional Cards... -->
+  </scroll-view>
+</view>

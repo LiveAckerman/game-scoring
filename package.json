@@ -1,0 +1,19 @@
+{
+  "name": "happy-score-hall",
+  "version": "1.0.0",
+  "private": true,
+  "description": "欢乐记分馆 - 微信小程序 + NestJS 后端 Monorepo",
+  "scripts": {
+    "dev:server": "pnpm --filter server dev",
+    "build:server": "pnpm --filter server build",
+    "start:server": "pnpm --filter server start:dev",
+    "test:server": "pnpm --filter server test"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["better-sqlite3", "@nestjs/core"]
+  }
+}

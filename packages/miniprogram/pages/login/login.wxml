@@ -1,0 +1,40 @@
+<view class="container">
+  <view class="confetti-bg"></view>
+
+  <view class="main">
+    <view class="logo-section">
+      <view class="logo-wrapper">
+        <view class="logo-card card-1">
+          <text class="icon">🎮</text>
+        </view>
+        <view class="logo-card card-2">
+          <text class="icon">😊</text>
+        </view>
+        <view class="logo-badge">
+          <text class="icon">⭐</text>
+        </view>
+      </view>
+      <view class="title">欢乐记分馆</view>
+      <view class="subtitle">好友聚会 · 轻松记分 · 快乐加倍</view>
+    </view>
+
+    <view class="button-section">
+      <button class="login-btn" bindtap="handleLogin">
+        <image class="wechat-icon" src="../../assets/icons/wechat.png" mode="aspectFit"></image>
+        <text>微信一键登录</text>
+      </button>
+    </view>
+  </view>
+
+  <view class="footer">
+    <view class="agreement-wrapper">
+      <checkbox-group bindchange="handleAgreementChange">
+        <checkbox value="agree" color="#E63946" />
+      </checkbox-group>
+      <view class="agreement-text">
+        我已阅读并同意 <text class="link">《用户协议》</text> 和 <text class="link">《隐私政策》</text>
+        <view class="notice">未注册手机号登录后将自动创建账号</view>
+      </view>
+    </view>
+  </view>
+</view>

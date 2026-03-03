@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>个人中心界面</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#D93025", // Festive Red
+                        secondary: "#FFD700", // Gold
+                        "background-light": "#FFF5F5", // Very light pinkish white for warmth
+                        "background-dark": "#2D0A0A", // Dark reddish brown for dark mode
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#3D1414", // Slightly lighter dark red
+                        "text-light": "#4A0404", // Dark red text
+                        "text-dark": "#FFE5E5", // Light pink text
+                        "accent-gold": "#F2C94C",
+                    },
+                    fontFamily: {
+                        display: ["'M PLUS Rounded 1c'", "sans-serif"],
+                        body: ["'Nunito'", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "1rem",
+                        'xl': "1.5rem",
+                        '2xl': "2rem",
+                    },
+                    boxShadow: {
+                        'festive': '0 4px 14px 0 rgba(217, 48, 37, 0.15)',
+                        'gold': '0 4px 14px 0 rgba(242, 201, 76, 0.25)',
+                    }
+                },
+            },
+        };
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&amp;family=Nunito:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Nunito', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        h1, h2, h3, .font-display {
+            font-family: 'M PLUS Rounded 1c', 'PingFang SC', sans-serif;
+        }.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen flex flex-col antialiased transition-colors duration-300">
+<header class="sticky top-0 z-50 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md px-4 py-3 flex justify-between items-center">
+<div class="w-20"></div>
+<h1 class="text-lg font-bold font-display" style="">个人中心</h1>
+<div class="flex items-center gap-1 bg-white/50 dark:bg-black/20 rounded-full px-3 py-1 border border-primary/10 dark:border-white/10">
+<span class="material-icons-round text-lg text-primary dark:text-secondary" style="">more_horiz</span>
+<div class="w-[1px] h-4 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+<span class="material-icons-round text-lg text-primary dark:text-secondary" style="">radio_button_checked</span>
+</div>
+</header>
+<main class="flex-1 px-4 pb-24 overflow-y-auto no-scrollbar">
+<div class="mt-4 relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-orange-600 shadow-festive text-white p-6">
+<div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+<div class="absolute bottom-0 left-0 w-24 h-24 bg-secondary/20 rounded-full -ml-8 -mb-8"></div>
+<div class="relative z-10 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img alt="User Avatar" class="w-16 h-16 rounded-full border-4 border-secondary shadow-lg object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7HZEUyEO7GF4NKRk9GWU2JXJ4Uc5S3NYMRcZ4_ioYH4Rq5PcGxqXRfl8JhMv5LiprbnUSAYEmPmv0jxSRe4wf2Jo9DA_pfatRNebgDne_IyMOAoDdSzhFqkaxmEPBx3kmz94ahLSFFpgrE4MVs0L9zpH2Y7kK9bIoLJvut0fLFQeYJ2QxbfkKpP6MvWLdhTpagwq71jVXhkCNaQgF3G_w0esQ0qKJZtElHOweg_UF10gGjBUx2AmJhnKPDpiT_4U0YRaN5-w2Tjg" style=""/>
+<div class="absolute -bottom-1 -right-1 bg-secondary text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-white shadow-sm" style="">
+                            VIP
+                        </div>
+</div>
+<div>
+<h2 class="text-xl font-bold font-display" style="">Lucky Dragon</h2>
+<div class="flex items-center mt-1 gap-2">
+<span class="bg-black/20 text-xs px-2 py-0.5 rounded-full backdrop-blur-sm flex items-center gap-1" style="">
+<span class="material-icons-round text-xs text-yellow-300" style="">emoji_events</span>
+                                小财神
+                            </span>
+</div>
+</div>
+</div>
+<button class="bg-white/20 hover:bg-white/30 active:scale-95 transition-all text-sm font-semibold py-2 px-4 rounded-xl border border-white/40 backdrop-blur-sm shadow-sm" style="">
+                    编辑资料
+                </button>
+</div>
+<div class="mt-6 flex justify-around border-t border-white/20 pt-4">
+<div class="text-center w-1/2 border-r border-white/10">
+<p class="text-2xl font-bold font-display" style="">128</p>
+<p class="text-xs text-white/80" style="">场次</p>
+</div>
+<div class="text-center w-1/2">
+<p class="text-2xl font-bold font-display" style="">45%</p>
+<p class="text-xs text-white/80" style="">胜率</p>
+</div>
+</div>
+</div>
+<div class="mt-4 bg-gradient-to-r from-amber-100 to-amber-50 dark:from-amber-900/40 dark:to-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl p-4 flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-3">
+<div class="bg-secondary p-2 rounded-full text-primary shadow-gold">
+<span class="material-icons-round" style="">diamond</span>
+</div>
+<div>
+<h3 class="font-bold text-amber-900 dark:text-amber-100 text-sm" style="">高级会员</h3>
+<p class="text-xs text-amber-700 dark:text-amber-300" style="">解锁专属主题 &amp; 更多统计</p>
+</div>
+</div>
+<button class="text-xs font-bold text-primary bg-white dark:bg-amber-950/50 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800" style="">
+                升级
+            </button>
+</div>
+<div class="mt-6 bg-surface-light dark:bg-surface-dark rounded-2xl shadow-sm p-4">
+<h3 class="text-base font-bold mb-4 px-2" style="">我的服务</h3>
+<div class="grid grid-cols-4 gap-y-6">
+<a class="flex flex-col items-center gap-2 group" href="#" style="">
+<div class="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-900/30 text-primary dark:text-red-400 flex items-center justify-center text-2xl transition-transform group-active:scale-90">
+<span class="material-icons-round" style="">emoji_events</span>
+</div>
+<span class="text-xs font-medium text-gray-600 dark:text-gray-300" style="">我的战绩</span>
+</a>
+<a class="flex flex-col items-center gap-2 group" href="#" style="">
+<div class="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-orange-900/30 text-orange-500 dark:text-orange-400 flex items-center justify-center text-2xl transition-transform group-active:scale-90">
+<span class="material-icons-round" style="">leaderboard</span>
+</div>
+<span class="text-xs font-medium text-gray-600 dark:text-gray-300" style="">战绩榜</span>
+</a>
+<a class="flex flex-col items-center gap-2 group" href="#" style="">
+<div class="w-12 h-12 rounded-2xl bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 flex items-center justify-center text-2xl transition-transform group-active:scale-90">
+<span class="material-icons-round" style="">restore</span>
+</div>
+<span class="text-xs font-medium text-gray-600 dark:text-gray-300" style="">数据恢复</span>
+</a>
+<a class="flex flex-col items-center gap-2 group" href="#" style="">
+<div class="w-12 h-12 rounded-2xl bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center text-2xl transition-transform group-active:scale-90">
+<span class="material-icons-round" style="">local_offer</span>
+</div>
+<span class="text-xs font-medium text-gray-600 dark:text-gray-300" style="">标签设置</span>
+</a>
+<a class="flex flex-col items-center gap-2 group" href="#" style="">
+<div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400 flex items-center justify-center text-2xl transition-transform group-active:scale-90">
+<span class="material-icons-round" style="">menu_book</span>
+</div>
+<span class="text-xs font-medium text-gray-600 dark:text-gray-300" style="">使用帮助</span>
+</a>
+<a class="flex flex-col items-center gap-2 group" href="#" style="">
+<div class="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-900/30 text-purple-500 dark:text-purple-400 flex items-center justify-center text-2xl transition-transform group-active:scale-90">
+<span class="material-icons-round" style="">forum</span>
+</div>
+<span class="text-xs font-medium text-gray-600 dark:text-gray-300" style="">问题反馈</span>
+</a>
+<a class="flex flex-col items-center gap-2 group" href="#" style="">
+<div class="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-900/30 text-teal-500 dark:text-teal-400 flex items-center justify-center text-2xl transition-transform group-active:scale-90">
+<span class="material-icons-round" style="">support_agent</span>
+</div>
+<span class="text-xs font-medium text-gray-600 dark:text-gray-300" style="">联系客服</span>
+</a>
+<a class="flex flex-col items-center gap-2 group" href="#" style="">
+<div class="w-12 h-12 rounded-2xl bg-pink-50 dark:bg-pink-900/30 text-pink-500 dark:text-pink-400 flex items-center justify-center text-2xl transition-transform group-active:scale-90">
+<span class="material-icons-round" style="">content_copy</span>
+</div>
+<span class="text-xs font-medium text-gray-600 dark:text-gray-300" style="">复制ID</span>
+</a>
+</div>
+</div>
+<div class="mt-6 bg-surface-light dark:bg-surface-dark rounded-2xl shadow-sm overflow-hidden">
+<a class="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0" href="#" style="">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400">
+<span class="material-icons-round text-lg" style="">share</span>
+</div>
+<span class="text-sm font-medium" style="">分享应用</span>
+</div>
+<span class="material-icons-round text-gray-400 text-lg" style="">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0" href="#" style="">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400">
+<span class="material-icons-round text-lg" style="">qr_code</span>
+</div>
+<span class="text-sm font-medium" style="">物料码 </span>
+</div>
+<span class="material-icons-round text-gray-400 text-lg" style="">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0" href="#" style="">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400">
+<span class="material-icons-round text-lg" style="">text_format</span>
+</div>
+<span class="text-sm font-medium" style="">字体设置</span>
+</div>
+<span class="material-icons-round text-gray-400 text-lg" style="">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0" href="#" style="">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400">
+<span class="material-icons-round text-lg" style="">logout</span>
+</div>
+<span class="text-sm font-medium" style="">退出登录</span>
+</div>
+<span class="material-icons-round text-gray-400 text-lg" style="">chevron_right</span>
+</a>
+</div>
+<div class="mt-8 mb-4 text-center">
+<p class="text-xs text-gray-400 dark:text-gray-600" style="">v1.2.0 Build 2024</p>
+</div>
+</main>
+<nav class="fixed bottom-0 w-full bg-white dark:bg-[#200505] border-t border-gray-100 dark:border-white/5 pb-6 pt-3 px-6 flex justify-between items-center z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<a class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary transition-colors" href="#" style="">
+<span class="material-icons-round text-2xl" style="">home</span>
+<span class="text-[10px] font-medium" style="">首页</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary transition-colors" href="#" style="">
+<span class="material-icons-round text-2xl" style="">bar_chart</span>
+<span class="text-[10px] font-medium" style="">记录</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary dark:text-primary transition-colors" href="#" style="">
+<span class="material-icons-round text-2xl" style="">person</span>
+<span class="text-[10px] font-medium" style="">我的</span>
+</a>
+</nav>
+<read-frog-selection style="overflow: visible; position: relative; width: 0px; height: 0px; display: block;"></read-frog-selection><read-frog-selection style="overflow: visible; position: relative; width: 0px; height: 0px; display: block;"></read-frog-selection></body></html>

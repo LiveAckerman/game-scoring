@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "ES6",
+    "lib": ["ES6", "DOM"],
+    "strict": true,
+    "noImplicitAny": true,
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "/*": ["./*"]
+    },
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "downlevelIteration": true,
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": [
+    "**/*.ts",
+    "app.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "miniprogram_npm"
+  ]
+}

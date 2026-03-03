@@ -1,0 +1,169 @@
+.container {
+  min-height: 100vh;
+  background-color: #FFFBE6;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-header {
+  padding: 30rpx 40rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff;
+}
+
+.tab-list {
+  display: flex;
+  background-color: #eeeeee;
+  border-radius: 40rpx;
+  padding: 5rpx;
+}
+
+.tab-item {
+  padding: 10rpx 40rpx;
+  font-size: 28rpx;
+  border-radius: 35rpx;
+  color: #666666;
+}
+
+.tab-item.active {
+  background-color: #E63946;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.action-icons { display: flex; gap: 30rpx; }
+.icon-btn { font-size: 40rpx; }
+
+.record-list {
+  flex: 1;
+  padding: 30rpx 40rpx;
+  box-sizing: border-box;
+}
+
+.stats-card {
+  background-color: #ffffff;
+  border-radius: 40rpx;
+  padding: 30rpx;
+  margin-bottom: 40rpx;
+  box-shadow: 0 5rpx 20rpx rgba(0,0,0,0.05);
+}
+
+.stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.stats-count { font-size: 24rpx; color: #999999; }
+.stats-detail-btn {
+  font-size: 20rpx;
+  color: #4CAF50;
+  background-color: #E8F5E9;
+  padding: 6rpx 20rpx;
+  border-radius: 20rpx;
+}
+
+.stats-grid {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1rpx dashed #eeeeee;
+  padding-bottom: 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.stats-item .value { font-size: 48rpx; font-weight: bold; margin-bottom: 10rpx; }
+.stats-item .label { font-size: 24rpx; color: #999999; }
+.color-neg { color: #666666; }
+
+.stats-footer {
+  display: flex;
+  justify-content: space-around;
+  font-size: 24rpx;
+  color: #666666;
+}
+
+.game-card {
+  background-color: #ffffff;
+  border-radius: 40rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+}
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.flex-row { display: flex; align-items: center; gap: 16rpx; }
+
+.game-type { font-size: 32rpx; font-weight: bold; color: #333333; }
+
+.game-status {
+  padding: 2rpx 16rpx;
+  border-radius: 10rpx;
+  font-size: 22rpx;
+  background-color: #E8F5E9;
+  color: #4CAF50;
+}
+
+.game-actions { display: flex; gap: 24rpx; color: #CCCCCC; font-size: 36rpx; }
+
+.game-players {
+  display: flex;
+  gap: 60rpx;
+  padding-bottom: 30rpx;
+  border-bottom: 1rpx dashed #eeeeee;
+  margin-bottom: 20rpx;
+}
+
+.player-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50rpx;
+  margin-bottom: 10rpx;
+}
+
+.avatar-wrapper { position: relative; }
+
+.badge {
+  position: absolute;
+  top: -5rpx;
+  left: 0;
+  background-color: #E63946;
+  color: #ffffff;
+  font-size: 16rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 20rpx;
+  border: 2rpx solid #ffffff;
+}
+
+.player-name { font-size: 24rpx; color: #999999; margin-bottom: 10rpx; }
+
+.score { font-size: 36rpx; font-weight: bold; }
+.score-neg { color: #333333; }
+.score-pos { color: #E63946; }
+
+.game-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 24rpx;
+  color: #999999;
+}

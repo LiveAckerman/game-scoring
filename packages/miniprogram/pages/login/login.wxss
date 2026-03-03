@@ -1,0 +1,157 @@
+.container {
+  min-height: 100vh;
+  background-color: #FFFBE6;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.confetti-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.2;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 40rpx;
+}
+
+.logo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 60rpx;
+}
+
+.logo-wrapper {
+  position: relative;
+  width: 300rpx;
+  height: 300rpx;
+  margin-bottom: 40rpx;
+}
+
+.logo-card {
+  position: absolute;
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10rpx 30rpx rgba(0,0,0,0.1);
+  border: 6rpx solid #ffffff;
+}
+
+.card-1 {
+  background-color: #ffffff;
+  border-color: #FFB703;
+  left: 40rpx;
+  top: 40rpx;
+  transform: rotate(-6deg);
+  z-index: 10;
+}
+
+.card-1 .icon { font-size: 60rpx; }
+
+.card-2 {
+  background-color: #E63946;
+  right: 40rpx;
+  bottom: 40rpx;
+  transform: rotate(12deg);
+  z-index: 20;
+}
+
+.card-2 .icon { font-size: 60rpx; }
+
+.logo-badge {
+  position: absolute;
+  top: 20rpx;
+  right: 20rpx;
+  background-color: #FFB703;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 20rpx;
+  border: 4rpx solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(12deg);
+  z-index: 5;
+}
+
+.logo-badge .icon { font-size: 40rpx; color: #ffffff; }
+
+.title {
+  font-size: 72rpx;
+  font-weight: bold;
+  color: #E63946;
+  letter-spacing: 4rpx;
+  margin-bottom: 16rpx;
+}
+
+.subtitle {
+  font-size: 28rpx;
+  color: #4A2C2C;
+  opacity: 0.6;
+}
+
+.button-section {
+  width: 100%;
+}
+
+.login-btn {
+  width: 100% !important;
+  height: 110rpx;
+  background-color: #07C160;
+  color: #ffffff;
+  border-radius: 55rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  font-weight: bold;
+  box-shadow: 0 10rpx 40rpx rgba(7, 193, 96, 0.2);
+}
+
+.wechat-icon {
+  width: 48rpx;
+  height: 48rpx;
+  margin-right: 20rpx;
+}
+
+.footer {
+  padding: 40rpx;
+}
+
+.agreement-wrapper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.agreement-text {
+  font-size: 22rpx;
+  color: #999999;
+  line-height: 1.6;
+  margin-left: 10rpx;
+  text-align: center;
+}
+
+.link {
+  color: #E63946;
+  font-weight: bold;
+}
+
+.notice {
+  font-size: 20rpx;
+  color: #CCCCCC;
+  margin-top: 4rpx;
+}

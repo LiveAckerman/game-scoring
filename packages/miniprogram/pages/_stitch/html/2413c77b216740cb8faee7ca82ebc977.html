@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Match History Records</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#E63946", // Festive Red
+              secondary: "#FFB703", // Gold/Yellow
+              "background-light": "#FFFBE6", // Light Cream
+              "background-dark": "#2D1B1E", // Dark warm brown/red
+              "card-light": "#FFFFFF",
+              "card-dark": "#3E272B",
+              "text-main-light": "#4A2C2C",
+              "text-main-dark": "#FFE5D9",
+              "accent-green": "#588157",
+            },
+            fontFamily: {
+              display: ["Fredoka", "Noto Sans SC", "sans-serif"],
+              sans: ["Noto Sans SC", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "16px",
+              'xl': "24px",
+              '2xl': "32px",
+            },
+            boxShadow: {
+              'soft': '0 4px 20px -2px rgba(230, 57, 70, 0.1)',
+              'card': '0 8px 30px -4px rgba(230, 57, 70, 0.08)',
+            }
+          },
+        },
+      };
+    </script>
+<style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .font-display {
+            font-family: 'Fredoka', sans-serif;
+        }
+        .lantern-decoration {
+            background-image: radial-gradient(#FFB703 10%, transparent 10%), radial-gradient(#FFB703 10%, transparent 10%);
+            background-position: 0 0, 10px 10px;
+            background-size: 20px 20px;
+            opacity: 0.1;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen text-text-main-light dark:text-text-main-dark transition-colors duration-300">
+<div class="fixed top-0 left-0 w-32 h-32 bg-secondary opacity-10 rounded-full blur-3xl pointer-events-none -translate-x-1/2 -translate-y-1/2"></div>
+<div class="fixed bottom-0 right-0 w-48 h-48 bg-primary opacity-10 rounded-full blur-3xl pointer-events-none translate-x-1/3 translate-y-1/3"></div>
+<header class="sticky top-0 z-50 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md pt-safe-top pb-2 px-4 shadow-sm border-b border-red-100 dark:border-red-900/30">
+<div class="flex items-center justify-between h-14 relative">
+<h1 class="text-lg font-bold w-full text-center font-display tracking-wide text-primary dark:text-secondary">计分记录</h1>
+<div class="absolute right-0 flex items-center space-x-1 bg-white dark:bg-card-dark rounded-full px-3 py-1.5 shadow-sm border border-gray-100 dark:border-gray-700">
+<span class="material-icons-round text-sm text-gray-800 dark:text-gray-200">more_horiz</span>
+<div class="w-[1px] h-4 bg-gray-200 dark:bg-gray-600"></div>
+<span class="material-icons-round text-sm text-gray-800 dark:text-gray-200">radio_button_checked</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-4 mb-2">
+<div class="flex p-1 bg-white dark:bg-card-dark rounded-xl shadow-sm border border-red-50 dark:border-red-900/30 w-full max-w-[240px]">
+<button class="flex-1 py-1.5 px-3 rounded-lg text-sm font-medium bg-primary text-white shadow-sm transition-all transform active:scale-95">全部</button>
+<button class="flex-1 py-1.5 px-3 rounded-lg text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-secondary transition-colors">进行中</button>
+<button class="flex-1 py-1.5 px-3 rounded-lg text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-secondary transition-colors">已结束</button>
+</div>
+<div class="flex space-x-2">
+<button class="flex items-center justify-center w-10 h-10 bg-white dark:bg-card-dark rounded-xl shadow-sm border border-red-50 dark:border-red-900/30 text-gray-600 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-700">
+<span class="material-icons-round text-[20px]">filter_list</span>
+</button>
+<button class="flex items-center justify-center w-10 h-10 bg-white dark:bg-card-dark rounded-xl shadow-sm border border-red-50 dark:border-red-900/30 text-gray-600 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-700">
+<span class="material-icons-round text-[20px]">delete_outline</span>
+</button>
+</div>
+</div>
+</header>
+<main class="px-4 pb-24 pt-4 space-y-5">
+<section class="bg-white dark:bg-card-dark rounded-2xl p-5 shadow-card border border-red-50 dark:border-red-900/20 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-secondary/20 to-transparent rounded-bl-3xl -mr-4 -mt-4"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="text-sm text-gray-500 dark:text-gray-400">当前筛选共计 <span class="font-bold text-primary dark:text-secondary text-base">4</span> 条记录</div>
+<button class="text-xs font-medium text-accent-green flex items-center space-x-1 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-lg">
+<span>查看战绩榜</span>
+<span class="material-icons-round text-[14px]">bar_chart</span>
+</button>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<div class="flex flex-col items-center">
+<span class="text-xs text-gray-400 mb-1">赢局</span>
+<div class="flex items-baseline space-x-1">
+<span class="font-display text-2xl font-bold text-text-main-light dark:text-text-main-dark">0</span>
+<span class="text-xs text-gray-400">场</span>
+</div>
+</div>
+<div class="flex flex-col items-center border-l border-r border-gray-100 dark:border-gray-700">
+<span class="text-xs text-gray-400 mb-1">总赢</span>
+<div class="flex items-baseline space-x-1">
+<span class="font-display text-2xl font-bold text-primary">0</span>
+<span class="text-xs text-gray-400">分</span>
+</div>
+</div>
+<div class="flex flex-col items-center">
+<span class="text-xs text-gray-400 mb-1">总输</span>
+<div class="flex items-baseline space-x-1">
+<span class="font-display text-2xl font-bold text-gray-400">-143</span>
+<span class="text-xs text-gray-400">分</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-4 mt-3 pt-3 border-t border-dashed border-gray-100 dark:border-gray-700">
+<div class="flex flex-col items-center">
+<div class="text-xs text-gray-400">输局 <span class="text-text-main-light dark:text-text-main-dark font-medium ml-1">2</span></div>
+</div>
+<div class="flex flex-col items-center">
+<div class="text-xs text-gray-400">平局 <span class="text-text-main-light dark:text-text-main-dark font-medium ml-1">2</span></div>
+</div>
+<div class="flex flex-col items-center">
+<div class="text-xs text-gray-400">总和 <span class="text-text-main-light dark:text-text-main-dark font-medium ml-1">-143</span></div>
+</div>
+</div>
+</section>
+<article class="bg-white dark:bg-card-dark rounded-2xl p-4 shadow-soft border border-red-50 dark:border-red-900/20">
+<div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-50 dark:border-gray-800">
+<div class="flex items-center space-x-2">
+<span class="text-base font-bold text-text-main-light dark:text-text-main-dark">多人计分桌</span>
+<span class="px-2 py-0.5 rounded-md bg-green-100 dark:bg-green-900/30 text-accent-green text-xs font-bold">进行中</span>
+</div>
+<div class="flex space-x-2">
+<button class="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-primary dark:hover:text-secondary flex items-center justify-center transition-colors">
+<span class="material-icons-round text-[18px]">bar_chart</span>
+</button>
+<button class="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-primary dark:hover:text-secondary flex items-center justify-center transition-colors">
+<span class="material-icons-round text-[18px]">local_offer</span>
+</button>
+<button class="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-primary dark:hover:text-secondary flex items-center justify-center transition-colors">
+<span class="material-icons-round text-[18px]">power_settings_new</span>
+</button>
+<button class="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-red-500 flex items-center justify-center transition-colors">
+<span class="material-icons-round text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<div class="flex space-x-6 overflow-x-auto pb-2 scrollbar-hide">
+<div class="flex flex-col items-center min-w-[60px]">
+<div class="relative">
+<img alt="Avatar 1" class="w-12 h-12 rounded-xl object-cover ring-2 ring-white dark:ring-card-dark shadow-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbfGt0RA4Ga-bVQF_0kLwYRVSUVPuNmlg_aO3gIMUU2l0M6hw749VMEZ2vtVvp1fd4rb2W99WAq7mqn_5yOXFJJ4Wz1PffVmhYBcThWivL1ldwAkA8s_hScmj9a6fjC6ZzYQqoyDNUQec2MIjgL4BJDL0g47xHPZJZW6aoy8aVSPR-729rj7NYYZTuC7xERG1w2RNg9Bwx0v18OTa-wBWKMXg5sDucVTWd9xIrS2IMCBraxU00CE6TRphXDuMcABLD6O_Dj61Bp-4"/>
+<span class="absolute -top-2 -right-2 bg-primary text-white text-[10px] px-1.5 py-0.5 rounded-full shadow-sm font-bold border-2 border-white dark:border-card-dark z-10">桌主</span>
+</div>
+<span class="text-xs mt-2 text-gray-600 dark:text-gray-300 truncate w-16 text-center">君の名...</span>
+<span class="font-display text-xl font-bold mt-1 text-gray-800 dark:text-gray-100">-20</span>
+</div>
+<div class="flex flex-col items-center min-w-[60px]">
+<div class="relative">
+<img alt="Avatar 2" class="w-12 h-12 rounded-xl object-cover ring-2 ring-white dark:ring-card-dark shadow-md grayscale opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuGjCRtuU51aVNhrZrIrKJ1LywUFLRPssExxFFlmTNoAd0wITpp46Pyb20GVB3kvOnzcTSQSYYs5NGQaxRBwaoe5L1wJDePn97l8Vsv_dIqioee45DBwjfhKFQjYGuxJQze__s9K--uSUNeutp2t7Mumsj79hldjFx_PeErWcyLSu4dmxPRdSxvdnkeToSY4-3Plfgcobreb2aGtqdLA-v-Iivt9tbIYZFe6Ota-hjIROIds3kXhoHJT7uKP3ub8wjizC769UMT7c"/>
+</div>
+<span class="text-xs mt-2 text-gray-600 dark:text-gray-300 truncate w-16 text-center">Y.</span>
+<span class="font-display text-xl font-bold mt-1 text-primary">20</span>
+</div>
+</div>
+<div class="mt-3 pt-3 border-t border-dashed border-gray-100 dark:border-gray-700 text-xs text-gray-400 flex justify-between items-center">
+<span>26-03-02 11:28 开始</span>
+<span>已进行0分钟</span>
+</div>
+</article>
+<article class="bg-white dark:bg-card-dark rounded-2xl p-4 shadow-soft border border-red-50 dark:border-red-900/20">
+<div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-50 dark:border-gray-800">
+<div class="flex items-center space-x-2">
+<span class="text-base font-bold text-text-main-light dark:text-text-main-dark">单人计分桌</span>
+<span class="px-2 py-0.5 rounded-md bg-green-100 dark:bg-green-900/30 text-accent-green text-xs font-bold">进行中</span>
+</div>
+<div class="flex space-x-2 opacity-80">
+<button class="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-primary flex items-center justify-center">
+<span class="material-icons-round text-[18px]">bar_chart</span>
+</button>
+<button class="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-red-500 flex items-center justify-center">
+<span class="material-icons-round text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<div class="flex space-x-6 overflow-x-auto pb-2 scrollbar-hide">
+<div class="flex flex-col items-center min-w-[60px]">
+<div class="relative">
+<img alt="Avatar 1" class="w-12 h-12 rounded-xl object-cover ring-2 ring-white dark:ring-card-dark shadow-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCFuTVLA8K__ZO9z3GVU_oCluy33l74gny1DK8xR0Csu9lmADITpEDuKqMWoThsSYiR--k8NvBi4_rNbHG6LZvQSvck1vOYNDmaL194ThdAIv2IJ_5IMLlg-EvqYUNZjOpvjNwltkwem3hT_LnHa6rIzD81-BgfxiaVPWlMkHH55LTbdC0MQ4ZFCgz-WQZD9_fuuJuRnJSsbQ6dySUKvAg_ovoucm8JEi0IDPorHiRDWy6cooQdlehAFHeYg7SLFPIEYJLlJzxiEo"/>
+<span class="absolute -top-2 -right-2 bg-primary text-white text-[10px] px-1.5 py-0.5 rounded-full shadow-sm font-bold border-2 border-white dark:border-card-dark z-10">桌主</span>
+</div>
+<span class="text-xs mt-2 text-gray-600 dark:text-gray-300 truncate w-16 text-center">君の名...</span>
+<span class="font-display text-xl font-bold mt-1 text-gray-800 dark:text-gray-100">-123</span>
+</div>
+<div class="flex flex-col items-center min-w-[60px]">
+<div class="w-12 h-12 rounded-xl bg-cyan-500 text-white flex items-center justify-center shadow-md shadow-cyan-200 dark:shadow-none font-display text-2xl font-bold">
+                        1
+                    </div>
+<span class="text-xs mt-2 text-gray-600 dark:text-gray-300 truncate w-16 text-center">123</span>
+<span class="font-display text-xl font-bold mt-1 text-primary">123</span>
+</div>
+</div>
+<div class="mt-3 pt-3 border-t border-dashed border-gray-100 dark:border-gray-700 text-xs text-gray-400 flex justify-between items-center">
+<span>26-03-02 11:28 开始</span>
+<span>已进行1分钟</span>
+</div>
+</article>
+<article class="bg-white dark:bg-card-dark rounded-2xl p-4 shadow-soft border border-red-50 dark:border-red-900/20 opacity-80">
+<div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-50 dark:border-gray-800">
+<div class="flex items-center space-x-2">
+<span class="text-base font-bold text-gray-500 dark:text-gray-400">分数池桌</span>
+<span class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-500 text-xs font-bold">已结束</span>
+</div>
+<div class="flex space-x-2 opacity-60">
+<button class="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-400 flex items-center justify-center">
+<span class="material-icons-round text-[18px]">bar_chart</span>
+</button>
+<button class="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-400 flex items-center justify-center">
+<span class="material-icons-round text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<div class="flex space-x-6 overflow-x-auto pb-2">
+<div class="flex flex-col items-center min-w-[60px] opacity-60 grayscale">
+<div class="relative">
+<div class="w-12 h-12 rounded-xl bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400">
+<span class="material-icons-round">person</span>
+</div>
+<span class="absolute -top-2 -right-2 bg-gray-400 text-white text-[10px] px-1.5 py-0.5 rounded-full shadow-sm font-bold border-2 border-white dark:border-card-dark z-10">桌主</span>
+</div>
+<span class="text-xs mt-2 text-gray-400 truncate w-16 text-center">...</span>
+</div>
+</div>
+</article>
+</main>
+<nav class="fixed bottom-0 w-full bg-white dark:bg-card-dark border-t border-gray-100 dark:border-gray-800 pb-safe-bottom">
+<div class="flex justify-around items-center h-16 max-w-lg mx-auto px-6">
+<a class="flex flex-col items-center group w-16" href="#">
+<span class="material-icons-round text-2xl text-gray-400 dark:text-gray-500 group-hover:text-primary dark:group-hover:text-secondary transition-colors">home</span>
+<span class="text-[10px] font-medium mt-1 text-gray-400 dark:text-gray-500 group-hover:text-primary dark:group-hover:text-secondary transition-colors">首页</span>
+</a>
+<a class="flex flex-col items-center group w-16" href="#">
+<div class="relative">
+<span class="material-icons-round text-2xl text-primary dark:text-secondary">poll</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-secondary dark:bg-primary rounded-full border-2 border-white dark:border-card-dark"></span>
+</div>
+<span class="text-[10px] font-bold mt-1 text-primary dark:text-secondary">记录</span>
+</a>
+<a class="flex flex-col items-center group w-16" href="#">
+<span class="material-icons-round text-2xl text-gray-400 dark:text-gray-500 group-hover:text-primary dark:group-hover:text-secondary transition-colors">person</span>
+<span class="text-[10px] font-medium mt-1 text-gray-400 dark:text-gray-500 group-hover:text-primary dark:group-hover:text-secondary transition-colors">我的</span>
+</a>
+</div>
+</nav>
+<script>
+        // Simple script to handle dark mode if user system prefers it, though tailwind config handles class strategy
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+
+</body></html>

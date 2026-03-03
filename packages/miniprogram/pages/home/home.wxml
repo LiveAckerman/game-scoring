@@ -1,0 +1,105 @@
+<view class="home-page">
+  <view class="home-header">
+    <view class="title-row">
+      <text class="title-icon">🎲</text>
+      <text class="title">欢乐记分馆</text>
+    </view>
+  </view>
+
+  <scroll-view class="home-scroll" scroll-y>
+    <view class="hero-card">
+      <view class="hero-dot"></view>
+      <view class="hero-left">
+        <text class="hero-title">开局吧！</text>
+        <text class="hero-subtitle">创建牌局，赢个痛快</text>
+      </view>
+      <view class="hero-right">🏆</view>
+    </view>
+
+    <view class="section-title-wrap">
+      <view class="section-line"></view>
+      <text class="section-title">开启新局</text>
+    </view>
+
+    <view class="mode-card" bindtap="startMultiMode">
+      <view>
+        <text class="mode-title">多人记分</text>
+        <text class="mode-desc">多人对局实时记分</text>
+      </view>
+      <view class="mode-icon mode-icon-red">👥</view>
+    </view>
+
+    <view class="mode-card" bindtap="startSingleMode">
+      <view>
+        <text class="mode-title">单人记分</text>
+        <text class="mode-desc">单人视角专注记分</text>
+      </view>
+      <view class="mode-icon mode-icon-orange">👤</view>
+    </view>
+
+    <view class="mode-card" bindtap="startPoolMode">
+      <view>
+        <text class="mode-title">分数池模式</text>
+        <text class="mode-desc">筹码管理与公共池</text>
+      </view>
+      <view class="mode-icon mode-icon-gold">💰</view>
+    </view>
+
+    <view class="section-title-wrap recent-title-wrap">
+      <view class="section-line"></view>
+      <text class="section-title">最近一桌</text>
+      <text class="view-all" bindtap="viewAllRecords">查看全部</text>
+    </view>
+
+    <view class="recent-card">
+      <view class="recent-top">
+        <text class="recent-name">多人记分桌</text>
+        <text class="status-tag">进行中</text>
+      </view>
+      <view class="recent-players">
+        <view class="player-col">
+          <view class="avatar-wrap">
+            <image class="avatar" src="../../assets/stitch/avatars/avatar-b.png" mode="aspectFill" />
+            <text class="host-tag">桌主</text>
+          </view>
+          <text class="score score-neg">-20</text>
+        </view>
+        <view class="split-line"></view>
+        <view class="player-col">
+          <image class="avatar small" src="../../assets/stitch/avatars/avatar-c.png" mode="aspectFill" />
+          <text class="score score-pos">20</text>
+        </view>
+      </view>
+      <view class="recent-foot">
+        <text class="recent-time">3月2日, 11:28 • 0 分钟</text>
+        <view class="recent-actions">
+          <text class="action">📊</text>
+          <text class="action active">⏻</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="recent-card mute-card">
+      <view class="recent-top">
+        <text class="recent-name">单人记分桌</text>
+        <text class="status-tag">进行中</text>
+      </view>
+      <view class="recent-players">
+        <view class="player-col">
+          <view class="avatar-wrap">
+            <image class="avatar" src="../../assets/stitch/avatars/avatar-d.png" mode="aspectFill" />
+            <text class="host-tag">桌主</text>
+          </view>
+          <text class="score score-neg">-123</text>
+        </view>
+      </view>
+      <view class="recent-foot">
+        <text class="recent-time">3月2日, 11:28 • 1 分钟</text>
+        <view class="recent-actions">
+          <text class="action">📊</text>
+          <text class="action">🗑</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+</view>

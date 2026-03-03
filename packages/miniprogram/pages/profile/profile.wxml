@@ -1,0 +1,116 @@
+<view class="container">
+  <!-- User Card -->
+  <view class="user-card">
+    <view class="card-top">
+      <view class="user-info">
+        <view class="avatar-box">
+          <image class="avatar" src="{{userInfo.avatar || '../../assets/stitch/avatars/avatar-main.png'}}" />
+          <text class="vip-badge">VIP</text>
+        </view>
+        <view class="name-box">
+          <text class="nickname">{{userInfo.nickname || ' Lucky Dragon'}}</text>
+          <view class="title-badge">
+            <text class="icon">🏆</text>
+            <text>{{userInfo.title || '小财神'}}</text>
+          </view>
+        </view>
+      </view>
+      <button class="edit-btn" bindtap="goToEdit">编辑资料</button>
+    </view>
+    <view class="card-stats">
+      <view class="stat-item border-right">
+        <text class="value">{{userInfo.totalGames || 128}}</text>
+        <text class="label">场次</text>
+      </view>
+      <view class="stat-item">
+        <text class="value">{{userInfo.winRate || '45%'}}</text>
+        <text class="label">胜率</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- VIP Banner -->
+  <view class="vip-banner">
+    <view class="vip-info">
+      <view class="vip-icon">💎</view>
+      <view class="vip-text">
+        <text class="vip-title">高级会员</text>
+        <text class="vip-desc">解锁专属主题 & 更多统计</text>
+      </view>
+    </view>
+    <button class="upgrade-btn">升级</button>
+  </view>
+
+  <!-- Services Grid -->
+  <view class="section-card">
+    <text class="section-title">我的服务</text>
+    <view class="service-grid">
+      <view class="service-item">
+        <view class="service-icon bg-red">🏆</view>
+        <text class="service-name">我的战绩</text>
+      </view>
+      <view class="service-item">
+        <view class="service-icon bg-orange">📊</view>
+        <text class="service-name">战绩榜</text>
+      </view>
+      <view class="service-item">
+        <view class="service-icon bg-yellow">🔄</view>
+        <text class="service-name">数据恢复</text>
+      </view>
+      <view class="service-item">
+        <view class="service-icon bg-green">🏷️</view>
+        <text class="service-name">标签设置</text>
+      </view>
+      <view class="service-item">
+        <view class="service-icon bg-blue">📚</view>
+        <text class="service-name">使用帮助</text>
+      </view>
+      <view class="service-item">
+        <view class="service-icon bg-purple">💬</view>
+        <text class="service-name">问题反馈</text>
+      </view>
+      <view class="service-item">
+        <view class="service-icon bg-teal">🎧</view>
+        <text class="service-name">联系客服</text>
+      </view>
+      <view class="service-item">
+        <view class="service-icon bg-pink">🆔</view>
+        <text class="service-name">复制ID</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Menu List -->
+  <view class="menu-card">
+    <view class="menu-item border-bottom">
+      <view class="menu-left">
+        <text class="icon">📤</text>
+        <text>分享应用</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+    <view class="menu-item border-bottom">
+      <view class="menu-left">
+        <text class="icon">🔳</text>
+        <text>物料码</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+    <view class="menu-item border-bottom">
+      <view class="menu-left">
+        <text class="icon">Aa</text>
+        <text>字体设置</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="handleLogout">
+      <view class="menu-left">
+        <text class="icon">🚪</text>
+        <text>退出登录</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+
+  <view class="version">v1.2.0 Build 2024</view>
+</view>

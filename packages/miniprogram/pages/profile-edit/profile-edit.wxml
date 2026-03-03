@@ -1,0 +1,75 @@
+<view class="container">
+  <!-- Avatar Edit -->
+  <view class="avatar-section" bindtap="chooseAvatar">
+    <view class="avatar-box">
+      <image class="avatar" src="{{userInfo.avatar || '../../assets/stitch/avatars/avatar-main.png'}}" />
+      <view class="camera-icon">📷</view>
+    </view>
+    <text class="hint">点击更换头像</text>
+  </view>
+
+  <!-- Form -->
+  <view class="form">
+    <view class="form-item">
+      <text class="label">昵称</text>
+      <view class="input-box">
+        <input class="input" value="{{userInfo.nickname}}" placeholder="请输入昵称" bindinput="onNicknameInput" />
+        <text class="edit-icon">✏️</text>
+      </view>
+    </view>
+
+    <view class="form-item">
+      <text class="label">性别</text>
+      <view class="gender-radio">
+        <view class="gender-item {{userInfo.gender === 1 ? 'active' : ''}}" bindtap="setGender" data-val="1">
+          <text class="icon">♂️</text>
+          <text>男</text>
+        </view>
+        <view class="gender-item {{userInfo.gender === 2 ? 'active' : ''}}" bindtap="setGender" data-val="2">
+          <text class="icon">♀️</text>
+          <text>女</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-item">
+      <view class="label-row">
+        <text class="label">称号</text>
+        <text class="view-all">查看全部 ›</text>
+      </view>
+      <view class="title-grid">
+        <view class="title-item {{userInfo.title === '小财神' ? 'active' : ''}}" bindtap="setTitle" data-val="小财神">
+          <view class="title-icon bg-yellow">🏆</view>
+          <view class="title-info">
+            <text class="name">小财神</text>
+            <text class="status">当前佩戴</text>
+          </view>
+          <icon wx:if="{{userInfo.title === '小财神'}}" type="success_no_circle" size="14" color="#E63946" class="check" />
+        </view>
+        <view class="title-item" bindtap="setTitle" data-val="常胜将军">
+          <view class="title-icon bg-gray">🔥</view>
+          <view class="title-info">
+            <text class="name gray">常胜将军</text>
+            <text class="status">胜率 60%</text>
+          </view>
+        </view>
+        <view class="title-item" bindtap="setTitle" data-val="运气王">
+          <view class="title-icon bg-gray">⭐</view>
+          <view class="title-info">
+            <text class="name gray">运气王</text>
+            <text class="status">暂未解锁</text>
+          </view>
+        </view>
+        <view class="title-item" bindtap="setTitle" data-val="至尊VIP">
+          <view class="title-icon bg-gray">💎</view>
+          <view class="title-info">
+            <text class="name gray">至尊VIP</text>
+            <text class="status">会员专属</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <button class="save-btn" bindtap="handleSave">💾 保存修改</button>
+</view>
