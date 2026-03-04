@@ -1,4 +1,6 @@
 <view class="edit-page">
+  <common-top-bar title="编辑资料" bind:back="goBack" />
+
   <scroll-view class="edit-scroll" scroll-y>
     <view class="avatar-section" bindtap="chooseAvatar">
       <view class="avatar-shell">

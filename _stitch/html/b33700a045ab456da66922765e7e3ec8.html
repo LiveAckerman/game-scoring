@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>多人记分 - 优化内容间距</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#E63946", // Festive red
+                        "primary-dark": "#9B2226",
+                        "background-light": "#FFFBF0", // Cream gold
+                        "accent": "#F4A261", // Gold/Orange
+                        "accent-light": "#FFE8D6",
+                    },
+                    fontFamily: {
+                        display: ['"Ma Shan Zheng"', 'cursive', 'system-ui', 'sans-serif'],
+                        body: ['system-ui', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        '3xl': '1.5rem',
+                        '4xl': '2rem',
+                    },
+                },
+            },
+        };
+    </script>
+<style type="text/tailwindcss">
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-confetti {
+            background-image: radial-gradient(#F4A261 1px, transparent 1px), radial-gradient(#E63946 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            opacity: 0.1;
+            pointer-events: none;
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+        .festive-dashed-border {
+            position: relative;
+        }
+        .festive-dashed-border::after {
+            content: '';
+            position: absolute;
+            inset: 6px;
+            border: 2px dashed #F4A261;
+            border-radius: 1.25rem;
+            pointer-events: none;
+            opacity: 0.4;
+        }
+        .paper-cut-jagged {
+            clip-path: polygon(
+                0% 20px, 10px 15px, 20px 20px, 30px 15px, 40px 20px, 50px 15px, 60px 20px, 70px 15px, 80px 20px, 90px 15px, 100% 20px,
+                100% calc(100% - 20px), 90% calc(100% - 15px), 80% calc(100% - 20px), 70% calc(100% - 15px), 60% calc(100% - 20px), 50% calc(100% - 15px), 40% calc(100% - 20px), 30% calc(100% - 15px), 20% calc(100% - 20px), 10% calc(100% - 15px), 0% calc(100% - 20px)
+            );
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light text-gray-800 font-body min-h-screen flex flex-col relative overflow-x-hidden">
+<div class="bg-confetti"></div>
+<header class="bg-primary text-white sticky top-0 z-50 pt-10 pb-3 px-4 shadow-sm">
+<div class="flex items-center justify-between relative h-10">
+<div class="flex items-center">
+<button class="material-symbols-outlined text-2xl active:opacity-60 transition-opacity">arrow_back_ios_new</button>
+</div>
+<h1 class="text-xl font-display font-bold absolute left-1/2 -translate-x-1/2 tracking-wider">桌号：888</h1>
+<div class="w-10"></div>
+</div>
+</header>
+<main class="flex-1 p-4 relative z-10 flex flex-col space-y-4 max-w-md mx-auto w-full pb-24">
+<div class="relative group">
+<div class="absolute inset-0 translate-y-1 bg-primary/20 paper-cut-jagged blur-[2px]"></div>
+<div class="bg-white paper-cut-jagged py-6 px-4 relative z-10 border-b-2 border-primary/10">
+<div class="grid grid-cols-7 gap-1">
+<button class="flex flex-col items-center space-y-1.5 group/btn">
+<div class="w-9 h-9 flex items-center justify-center rounded-full border border-accent/20 group-active/btn:bg-accent/10 transition-colors">
+<span class="material-symbols-outlined text-accent text-[22px]">person_add</span>
+</div>
+<span class="text-[10px] font-bold text-gray-400">邀请</span>
+</button>
+<button class="flex flex-col items-center space-y-1.5 group/btn">
+<div class="w-9 h-9 flex items-center justify-center rounded-full border border-accent/20 group-active/btn:bg-accent/10 transition-colors">
+<span class="material-symbols-outlined text-accent text-[22px]">description</span>
+</div>
+<span class="text-[10px] font-bold text-gray-400">明细</span>
+</button>
+<button class="flex flex-col items-center space-y-1.5 group/btn">
+<div class="w-9 h-9 flex items-center justify-center rounded-full border border-accent/20 group-active/btn:bg-accent/10 transition-colors">
+<span class="material-symbols-outlined text-accent text-[22px]">settings</span>
+</div>
+<span class="text-[10px] font-bold text-gray-400">设置</span>
+</button>
+<button class="flex flex-col items-center space-y-1.5 group/btn">
+<div class="w-9 h-9 flex items-center justify-center rounded-full border border-accent/20 group-active/btn:bg-accent/10 transition-colors">
+<span class="material-symbols-outlined text-accent text-[22px]">border_all</span>
+</div>
+<span class="text-[10px] font-bold text-gray-400">台板</span>
+</button>
+<button class="flex flex-col items-center space-y-1.5 group/btn">
+<div class="w-9 h-9 flex items-center justify-center rounded-full border border-accent/20 group-active/btn:bg-accent/10 transition-colors">
+<span class="material-symbols-outlined text-accent text-[22px]">power_settings_new</span>
+</div>
+<span class="text-[10px] font-bold text-gray-400">结束</span>
+</button>
+<button class="flex flex-col items-center space-y-1.5 group/btn">
+<div class="w-9 h-9 flex items-center justify-center rounded-full border border-accent/20 group-active/btn:bg-accent/10 transition-colors">
+<span class="material-symbols-outlined text-accent text-[22px]">volume_off</span>
+</div>
+<span class="text-[10px] font-bold text-gray-400">静音</span>
+</button>
+<button class="flex flex-col items-center space-y-1.5 group/btn">
+<div class="w-9 h-9 flex items-center justify-center rounded-full border border-accent/20 group-active/btn:bg-accent/10 transition-colors">
+<span class="material-symbols-outlined text-accent text-[22px]">more_horiz</span>
+</div>
+<span class="text-[10px] font-bold text-gray-400">更多</span>
+</button>
+</div>
+</div>
+</div>
+<div class="bg-white rounded-3xl p-6 shadow-xl border-2 border-primary/10 festive-dashed-border flex flex-col items-center relative">
+<button class="absolute top-4 right-4 text-gray-300 active:text-gray-500">
+<span class="material-symbols-outlined">close</span>
+</button>
+<div class="relative w-44 h-44 mb-4 mt-2">
+<div class="absolute -top-4 -right-4 w-12 h-12 bg-[#F94144] rounded-lg shadow-lg flex items-center justify-center z-10 rotate-12 border-2 border-white">
+<span class="text-xl">🧧</span>
+</div>
+<div class="w-full h-full p-3 bg-white border border-gray-100 rounded-2xl shadow-inner">
+<img alt="二维码" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACv9S9AQXPnX0FGp_hqtCQSW-uI1sTvFf-H2bOA6Znt6BmrTeZ_uQL57QVflLTDs9yjkkMs5wtT6LqyuCjDcIEQc_NGFrk_sDQhcEtWPsCkDk0DaO1mdnEbn2vIGXOuHSMxVbCwhqUKOQcVd3gdXY2NZ-neZQ0I-juNZpKHsT3SUbFhYzFcy4SRQfEkmlxziHJlSWZsRvyspwv5g52aam0STmmnIPLqnuToZTrgEQPC5ZxKzFwJ7I17x8E1RlfUqgSGm4EOyNyTm8"/>
+</div>
+</div>
+<p class="text-gray-500 text-sm font-medium mb-4">邀请麻友扫一扫，参与计分</p>
+<div class="w-full relative mb-4">
+<input class="w-full bg-[#FFE8D6] border-none rounded-xl py-3 px-4 text-center text-primary font-bold placeholder:text-primary/40 focus:ring-2 focus:ring-accent" placeholder="手动输入房间号" type="text"/>
+</div>
+<button class="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 rounded-2xl shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-95">
+<span class="material-symbols-outlined">send</span>
+<span>转发邀请好友</span>
+</button>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between px-1">
+<h2 class="text-sm font-bold text-gray-500">玩家数量: 1</h2>
+</div>
+<div class="bg-white rounded-2xl p-4 flex items-center space-x-4 shadow-md border border-primary/10 relative overflow-visible">
+<div class="relative">
+<div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow-md z-20 whitespace-nowrap border-2 border-white">
+                        桌主
+                    </div>
+<img alt="玩家头像" class="w-14 h-14 rounded-full object-cover border-4 border-accent relative z-10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZ6OQ29Ntj6zFnTt0Aix5ge74PMh08NQ3LdU0baSAnOSvqeL9Jvgtjq7Ni78MG0VfFx1iBhGX8MNZL2tKvhiCJhlvDVJb4IHiigIgizvEkfp8hXeXarWEc7ZBFSz2gQsnuZlAigcMGg-cIm1ClasooHImlBw1HBwLrCKfYi0aND1dDo2Z3J5SrJPDoNVmlqGAod9bTno2V-C9GXb6zmFnI7hfUwPErHfb-kfSzjJwS4u4_D2Ot2CORCn8cXe_3FtmLV3KgugmwYM4"/>
+</div>
+<div class="flex-1">
+<h3 class="font-bold text-gray-800 text-lg">君の名は、泷</h3>
+<p class="text-xs text-gray-400">不赢不输</p>
+</div>
+<div class="text-right">
+<span class="text-2xl font-display font-bold text-primary">0</span>
+<p class="text-[10px] text-gray-400 font-bold uppercase tracking-tight">积分</p>
+</div>
+</div>
+<button class="w-full bg-white/50 border-2 border-dashed border-accent/30 rounded-2xl p-4 flex items-center justify-center space-x-2 active:bg-accent/5 transition-colors">
+<span class="material-symbols-outlined text-accent/40">person_outline</span>
+<span class="text-sm text-accent/50 font-bold">虚位以待</span>
+</button>
+</div>
+</main>
+<nav class="bg-white border-t border-gray-100 fixed bottom-0 w-full z-50 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
+<div class="flex justify-around items-center h-16 max-w-md mx-auto">
+<a class="flex flex-col items-center justify-center w-full h-full text-primary" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-bold">首页</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-gray-300" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="text-[10px] font-bold">记录</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-gray-300" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-bold">我的</span>
+</a>
+</div>
+</nav>
+
+</body></html>

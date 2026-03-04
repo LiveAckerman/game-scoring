@@ -1,104 +1,77 @@
 <view class="records-page">
+  <common-top-bar title="计分记录" showBack="{{false}}" />
+
   <view class="header-bar">
     <view class="tabs">
       <view class="tab {{activeTab === 'all' ? 'active' : ''}}" data-id="all" bindtap="switchTab">全部</view>
       <view class="tab {{activeTab === 'ongoing' ? 'active' : ''}}" data-id="ongoing" bindtap="switchTab">进行中</view>
       <view class="tab {{activeTab === 'finished' ? 'active' : ''}}" data-id="finished" bindtap="switchTab">已结束</view>
     </view>
-    <view class="tools">
-      <view class="tool-btn"><view class="icon icon-filter"></view></view>
-      <view class="tool-btn"><view class="icon icon-delete"></view></view>
-    </view>
   </view>
 
   <scroll-view class="content" scroll-y>
     <view class="summary-card">
       <view class="summary-top">
-        <text class="tip">当前筛选共计 <text class="count">4</text> 条记录</text>
-        <view class="rank-btn">
-          <text>查看战绩榜</text>
-          <view class="icon icon-chart-green"></view>
-        </view>
+        <text class="tip">当前筛选共计 <text class="count">{{totalRecords}}</text> 条记录</text>
       </view>
       <view class="summary-grid">
         <view class="stat-item">
           <text class="stat-label">赢局</text>
-          <text class="stat-value">0场</text>
+          <text class="stat-value">{{summary.winRounds}}场</text>
         </view>
         <view class="stat-item split-v">
           <text class="stat-label">总赢</text>
-          <text class="stat-value red">0分</text>
+          <text class="stat-value red">{{summary.totalWinPoints}}分</text>
         </view>
         <view class="stat-item">
           <text class="stat-label">总输</text>
-          <text class="stat-value gray">-143分</text>
+          <text class="stat-value gray">{{summary.totalLosePoints}}分</text>
         </view>
       </view>
       <view class="summary-foot">
-        <text>输局 2</text>
-        <text>平局 2</text>
-        <text>总和 -143</text>
+        <text>输局 {{summary.loseRounds}}</text>
+        <text>平局 {{summary.drawRounds}}</text>
+        <text>总和 {{summary.totalScore}}</text>
       </view>
     </view>
 
-    <view class="record-card">
-      <view class="record-head">
-        <view class="title-row">
-          <text class="record-title">多人计分桌</text>
-          <text class="badge">进行中</text>
-        </view>
-        <view class="head-actions">
-          <view class="round-btn"><view class="icon icon-chart"></view></view>
-          <view class="round-btn"><view class="icon icon-tag"></view></view>
-          <view class="round-btn"><view class="icon icon-power"></view></view>
-          <view class="round-btn"><view class="icon icon-delete"></view></view>
-        </view>
-      </view>
-      <view class="players">
-        <view class="p-item">
-          <view class="avatar-box">
-            <image class="avatar" src="../../assets/stitch/avatars/avatar-e.png" mode="aspectFill" />
-            <text class="host">桌主</text>
-          </view>
-          <text class="name">君の名...</text>
-          <text class="score">-20</text>
-        </view>
-        <view class="p-item">
-          <image class="avatar muted" src="../../assets/stitch/avatars/avatar-f.png" mode="aspectFill" />
-          <text class="name">Y.</text>
-          <text class="score red">20</text>
-        </view>
-      </view>
-      <view class="card-foot">
-        <text>26-03-02 11:28 开始</text>
-        <text>已进行0分钟</text>
-      </view>
-    </view>
+    <view wx:if="{{loading}}" class="page-tip">加载中...</view>
+    <view wx:elif="{{records.length === 0}}" class="page-tip">暂无对局记录</view>
 
-    <view class="record-card soft">
+    <view
+      wx:for="{{records}}"
+      wx:key="roomId"
+      class="record-card {{item.status === 'ENDED' ? 'soft' : ''}}"
+      bindtap="openRoomFromRecord"
+      data-room-code="{{item.roomCode}}"
+      data-status="{{item.status}}"
+    >
       <view class="record-head">
         <view class="title-row">
-          <text class="record-title">单人计分桌</text>
-          <text class="badge">进行中</text>
+          <text class="record-title">桌号 {{item.roomCode}}</text>
+          <text class="badge {{item.statusClass}}">{{item.statusText}}</text>
         </view>
-        <view class="head-actions">
-          <view class="round-btn"><view class="icon icon-chart"></view></view>
-          <view class="round-btn"><view class="icon icon-delete"></view></view>
+        <view class="record-meta">
+          <text class="meta">我的积分 {{item.myScoreText}}</text>
+          <text class="meta">{{item.scoreRecordCount}} 笔记分</text>
         </view>
       </view>
+
       <view class="players">
-        <view class="p-item">
+        <view wx:for="{{item.members}}" wx:key="id" class="p-item">
           <view class="avatar-box">
-            <image class="avatar" src="../../assets/stitch/avatars/avatar-g.png" mode="aspectFill" />
-            <text class="host">桌主</text>
+            <image wx:if="{{item.avatar}}" class="avatar" src="{{item.avatar}}" mode="aspectFill" />
+            <view wx:else class="avatar avatar-text"><text>{{item.avatarInitials || '游客'}}</text></view>
+            <text wx:if="{{item.isOwner}}" class="host">桌主</text>
           </view>
-          <text class="name">君の名...</text>
-          <text class="score">-123</text>
+          <text class="name">{{item.nickname}}</text>
+          <text class="score {{item.score > 0 ? 'red' : (item.score < 0 ? 'dark' : 'zero')}}">{{item.score > 0 ? '+' : ''}}{{item.score}}</text>
         </view>
       </view>
+
       <view class="card-foot">
-        <text>26-03-02 11:28 开始</text>
-        <text>已进行1分钟</text>
+        <text>{{item.startText}}</text>
+        <text>{{item.durationText}}</text>
       </view>
     </view>
   </scroll-view>

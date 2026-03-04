@@ -1,5 +1,3 @@
 {
-  "navigationBarTitleText": "计分记录",
-  "navigationBarBackgroundColor": "#FFFBE6",
-  "navigationBarTextStyle": "black"
+  "navigationStyle": "custom"
 }

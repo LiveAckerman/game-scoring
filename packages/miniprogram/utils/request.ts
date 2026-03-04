@@ -1,48 +1,79 @@
-const BASE_URL = 'http://localhost:8040/api'; // 实际开发时请替换为真实后端地址
+export const API_BASE_URL = 'http://192.168.110.79:8040/api';
 
 interface RequestOptions {
   url: string;
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  data?: any;
-  header?: any;
+  data?: unknown;
+  header?: WechatMiniprogram.IAnyObject;
 }
 
-export const request = <T = any>(options: RequestOptions): Promise<T> => {
+export interface RequestError {
+  statusCode: number;
+  message: string;
+  data?: unknown;
+}
+
+export const request = <T = unknown>(options: RequestOptions): Promise<T> => {
   const token = wx.getStorageSync('token');
-  const header = {
+  const guestToken = wx.getStorageSync('guestToken');
+
+  const header: WechatMiniprogram.IAnyObject = {
     ...options.header,
-    'Authorization': token ? `Bearer ${token}` : ''
   };
+
+  if (token) {
+    header.Authorization = `Bearer ${token}`;
+  }
+
+  if (guestToken) {
+    header['x-guest-token'] = guestToken;
+  }
 
   return new Promise((resolve, reject) => {
     wx.request({
-      url: `${BASE_URL}${options.url}`,
+      url: `${API_BASE_URL}${options.url}`,
       method: options.method || 'GET',
       data: options.data,
       header,
-      success: (res) => {
+      success: (res: WechatMiniprogram.RequestSuccessCallbackResult) => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           resolve(res.data as T);
-        } else if (res.statusCode === 401) {
-          // Token 过期或未登录，跳转登录页
-          wx.removeStorageSync('token');
-          wx.navigateTo({ url: '/pages/login/login' });
-          reject(res);
-        } else {
-          wx.showToast({
-            title: (res.data as any)?.message || '请求失败',
-            icon: 'none'
-          });
-          reject(res);
+          return;
         }
+
+        const responseData = res.data as { message?: string | string[] } | undefined;
+        const message = Array.isArray(responseData?.message)
+          ? responseData?.message[0]
+          : responseData?.message || '请求失败';
+
+        const error: RequestError = {
+          statusCode: res.statusCode,
+          message,
+          data: res.data,
+        };
+
+        if (res.statusCode !== 401) {
+          wx.showToast({
+            title: message,
+            icon: 'none',
+          });
+        }
+
+        reject(error);
       },
-      fail: (err) => {
+      fail: () => {
+        const error: RequestError = {
+          statusCode: 0,
+          message: '网络请求失败',
+        };
+
         wx.showToast({
-          title: '网络请求失败',
-          icon: 'none'
+          title: error.message,
+          icon: 'none',
         });
-        reject(err);
-      }
+
+        reject(error);
+      },
     });
   });
 };

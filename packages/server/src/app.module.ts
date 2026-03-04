@@ -4,6 +4,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { User } from './user/entities/user.entity';
+import { GuestModule } from './guest/guest.module';
+import { RoomModule } from './room/room.module';
+import { RealtimeModule } from './realtime/realtime.module';
+import { GuestUser } from './guest/entities/guest-user.entity';
+import { Room, RoomMember, RoomScoreRecord } from './room/entities';
 
 @Module({
   imports: [
@@ -31,7 +36,7 @@ import { User } from './user/entities/user.entity';
               'DB_DATABASE',
               'happy_score_hall',
             ),
-            entities: [User],
+            entities: [User, GuestUser, Room, RoomMember, RoomScoreRecord],
             synchronize: true, // 开发环境自动同步，生产环境请关闭
             charset: 'utf8mb4',
           };
@@ -44,14 +49,17 @@ import { User } from './user/entities/user.entity';
             'DB_DATABASE',
             'happy_score_hall.sqlite',
           ),
-          entities: [User],
+          entities: [User, GuestUser, Room, RoomMember, RoomScoreRecord],
           synchronize: true,
         };
       },
     }),
 
     AuthModule,
+    GuestModule,
     UserModule,
+    RoomModule,
+    RealtimeModule,
   ],
 })
 export class AppModule { }

@@ -1,0 +1,52 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.inner {
+  height: 96rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28rpx;
+  position: relative;
+}
+
+.side {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.back-btn {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-arrow {
+  font-size: 58rpx;
+  line-height: 1;
+  font-weight: 500;
+  margin-top: -4rpx;
+}
+
+.title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 40rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+  max-width: 60%;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,4 +1,6 @@
 <view class="profile-page">
+  <common-top-bar title="个人中心" showBack="{{false}}" />
+
   <scroll-view class="profile-scroll" scroll-y>
     <view class="user-card">
       <view class="bubble b1"></view>
@@ -7,17 +9,20 @@
         <view class="user-left">
           <view class="avatar-box">
             <image class="avatar" src="{{userInfo.avatar || '../../assets/stitch/avatars/avatar-main.png'}}" mode="aspectFill" />
-            <text class="vip">VIP</text>
           </view>
           <view>
-            <text class="name">{{userInfo.nickname || 'Lucky Dragon'}}</text>
+            <view class="name-row">
+              <text class="name">{{userInfo.nickname || 'Lucky Dragon'}}</text>
+              <view wx:if="{{!isGuest}}" class="edit-icon-btn" bindtap="goToEdit">
+                <view class="icon icon-edit-name"></view>
+              </view>
+            </view>
             <view class="title-chip">
               <view class="icon icon-trophy-mini"></view>
               <text>{{userInfo.title || '小财神'}}</text>
             </view>
           </view>
         </view>
-        <button class="edit-btn" bindtap="goToEdit">编辑资料</button>
       </view>
       <view class="stats">
         <view class="stat split-r">
@@ -29,17 +34,6 @@
           <text class="k">胜率</text>
         </view>
       </view>
-    </view>
-
-    <view class="vip-banner">
-      <view class="vip-left">
-        <view class="vip-icon"><view class="icon icon-diamond"></view></view>
-        <view>
-          <text class="vip-title">高级会员</text>
-          <text class="vip-desc">解锁专属主题 & 更多统计</text>
-        </view>
-      </view>
-      <button class="upgrade">升级</button>
     </view>
 
     <view class="service-card">
@@ -60,7 +54,7 @@
       <view class="menu-item border"><view class="left"><view class="mini icon icon-share"></view><text>分享应用</text></view><view class="mini icon icon-arrow"></view></view>
       <view class="menu-item border"><view class="left"><view class="mini icon icon-qr"></view><text>物料码</text></view><view class="mini icon icon-arrow"></view></view>
       <view class="menu-item border"><view class="left"><view class="mini icon icon-font"></view><text>字体设置</text></view><view class="mini icon icon-arrow"></view></view>
-      <view class="menu-item" bindtap="handleLogout"><view class="left"><view class="mini icon icon-logout"></view><text>退出登录</text></view><view class="mini icon icon-arrow"></view></view>
+      <view class="menu-item" bindtap="handleLogout"><view class="left"><view class="mini icon icon-logout"></view><text>{{isGuest ? '退出游客身份' : '退出登录'}}</text></view><view class="mini icon icon-arrow"></view></view>
     </view>
 
     <text class="version">v1.2.0 Build 2024</text>

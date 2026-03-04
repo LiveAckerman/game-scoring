@@ -14,6 +14,10 @@ Page({
     this.fetchUserInfo();
   },
 
+  goBack() {
+    wx.navigateBack();
+  },
+
   async fetchUserInfo() {
     try {
       const userInfo = await request({ url: '/user/profile' });

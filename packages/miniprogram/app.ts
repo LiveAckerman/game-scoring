@@ -2,18 +2,22 @@
 App<IAppOption>({
   globalData: {
     userInfo: null,
-    token: ''
+    guestProfile: null,
+    token: '',
   },
   onLaunch() {
-    // 展示本地存储能力
-    const logs: number[] = wx.getStorageSync('logs') || []
-    logs.unshift(Date.now())
-    wx.setStorageSync('logs', logs)
+    const logs: number[] = wx.getStorageSync('logs') || [];
+    logs.unshift(Date.now());
+    wx.setStorageSync('logs', logs);
 
-    // 尝试从本地加载 token
-    const token = wx.getStorageSync('token')
+    const token = wx.getStorageSync('token');
     if (token) {
-      this.globalData.token = token
+      this.globalData.token = token;
+    }
+
+    const guestProfile = wx.getStorageSync('guestProfile');
+    if (guestProfile) {
+      this.globalData.guestProfile = guestProfile as AppGuestProfile;
     }
   },
-})
+});

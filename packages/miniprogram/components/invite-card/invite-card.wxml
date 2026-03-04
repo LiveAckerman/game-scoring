@@ -1,0 +1,41 @@
+<view class="invite-card">
+  <view wx:if="{{showClose}}"  class="close-btn" bindtap="onCloseTap">
+    <view class="icon icon-close"></view>
+  </view>
+
+  <view class="qr-wrap">
+    <view class="hongbao">福</view>
+    <view class="qr-shell">
+      <image class="qr" src="../../assets/stitch/invite/invite-qr.png" mode="aspectFit" />
+    </view>
+  </view>
+
+  <text class="invite-tip">{{tipText}}</text>
+
+  <view class="room-code-wrap" bindtap="onFocusCode">
+    <view class="room-code-grid">
+      <view wx:for="{{codeDigits}}" wx:key="index" class="code-cell {{roomCode.length === index ? 'active' : ''}}">
+        <text class="code-char">{{item}}</text>
+      </view>
+    </view>
+    <input
+      wx:if="{{editable}}"
+      class="hidden-room-input"
+      type="number"
+      maxlength="6"
+      value="{{roomCode}}"
+      focus="{{codeFocus}}"
+      bindinput="onCodeInput"
+      bindblur="onCodeBlur"
+    />
+  </view>
+
+  <view class="room-btn-row {{!showJoinButton || !showCopyButton ? 'single' : ''}}">
+    <button wx:if="{{showJoinButton}}" class="join-btn" bindtap="onJoinTap">{{joinButtonText}}</button>
+    <button wx:if="{{showCopyButton}}" class="share-btn" bindtap="onShareTap">{{copyButtonText}}</button>
+  </view>
+
+  <text class="room-status {{roomStatus === 'IN_PROGRESS' ? 'active' : 'ended'}}">
+    {{roomStatus === 'IN_PROGRESS' ? '房间进行中' : '房间已结束'}}
+  </text>
+</view>

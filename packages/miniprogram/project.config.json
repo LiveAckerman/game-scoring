@@ -1,7 +1,24 @@
 {
   "description": "项目配置文件",
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "file",
+        "value": ".DS_Store"
+      },
+      {
+        "type": "file",
+        "value": "assets/.DS_Store"
+      },
+      {
+        "type": "folder",
+        "value": "_stitch"
+      },
+      {
+        "type": "folder",
+        "value": "_material_archive"
+      }
+    ],
     "include": []
   },
   "setting": {

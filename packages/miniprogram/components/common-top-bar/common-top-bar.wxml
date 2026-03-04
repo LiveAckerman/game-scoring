@@ -1,0 +1,11 @@
+<view class="topbar" style="background: {{bgColor}}; color: {{textColor}}; padding-top: {{statusBarHeight}}px;">
+  <view class="inner">
+    <view class="side">
+      <view wx:if="{{showBack}}" class="back-btn" bindtap="onBackTap">
+        <text class="back-arrow">‹</text>
+      </view>
+    </view>
+    <text class="title">{{title}}</text>
+    <view class="side"></view>
+  </view>
+</view>

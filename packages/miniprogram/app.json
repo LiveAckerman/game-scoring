@@ -1,10 +1,18 @@
 {
   "pages": [
-    "pages/login/login",
     "pages/home/home",
     "pages/records/records",
-    "pages/profile/profile",
-    "pages/profile-edit/profile-edit"
+    "pages/profile/profile"
+  ],
+  "subpackages": [
+    {
+      "root": "subpkg",
+      "pages": [
+        "login/login",
+        "multi-invite/multi-invite",
+        "profile-edit/profile-edit"
+      ]
+    }
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -39,5 +47,10 @@
     ]
   },
   "style": "v2",
+  "usingComponents": {
+    "common-top-bar": "/components/common-top-bar/common-top-bar",
+    "common-dialog": "/components/common-dialog/common-dialog",
+    "invite-card": "/components/invite-card/invite-card"
+  },
   "sitemapLocation": "sitemap.json"
 }

@@ -1,0 +1,100 @@
+.dialog-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.38);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.dialog-panel {
+  width: 100%;
+  max-width: 680rpx;
+  border-radius: 26rpx;
+  background: #fff;
+  border: 2rpx solid rgba(230, 57, 70, 0.1);
+  box-shadow: 0 16rpx 36rpx rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.dialog-head {
+  height: 92rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24rpx;
+  border-bottom: 2rpx solid #f4f4f4;
+  box-sizing: border-box;
+}
+
+.dialog-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.close-btn {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 32rpx;
+  margin: 0;
+  padding: 0;
+  background: #fff7ef;
+  border: 2rpx solid #f5d8bf;
+  box-shadow: 0 4rpx 12rpx rgba(230, 57, 70, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.icon-close {
+  width: 26rpx;
+  height: 26rpx;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 6l12 12M18 6 6 18' stroke='%23cf4f4f' stroke-width='2.8' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.dialog-body {
+  padding: 22rpx 24rpx;
+}
+
+.dialog-footer {
+  display: flex;
+  gap: 12rpx;
+  padding: 0 24rpx 22rpx;
+}
+
+.footer-btn {
+  flex: 1;
+  height: 84rpx;
+  line-height: 84rpx;
+  border-radius: 18rpx;
+  margin: 0;
+  background: #e63946;
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.footer-btn.ghost {
+  background: #f6f2eb;
+  color: #666;
+}
+
+.footer-btn::after {
+  border: none;
+}

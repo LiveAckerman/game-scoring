@@ -1,0 +1,23 @@
+<view wx:if="{{visible}}" class="dialog-mask" bindtap="onMaskTap">
+  <view class="dialog-panel" catchtap="stopPropagation">
+    <view class="dialog-head" wx:if="{{title || showClose}}">
+      <text class="dialog-title">{{title}}</text>
+      <view wx:if="{{showClose}}" class="close-btn" bindtap="onCloseTap">
+        <view class="icon icon-close"></view>
+      </view>
+    </view>
+
+    <view class="dialog-body">
+      <slot></slot>
+    </view>
+
+    <view wx:if="{{showFooter}}" class="dialog-footer">
+      <button class="footer-btn ghost" bindtap="onCancelTap">{{cancelText}}</button>
+      <button class="footer-btn" bindtap="onConfirmTap">{{confirmText}}</button>
+    </view>
+
+    <view wx:else>
+      <slot name="footer"></slot>
+    </view>
+  </view>
+</view>

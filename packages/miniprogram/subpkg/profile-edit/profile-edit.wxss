@@ -1,5 +1,5 @@
-.edit-page { min-height: 100vh; background: #fff5f5; }
-.edit-scroll { height: 100vh; padding: 28rpx 24rpx 30rpx; box-sizing: border-box; }
+.edit-page { min-height: 100vh; background: #fff5f5; display: flex; flex-direction: column; }
+.edit-scroll { flex: 1; padding: 28rpx 24rpx 30rpx; box-sizing: border-box; }
 .avatar-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 34rpx; }
 .avatar-shell { position: relative; }
 .avatar-ring { width: 220rpx; height: 220rpx; border-radius: 110rpx; background: linear-gradient(135deg,#d93025,#ff6f00); padding: 8rpx; box-sizing: border-box; }

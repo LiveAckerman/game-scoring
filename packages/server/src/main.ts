@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { RealtimeService } from './realtime/realtime.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -37,6 +38,8 @@ async function bootstrap() {
     )
     .addTag('认证', '微信登录相关接口')
     .addTag('用户', '用户信息相关接口')
+    .addTag('游客', '游客身份相关接口')
+    .addTag('房间', '多人记分房间相关接口')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -48,8 +51,12 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT || 3000;
-  await app.listen(port);
-  console.log(`🎮 欢乐记分馆 API 服务已启动: http://localhost:${port}`);
-  console.log(`📖 Swagger 文档: http://localhost:${port}/api-docs`);
+  const realtimeService = app.get(RealtimeService);
+  realtimeService.bindServer(app.getHttpServer());
+
+  await app.listen(port, '0.0.0.0');
+  console.log(`🎮 欢乐记分馆 API 服务已启动: http://0.0.0.0:${port}`);
+  console.log(`📖 Swagger 文档: http://0.0.0.0:${port}/api-docs`);
+  console.log(`🔄 Realtime WebSocket: ws://0.0.0.0:${port}/ws`);
 }
 bootstrap();

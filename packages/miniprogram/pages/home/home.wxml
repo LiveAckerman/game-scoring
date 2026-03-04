@@ -1,10 +1,5 @@
 <view class="home-page">
-  <view class="home-header">
-    <view class="title-wrap">
-      <view class="icon icon-casino"></view>
-      <text class="home-title">欢乐记分馆</text>
-    </view>
-  </view>
+  <common-top-bar title="欢乐记分馆" showBack="{{false}}" />
 
   <scroll-view class="home-scroll" scroll-y>
     <view class="hero-card">
@@ -55,61 +50,147 @@
       </view>
     </view>
 
+    <view class="join-entry-card" bindtap="openJoinDialog">
+      <view class="join-entry-left">
+        <view class="join-entry-icon">
+          <view class="icon icon-keypad"></view>
+        </view>
+        <view class="join-entry-copy">
+          <text class="join-entry-title">加入房间</text>
+          <text class="join-entry-sub">输入6位房间号，快速加入正在进行的牌局</text>
+        </view>
+      </view>
+      <text class="join-entry-action">去加入</text>
+    </view>
+
     <view class="section-head recent-head">
       <view class="line"></view>
-      <text class="section-title">最近一桌</text>
+      <text class="section-title">最近5局</text>
       <text class="view-all" bindtap="viewAllRecords">查看全部</text>
     </view>
 
-    <view class="table-card">
-      <view class="table-top">
-        <text class="table-name">多人记分桌</text>
-        <text class="status active">进行中</text>
-      </view>
-      <view class="players-row">
-        <view class="player-col">
-          <view class="avatar-wrap">
-            <image class="avatar" src="../../assets/stitch/avatars/avatar-b.png" mode="aspectFill" />
-            <text class="host-tag">桌主</text>
-          </view>
-          <text class="score neg">-20</text>
-        </view>
-        <view class="split"></view>
-        <view class="player-col">
-          <image class="avatar small" src="../../assets/stitch/avatars/avatar-c.png" mode="aspectFill" />
-          <text class="score pos">20</text>
-        </view>
-      </view>
-      <view class="table-foot">
-        <text class="time">3月2日, 11:28 • 0 分钟</text>
-        <view class="actions">
-          <view class="action-btn"><view class="icon icon-chart"></view></view>
-          <view class="action-btn active"><view class="icon icon-power"></view></view>
-        </view>
-      </view>
-    </view>
+    <view wx:if="{{historyLoading}}" class="empty-history">加载中...</view>
+    <view wx:elif="{{recentRooms.length === 0}}" class="empty-history">暂无历史对局，开一局试试吧</view>
 
-    <view class="table-card soft">
+    <view
+      wx:for="{{recentRooms}}"
+      wx:for-item="room"
+      wx:key="roomId"
+      class="table-card {{room.status === 'ENDED' ? 'soft' : ''}}"
+      bindtap="openRecentRoom"
+      data-room-code="{{room.roomCode}}"
+      data-status="{{room.status}}"
+    >
       <view class="table-top">
-        <text class="table-name">单人记分桌</text>
-        <text class="status active">进行中</text>
+        <text class="table-name">桌号 {{room.roomCode}}</text>
+        <text class="status {{room.status === 'IN_PROGRESS' ? 'active' : 'ended'}}">{{room.statusText}}</text>
       </view>
+
       <view class="players-row">
-        <view class="player-col">
+        <view wx:for="{{room.previewMembers}}" wx:for-item="member" wx:key="id" class="player-col">
           <view class="avatar-wrap">
-            <image class="avatar" src="../../assets/stitch/avatars/avatar-d.png" mode="aspectFill" />
-            <text class="host-tag">桌主</text>
+            <image wx:if="{{member.avatar}}" class="avatar" src="{{member.avatar}}" mode="aspectFill" />
+            <view wx:else class="avatar avatar-text"><text>{{member.avatarInitials || '游客'}}</text></view>
+            <text wx:if="{{member.isOwner}}" class="host-tag">桌主</text>
           </view>
-          <text class="score neg">-123</text>
+          <text class="score {{member.score > 0 ? 'pos' : (member.score < 0 ? 'neg' : 'zero')}}">{{member.score > 0 ? '+' : ''}}{{member.score}}</text>
         </view>
       </view>
+
       <view class="table-foot">
-        <text class="time">3月2日, 11:28 • 1 分钟</text>
-        <view class="actions">
-          <view class="action-btn"><view class="icon icon-chart"></view></view>
-          <view class="action-btn"><view class="icon icon-delete"></view></view>
-        </view>
+        <text class="time">{{room.timeText}} • {{room.durationText}}</text>
+        <text class="my-score">我的积分 {{room.myScoreText}}</text>
       </view>
     </view>
   </scroll-view>
+
+  <common-dialog
+    visible="{{joinDialogVisible}}"
+    title="加入房间"
+    showClose="{{true}}"
+    maskClosable="{{true}}"
+    bind:close="closeJoinDialog"
+  >
+    <view class="join-dialog-tip">请输入6位房间号，快速加入好友牌局</view>
+    <view class="join-code-wrap" bindtap="focusJoinCodeInput">
+      <view class="join-code-grid">
+        <view
+          wx:for="{{joinCodeDigits}}"
+          wx:key="index"
+          class="join-code-cell {{joinRoomCode.length === index ? 'active' : ''}}"
+        >
+          <text class="join-code-char">{{item}}</text>
+        </view>
+      </view>
+      <input
+        class="join-hidden-input"
+        type="number"
+        maxlength="6"
+        value="{{joinRoomCode}}"
+        focus="{{joinCodeFocus}}"
+        bindinput="onJoinCodeInput"
+        bindblur="onJoinCodeBlur"
+      />
+    </view>
+    <view slot="footer" class="join-dialog-footer">
+      <button class="join-dialog-btn ghost" bindtap="closeJoinDialog">取消</button>
+      <button
+        class="join-dialog-btn"
+        bindtap="confirmJoinRoom"
+        loading="{{joiningRoom}}"
+        disabled="{{joiningRoom}}"
+      >加入房间</button>
+    </view>
+  </common-dialog>
+
+  <common-dialog
+    visible="{{ongoingDialogVisible}}"
+    title="你有进行中的对局"
+    showFooter="{{true}}"
+    cancelText="稍后再说"
+    confirmText="开启新对局"
+    bind:close="closeOngoingDialog"
+    bind:cancel="closeOngoingDialog"
+    bind:confirm="handleCreateNewRoomFromDialog"
+  >
+    <view class="ongoing-tip">检测到你还有正在进行中的对局，可直接进入，或新开一局。</view>
+    <view class="ongoing-list">
+      <view
+        wx:for="{{ongoingRooms}}"
+        wx:key="roomCode"
+        class="ongoing-item"
+        bindtap="enterOngoingRoom"
+        data-room-code="{{item.roomCode}}"
+      >
+        <view class="ongoing-main">
+          <text class="ongoing-room">桌号 {{item.roomCode}}</text>
+          <text class="ongoing-meta">{{item.memberCount}} 人 • {{item.durationMinutes}} 分钟</text>
+        </view>
+        <text class="ongoing-time">{{item.timeText}}</text>
+      </view>
+    </view>
+  </common-dialog>
+
+  <common-dialog
+    visible="{{inputDialogVisible}}"
+    title="{{inputDialogTitle}}"
+    showClose="{{true}}"
+    maskClosable="{{true}}"
+    bind:close="cancelInputDialog"
+  >
+    <view class="input-dialog-tip">{{inputDialogTip}}</view>
+    <input
+      class="input-dialog-input"
+      type="text"
+      maxlength="64"
+      value="{{inputDialogValue}}"
+      placeholder="{{inputDialogPlaceholder}}"
+      focus="{{inputDialogVisible}}"
+      bindinput="onInputDialogInput"
+    />
+    <view slot="footer" class="join-dialog-footer">
+      <button class="join-dialog-btn ghost" bindtap="cancelInputDialog">取消</button>
+      <button class="join-dialog-btn" bindtap="confirmInputDialog">{{inputDialogConfirmText}}</button>
+    </view>
+  </common-dialog>
 </view>
