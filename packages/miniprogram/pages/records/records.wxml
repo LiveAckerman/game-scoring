@@ -1,80 +1,105 @@
-<view class="container">
-  <!-- Top Tabs -->
-  <view class="tab-header">
-    <view class="tab-list">
-      <view class="tab-item {{activeTab === 'all' ? 'active' : ''}}" bindtap="switchTab" data-id="all">全部</view>
-      <view class="tab-item {{activeTab === 'ongoing' ? 'active' : ''}}" bindtap="switchTab" data-id="ongoing">进行中</view>
-      <view class="tab-item {{activeTab === 'finished' ? 'active' : ''}}" bindtap="switchTab" data-id="finished">已结束</view>
+<view class="records-page">
+  <view class="header-bar">
+    <view class="tabs">
+      <view class="tab {{activeTab === 'all' ? 'active' : ''}}" data-id="all" bindtap="switchTab">全部</view>
+      <view class="tab {{activeTab === 'ongoing' ? 'active' : ''}}" data-id="ongoing" bindtap="switchTab">进行中</view>
+      <view class="tab {{activeTab === 'finished' ? 'active' : ''}}" data-id="finished" bindtap="switchTab">已结束</view>
     </view>
-    <view class="action-icons">
-      <view class="icon-btn">🔍</view>
-      <view class="icon-btn">🗑️</view>
+    <view class="tools">
+      <view class="tool-btn"><view class="icon icon-filter"></view></view>
+      <view class="tool-btn"><view class="icon icon-delete"></view></view>
     </view>
   </view>
 
-  <scroll-view scroll-y class="record-list">
-    <!-- Stats Card -->
-    <view class="stats-card">
-      <view class="stats-header">
-        <text class="stats-count">当前筛选共计 4 条记录</text>
-        <view class="stats-detail-btn">查看战绩榜 📊</view>
-      </view>
-      <view class="stats-grid">
-        <view class="stats-item">
-          <text class="value">0</text>
-          <text class="label">赢局</text>
-        </view>
-        <view class="stats-item">
-          <text class="value">0</text>
-          <text class="label">总赢</text>
-        </view>
-        <view class="stats-item">
-          <text class="value color-neg">-143</text>
-          <text class="label">总输</text>
+  <scroll-view class="content" scroll-y>
+    <view class="summary-card">
+      <view class="summary-top">
+        <text class="tip">当前筛选共计 <text class="count">4</text> 条记录</text>
+        <view class="rank-btn">
+          <text>查看战绩榜</text>
+          <view class="icon icon-chart-green"></view>
         </view>
       </view>
-      <view class="stats-footer">
-        <text>输局: 2</text>
-        <text>平局: 2</text>
-        <text>总和: -143</text>
+      <view class="summary-grid">
+        <view class="stat-item">
+          <text class="stat-label">赢局</text>
+          <text class="stat-value">0场</text>
+        </view>
+        <view class="stat-item split-v">
+          <text class="stat-label">总赢</text>
+          <text class="stat-value red">0分</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-label">总输</text>
+          <text class="stat-value gray">-143分</text>
+        </view>
+      </view>
+      <view class="summary-foot">
+        <text>输局 2</text>
+        <text>平局 2</text>
+        <text>总和 -143</text>
       </view>
     </view>
 
-    <!-- Game Cards -->
-    <view class="game-card">
-        <view class="game-header">
-          <view class="flex-row">
-            <text class="game-type">多人记分桌</text>
-            <text class="game-status status-active">进行中</text>
-          </view>
-          <view class="game-actions">
-            <text class="icon">📊</text>
-            <text class="icon">🏷️</text>
-            <text class="icon">🔌</text>
-            <text class="icon">🗑️</text>
-          </view>
+    <view class="record-card">
+      <view class="record-head">
+        <view class="title-row">
+          <text class="record-title">多人计分桌</text>
+          <text class="badge">进行中</text>
         </view>
-        <view class="game-players">
-          <view class="player-item">
-            <view class="avatar-wrapper">
-              <image class="avatar" src="../../assets/stitch/avatars/avatar-b.png" />
-              <text class="badge">桌主</text>
-            </view>
-            <text class="player-name">君の名...</text>
-            <text class="score score-neg">-20</text>
-          </view>
-          <view class="player-item">
-            <image class="avatar" src="../../assets/stitch/avatars/avatar-c.png" />
-            <text class="player-name">Y.</text>
-            <text class="score score-pos">20</text>
-          </view>
+        <view class="head-actions">
+          <view class="round-btn"><view class="icon icon-chart"></view></view>
+          <view class="round-btn"><view class="icon icon-tag"></view></view>
+          <view class="round-btn"><view class="icon icon-power"></view></view>
+          <view class="round-btn"><view class="icon icon-delete"></view></view>
         </view>
-        <view class="game-footer">
-          <text class="game-time">26-03-02 11:28 开始</text>
-          <text class="game-duration">已进行0分钟</text>
+      </view>
+      <view class="players">
+        <view class="p-item">
+          <view class="avatar-box">
+            <image class="avatar" src="../../assets/stitch/avatars/avatar-e.png" mode="aspectFill" />
+            <text class="host">桌主</text>
+          </view>
+          <text class="name">君の名...</text>
+          <text class="score">-20</text>
         </view>
+        <view class="p-item">
+          <image class="avatar muted" src="../../assets/stitch/avatars/avatar-f.png" mode="aspectFill" />
+          <text class="name">Y.</text>
+          <text class="score red">20</text>
+        </view>
+      </view>
+      <view class="card-foot">
+        <text>26-03-02 11:28 开始</text>
+        <text>已进行0分钟</text>
+      </view>
     </view>
 
-    <!-- Additional Cards... -->
+    <view class="record-card soft">
+      <view class="record-head">
+        <view class="title-row">
+          <text class="record-title">单人计分桌</text>
+          <text class="badge">进行中</text>
+        </view>
+        <view class="head-actions">
+          <view class="round-btn"><view class="icon icon-chart"></view></view>
+          <view class="round-btn"><view class="icon icon-delete"></view></view>
+        </view>
+      </view>
+      <view class="players">
+        <view class="p-item">
+          <view class="avatar-box">
+            <image class="avatar" src="../../assets/stitch/avatars/avatar-g.png" mode="aspectFill" />
+            <text class="host">桌主</text>
+          </view>
+          <text class="name">君の名...</text>
+          <text class="score">-123</text>
+        </view>
+      </view>
+      <view class="card-foot">
+        <text>26-03-02 11:28 开始</text>
+        <text>已进行1分钟</text>
+      </view>
+    </view>
   </scroll-view>
 </view>

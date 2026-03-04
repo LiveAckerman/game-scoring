@@ -56,10 +56,11 @@
   },
   "compileType": "miniprogram",
   "libVersion": "3.14.3",
-  "appid": "wxc91779b42b222642",
+  "appid": "wxcd442ce3374ec257",
   "projectname": "happy-score-hall-mp",
   "condition": {},
   "srcMiniprogramRoot": "./",
   "simulatorPluginLibVersion": {},
-  "editorSetting": {}
+  "editorSetting": {},
+  "isGameTourist": false
 }
