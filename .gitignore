@@ -34,3 +34,6 @@ packages/miniprogram/miniprogram_npm/
 
 # Coverage
 coverage/
+
+
+server.env
