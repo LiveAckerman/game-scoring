@@ -1,6 +1,7 @@
 import { getAccessToken, getGuestToken, saveActorIdentity } from '../../utils/identity';
 import { RequestError } from '../../utils/request';
 import { createRoom, getRoomHistory, joinRoom, RoomHistoryItem } from '../../utils/room';
+import { fontSizeBehavior } from '../../behaviors/font-size';
 
 interface HomePreviewMember {
   id: number;
@@ -14,6 +15,7 @@ interface HomePreviewMember {
 interface HomeRecentCard {
   roomId: number;
   roomCode: string;
+  roomType: 'MULTI' | 'SINGLE';
   status: 'IN_PROGRESS' | 'ENDED';
   statusText: string;
   timeText: string;
@@ -42,6 +44,7 @@ let inputDialogResolver: ((value: string | null) => void) | null = null;
 const SHARE_PROMO_IMAGE = '/assets/images/share-promo.jpg';
 
 Page({
+  behaviors: [fontSizeBehavior],
   data: {
     creatingRoom: false,
     historyLoading: false,
@@ -70,6 +73,7 @@ Page({
   },
 
   onShow() {
+    (this as any)._applyFontSize();
     this.loadRecentRooms();
   },
 
@@ -429,8 +433,46 @@ Page({
     }
   },
 
-  startSingleMode() {
-    wx.showToast({ title: '单人记分功能开发中', icon: 'none' });
+  async startSingleMode() {
+    if (this.data.creatingRoom) {
+      return;
+    }
+
+    const hasIdentity = Boolean(getAccessToken() || getGuestToken());
+    let guestNickname: string | undefined;
+
+    if (!hasIdentity) {
+      const inputNickname = await this.openInputDialog({
+        title: '游客昵称',
+        tip: '创建房间前，请先输入昵称',
+        placeholder: '请输入昵称',
+        confirmText: '继续',
+        required: true,
+      });
+      if (!inputNickname) {
+        return;
+      }
+      guestNickname = inputNickname;
+    }
+
+    this.setData({ creatingRoom: true });
+    wx.showLoading({ title: '创建房间中...' });
+
+    try {
+      const payload = await createRoom(guestNickname, '单人记分', 'SINGLE');
+      saveActorIdentity(payload.actor);
+      wx.navigateTo({
+        url: `/subpkg/single-score/single-score?roomCode=${payload.room.roomCode}`,
+      });
+    } catch (error) {
+      wx.showToast({
+        title: (error as RequestError).message || '创建房间失败',
+        icon: 'none',
+      });
+    } finally {
+      wx.hideLoading();
+      this.setData({ creatingRoom: false });
+    }
   },
 
   startPoolMode() {
@@ -443,14 +485,17 @@ Page({
 
   openRecentRoom(e: WechatMiniprogram.BaseEvent) {
     const roomCode = String(e.currentTarget.dataset.roomCode || '');
+    const roomType = String(e.currentTarget.dataset.roomType || 'MULTI');
 
     if (!roomCode) {
       return;
     }
 
-    wx.navigateTo({
-      url: `/subpkg/multi-invite/multi-invite?roomCode=${roomCode}`,
-    });
+    const page = roomType === 'SINGLE'
+      ? `/subpkg/single-score/single-score?roomCode=${roomCode}`
+      : `/subpkg/multi-invite/multi-invite?roomCode=${roomCode}`;
+
+    wx.navigateTo({ url: page });
   },
 
   mapRoomToCard(item: RoomHistoryItem): HomeRecentCard {
@@ -465,6 +510,7 @@ Page({
     return {
       roomId: item.roomId,
       roomCode: item.roomCode,
+      roomType: item.roomType || 'MULTI',
       status: item.status,
       statusText: item.status === 'IN_PROGRESS' ? '进行中' : '已结束',
       timeText,

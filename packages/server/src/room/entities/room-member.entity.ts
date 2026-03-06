@@ -22,6 +22,7 @@ export type RoomMemberRole = (typeof ROOM_MEMBER_ROLE)[keyof typeof ROOM_MEMBER_
 export const ROOM_ACTOR_TYPE = {
   USER: 'USER',
   GUEST: 'GUEST',
+  VIRTUAL: 'VIRTUAL',
 } as const;
 
 export type RoomActorType = (typeof ROOM_ACTOR_TYPE)[keyof typeof ROOM_ACTOR_TYPE];

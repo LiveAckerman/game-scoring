@@ -1,46 +1,22 @@
 .records-page { min-height: 100vh; background: #fffbe6; display: flex; flex-direction: column; }
 .header-bar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; padding: 22rpx 24rpx; background: rgba(255,251,230,.95); }
 .tabs { display: flex; padding: 6rpx; border-radius: 22rpx; background: #fff; border: 2rpx solid #f3ecec; }
-.tab { padding: 10rpx 24rpx; font-size: 24rpx; color: #858585; border-radius: 18rpx; }
+.tab { padding: 10rpx 24rpx; font-size: var(--fs-sm, 24rpx); color: #858585; border-radius: 18rpx; }
 .tab.active { background: #e63946; color: #fff; font-weight: 700; }
 
 .content { flex: 1; padding: 16rpx 24rpx 26rpx; box-sizing: border-box; }
 .summary-card { background: #fff; border-radius: 28rpx; padding: 24rpx; border: 2rpx solid #f5eded; margin-bottom: 16rpx; }
 .summary-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18rpx; }
-.tip { font-size: 22rpx; color: #8e8e8e; }
-.count { color: #e63946; font-weight: 700; font-size: 28rpx; }
+.tip { font-size: var(--fs-sm, 24rpx); color: #8e8e8e; }
+.count { color: #e63946; font-weight: 700; font-size: var(--fs-base, 28rpx); }
 .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 14rpx; }
 .stat-item { display: flex; flex-direction: column; align-items: center; gap: 8rpx; }
 .split-v { border-left: 2rpx solid #f1f1f1; border-right: 2rpx solid #f1f1f1; }
-.stat-label { font-size: 22rpx; color: #a1a1a1; }
-.stat-value { font-size: 34rpx; color: #333; font-weight: 700; }
+.stat-label { font-size: var(--fs-sm, 24rpx); color: #a1a1a1; }
+.stat-value { font-size: var(--fs-lg, 34rpx); color: #333; font-weight: 700; }
 .stat-value.red { color: #e63946; }
 .stat-value.gray { color: #888; }
-.summary-foot { border-top: 2rpx dashed #efefef; padding-top: 12rpx; display: flex; justify-content: space-around; color: #888; font-size: 22rpx; }
+.summary-foot { border-top: 2rpx dashed #efefef; padding-top: 12rpx; display: flex; justify-content: space-around; color: #888; font-size: var(--fs-sm, 24rpx); }
 
-.page-tip { background: #fff; border: 2rpx dashed #f0dede; border-radius: 20rpx; color: #aa8f8f; text-align: center; font-size: 24rpx; padding: 24rpx 12rpx; margin-bottom: 14rpx; }
+.page-tip { background: #fff; border: 2rpx dashed #f0dede; border-radius: 20rpx; color: #aa8f8f; text-align: center; font-size: var(--fs-sm, 24rpx); padding: 24rpx 12rpx; margin-bottom: 14rpx; }
 
-.record-card { background: #fff; border-radius: 28rpx; border: 2rpx solid #f5eded; padding: 22rpx; margin-bottom: 14rpx; }
-.record-card.soft { opacity: .92; }
-.record-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12rpx; margin-bottom: 16rpx; padding-bottom: 14rpx; border-bottom: 2rpx solid #f5f5f5; }
-.title-row { display: flex; align-items: center; gap: 10rpx; }
-.record-title { font-size: 30rpx; font-weight: 700; color: #333; }
-.badge { font-size: 20rpx; border-radius: 10rpx; padding: 4rpx 10rpx; }
-.badge.active { background: #e9f8ed; color: #588157; }
-.badge.ended { background: #f8ecec; color: #b05a5a; }
-.record-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6rpx; }
-.meta { font-size: 20rpx; color: #8f8f8f; }
-
-.players { display: flex; gap: 26rpx; flex-wrap: wrap; padding-bottom: 14rpx; }
-.p-item { display: flex; flex-direction: column; align-items: center; gap: 8rpx; min-width: 94rpx; }
-.avatar-box { position: relative; }
-.avatar { width: 84rpx; height: 84rpx; border-radius: 42rpx; border: 2rpx solid #fff; box-shadow: 0 8rpx 16rpx rgba(0,0,0,.08); }
-.avatar-text { background: linear-gradient(135deg,#f4a261,#e63946); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22rpx; font-weight: 700; }
-.host { position: absolute; top: -10rpx; right: -10rpx; padding: 2rpx 8rpx; border-radius: 12rpx; font-size: 16rpx; color: #fff; background: #e63946; }
-.name { font-size: 20rpx; color: #8a8a8a; max-width: 120rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.score { font-size: 34rpx; font-weight: 700; line-height: 1; display: block; min-height: 34rpx; }
-.score.red { color: #e63946; }
-.score.dark { color: #333; }
-.score.zero { color: #999; transform: translateY(2rpx); }
-
-.card-foot { border-top: 2rpx dashed #efefef; padding-top: 10rpx; display: flex; justify-content: space-between; font-size: 20rpx; color: #999; }

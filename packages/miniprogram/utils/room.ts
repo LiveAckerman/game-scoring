@@ -1,6 +1,7 @@
 import { request } from './request';
 
 export type RoomStatus = 'IN_PROGRESS' | 'ENDED';
+export type RoomType = 'MULTI' | 'SINGLE';
 export type RoomActorType = 'USER' | 'GUEST';
 
 export interface RoomMember {
@@ -32,6 +33,7 @@ export interface RoomData {
   id: number;
   roomCode: string;
   roomName: string;
+  roomType: RoomType;
   status: RoomStatus;
   ownerMemberId: number | null;
   members: RoomMember[];
@@ -67,6 +69,7 @@ export interface RoomHistoryItem {
   roomId: number;
   roomCode: string;
   roomName: string;
+  roomType: RoomType;
   status: RoomStatus;
   ownerMemberId: number | null;
   startedAt: string;
@@ -105,6 +108,7 @@ interface GuestBody {
 
 interface CreateRoomBody extends GuestBody {
   roomName?: string;
+  roomType?: RoomType;
 }
 
 const buildGuestBody = (guestNickname?: string): GuestBody | undefined => {
@@ -117,20 +121,22 @@ const buildGuestBody = (guestNickname?: string): GuestBody | undefined => {
 const buildCreateRoomBody = (
   guestNickname?: string,
   roomName?: string,
-): CreateRoomBody | undefined => {
-  const nicknameValue = (guestNickname || '').trim();
-  const roomNameValue = (roomName || '').trim();
-
+  roomType?: RoomType,
+): CreateRoomBody => {
   const body: CreateRoomBody = {};
+
+  const nicknameValue = (guestNickname || '').trim();
   if (nicknameValue) {
     body.guestNickname = nicknameValue;
   }
+
+  const roomNameValue = (roomName || '').trim();
   if (roomNameValue) {
     body.roomName = roomNameValue;
   }
 
-  if (!body.guestNickname && !body.roomName) {
-    return undefined;
+  if (roomType) {
+    body.roomType = roomType;
   }
 
   return body;
@@ -139,11 +145,12 @@ const buildCreateRoomBody = (
 export const createRoom = (
   guestNickname?: string,
   roomName?: string,
+  roomType?: RoomType,
 ): Promise<RoomPayload> => {
   return request<RoomPayload>({
     url: '/rooms',
     method: 'POST',
-    data: buildCreateRoomBody(guestNickname, roomName),
+    data: buildCreateRoomBody(guestNickname, roomName, roomType),
   });
 };
 
@@ -172,14 +179,30 @@ export const addRoomScore = (
   roomId: number,
   toMemberId: number,
   points: number,
+  fromMemberId?: number,
 ): Promise<RoomPayload> => {
+  const data: { toMemberId: number; points: number; fromMemberId?: number } = {
+    toMemberId,
+    points,
+  };
+  if (fromMemberId) {
+    data.fromMemberId = fromMemberId;
+  }
   return request<RoomPayload>({
     url: `/rooms/${roomId}/score`,
     method: 'POST',
-    data: {
-      toMemberId,
-      points,
-    },
+    data,
+  });
+};
+
+export const addRoomMember = (
+  roomId: number,
+  nickname: string,
+): Promise<RoomPayload> => {
+  return request<RoomPayload>({
+    url: `/rooms/${roomId}/members`,
+    method: 'POST',
+    data: { nickname },
   });
 };
 

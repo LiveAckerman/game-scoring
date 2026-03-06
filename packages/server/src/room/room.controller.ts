@@ -12,6 +12,7 @@ import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/s
 import { Request } from 'express';
 import { RoomService } from './room.service';
 import {
+  AddMemberDto,
   AddScoreDto,
   CreateRoomDto,
   JoinRoomDto,
@@ -56,6 +57,19 @@ export class RoomController {
     @Query() query: ListRoomHistoryQueryDto,
   ) {
     return this.roomService.getHistory(req, query);
+  }
+
+  @Post(':roomId/members')
+  @ApiOperation({ summary: '桌主添加虚拟成员' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiBody({ type: AddMemberDto })
+  @ApiResponse({ status: 201, description: '添加成功' })
+  addMember(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+    @Body() dto: AddMemberDto,
+  ) {
+    return this.roomService.addMember(req, roomId, dto);
   }
 
   @Post(':roomId/score')

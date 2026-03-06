@@ -1,0 +1,168 @@
+<page-meta page-style="{{pageFontStyle}}" />
+<view class="single-score-page">
+  <view class="bg-confetti"></view>
+
+  <common-top-bar title="{{topBarTitle}}" bind:back="goBack" />
+
+  <scroll-view class="content" scroll-y>
+    <view class="action-bar">
+      <view
+        class="action-bar-btn add-btn"
+        wx:if="{{isOwner && roomStatus === 'IN_PROGRESS' && members.length < 10}}"
+        bindtap="openAddModal"
+      >
+        <view class="icon icon-plus"></view>
+        <text>添加玩家</text>
+      </view>
+      <view
+        class="action-bar-btn end-btn {{!isOwner ? 'disabled' : ''}}"
+        wx:if="{{roomStatus === 'IN_PROGRESS'}}"
+        bindtap="handleEndRoom"
+      >
+        <view class="icon icon-power"></view>
+        <text>结束</text>
+      </view>
+      <view class="room-status-tag {{roomStatus === 'IN_PROGRESS' ? 'active' : 'ended'}}">
+        <text>{{roomStatus === 'IN_PROGRESS' ? '进行中' : '已结束'}}</text>
+      </view>
+    </view>
+
+    <view class="player-section">
+      <view class="player-head"><text>玩家 ({{members.length}})</text></view>
+
+      <view
+        wx:for="{{members}}"
+        wx:key="id"
+        class="player-card {{item.id === currentMemberId ? 'self' : ''}}"
+      >
+        <view class="avatar-wrap">
+          <image wx:if="{{item.avatar}}" class="avatar" src="{{item.avatar}}" mode="aspectFill" />
+          <view wx:else class="avatar avatar-text"><text>{{item.avatarInitials || '?'}}</text></view>
+          <text wx:if="{{item.isOwner}}" class="host-tag">房主</text>
+        </view>
+
+        <view class="player-info">
+          <view class="name-row">
+            <text class="player-name">{{item.nickname}}</text>
+            <text wx:if="{{item.id === currentMemberId}}" class="self-tag">我</text>
+          </view>
+          <view class="score-wrap-inline">
+            <text class="score {{item.score >= 0 ? 'pos' : 'neg'}}">{{item.score}}</text>
+            <text class="score-label">分</text>
+          </view>
+        </view>
+
+        <view class="player-actions" wx:if="{{roomStatus === 'IN_PROGRESS' && members.length >= 2}}">
+          <view
+            class="tiny-btn lose-btn"
+            bindtap="openScoreDialog"
+            data-type="lose"
+            data-member-id="{{item.id}}"
+            data-member-name="{{item.nickname}}"
+          >输</view>
+          <view
+            class="tiny-btn win-btn"
+            bindtap="openScoreDialog"
+            data-type="win"
+            data-member-id="{{item.id}}"
+            data-member-name="{{item.nickname}}"
+          >赢</view>
+        </view>
+      </view>
+
+      <view wx:if="{{members.length === 0}}" class="empty-hint">
+        <text>暂无玩家，请添加玩家开始记分</text>
+      </view>
+      <view wx:elif="{{members.length === 1}}" class="empty-hint">
+        <text>至少需要2名玩家才能记分，请继续添加</text>
+      </view>
+    </view>
+
+    <view class="records-card">
+      <view class="records-head"><text>记分明细</text></view>
+      <view wx:if="{{scoreRecords.length === 0}}" class="empty-records">暂无记分记录</view>
+      <view wx:for="{{scoreRecords}}" wx:key="id" class="record-item">
+        <view class="record-main">
+          <text class="name">{{item.fromMemberName}}</text>
+          <text class="action">输给</text>
+          <text class="name">{{item.toMemberName}}</text>
+          <text class="points">{{item.points}}</text>
+          <text class="action">分</text>
+        </view>
+        <text class="time">{{item.displayTime}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 添加玩家弹窗 -->
+  <view wx:if="{{showAddModal}}" class="modal-mask" bindtap="closeAddModal">
+    <view class="modal-box" catchtap="noop">
+      <text class="modal-title">添加玩家</text>
+      <input
+        class="modal-input"
+        placeholder="请输入玩家名字"
+        value="{{newPlayerName}}"
+        bindinput="onNameInput"
+        focus="{{showAddModal}}"
+        maxlength="20"
+      />
+      <view class="modal-actions">
+        <view class="modal-btn ghost" bindtap="closeAddModal">取消</view>
+        <view class="modal-btn" bindtap="confirmAddPlayer">确定</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 记分弹窗（选人 + 输入分数） -->
+  <view wx:if="{{scoreDialogVisible}}" class="modal-mask" bindtap="closeScoreDialog">
+    <view class="score-dialog" catchtap="noop">
+      <text class="score-dialog-title">
+        {{scoreDialogSourceName}} {{scoreDialogType === 'lose' ? '输给谁？' : '赢了谁？'}}
+      </text>
+
+      <view class="target-picker">
+        <view
+          wx:for="{{otherMembers}}"
+          wx:key="id"
+          class="target-item {{scoreDialogTargetId === item.id ? 'selected' : ''}}"
+          bindtap="selectTarget"
+          data-member-id="{{item.id}}"
+        >
+          <view class="target-avatar">
+            <image wx:if="{{item.avatar}}" class="target-avatar-img" src="{{item.avatar}}" mode="aspectFill" />
+            <view wx:else class="target-avatar-text">{{item.avatarInitials || '?'}}</view>
+          </view>
+          <view class="target-info">
+            <text class="target-name">{{item.nickname}}</text>
+            <text class="target-score {{item.score > 0 ? 'positive' : item.score < 0 ? 'negative' : ''}}">{{item.score > 0 ? '+' : ''}}{{item.score}}</text>
+          </view>
+          <view wx:if="{{scoreDialogTargetId === item.id}}" class="target-check">
+            <view class="icon icon-check"></view>
+          </view>
+        </view>
+      </view>
+
+      <view class="score-input-section">
+        <text class="score-input-label">
+          {{scoreDialogType === 'lose' ? '输了多少分？' : '赢了多少分？'}}
+        </text>
+        <input
+          class="score-input"
+          type="number"
+          maxlength="6"
+          value="{{scoreDialogValue}}"
+          placeholder="请输入分数"
+          focus="{{scoreDialogVisible && scoreDialogTargetId > 0}}"
+          bindinput="onScoreInput"
+        />
+      </view>
+
+      <view class="modal-actions">
+        <view class="modal-btn ghost" bindtap="closeScoreDialog">取消</view>
+        <view class="modal-btn {{scoreDialogType === 'lose' ? 'lose-confirm' : 'win-confirm'}}" bindtap="confirmScore">
+          确认{{scoreDialogType === 'lose' ? '输' : '赢'}}
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

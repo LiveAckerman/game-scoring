@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateRoomDto {
   @ApiProperty({
@@ -11,6 +11,15 @@ export class CreateRoomDto {
   @IsString()
   @MaxLength(64)
   roomName?: string;
+
+  @ApiPropertyOptional({
+    description: '房间类型 MULTI/SINGLE',
+    example: 'MULTI',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['MULTI', 'SINGLE'])
+  roomType?: string;
 
   @ApiProperty({
     description: '游客昵称（未登录时必填）',

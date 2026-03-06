@@ -1,3 +1,4 @@
+<page-meta page-style="{{pageFontStyle}}" />
 <view class="page">
   <view class="bg-confetti"></view>
   <view class="blur-circle blur-circle-tl"></view>

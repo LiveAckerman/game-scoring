@@ -1,6 +1,7 @@
 import { getAccessToken, getGuestToken } from '../../utils/identity';
 import { RequestError } from '../../utils/request';
 import { getRoomHistory, RoomHistoryItem, RoomHistorySummary } from '../../utils/room';
+import { fontSizeBehavior } from '../../behaviors/font-size';
 
 interface RecordMemberView {
   id: number;
@@ -36,6 +37,7 @@ const EMPTY_SUMMARY: RoomHistorySummary = {
 const SHARE_PROMO_IMAGE = '/assets/images/share-promo.jpg';
 
 Page({
+  behaviors: [fontSizeBehavior],
   data: {
     activeTab: 'all' as 'all' | 'ongoing' | 'finished',
     loading: false,
@@ -49,6 +51,7 @@ Page({
   },
 
   onShow() {
+    (this as any)._applyFontSize();
     this.loadRecords();
   },
 

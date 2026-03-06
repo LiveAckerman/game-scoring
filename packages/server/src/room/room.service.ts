@@ -18,6 +18,7 @@ import {
   Room,
   RoomStatus,
   ROOM_STATUS,
+  ROOM_TYPE,
   RoomMember,
   ROOM_ACTOR_TYPE,
   RoomActorType,
@@ -25,6 +26,7 @@ import {
   RoomScoreRecord,
 } from './entities';
 import {
+  AddMemberDto,
   AddScoreDto,
   CreateRoomDto,
   JoinRoomDto,
@@ -65,9 +67,12 @@ export class RoomService {
     const roomCode = await this.generateRoomCode();
     const roomName = this.normalizeRoomName(dto.roomName, roomCode);
 
+    const roomType = dto.roomType === ROOM_TYPE.SINGLE ? ROOM_TYPE.SINGLE : ROOM_TYPE.MULTI;
+
     const room = this.roomRepository.create({
       roomCode,
       roomName,
+      roomType,
       status: ROOM_STATUS.IN_PROGRESS,
       createdByType: actor.actorType,
       createdByRefId: actor.actorRefId,
@@ -285,6 +290,7 @@ export class RoomService {
         roomId: room.id,
         roomCode: room.roomCode,
         roomName: room.roomName,
+        roomType: room.roomType,
         status: room.status,
         ownerMemberId: room.ownerMemberId,
         startedAt,
@@ -336,7 +342,7 @@ export class RoomService {
         throw new ConflictException('房间已结束，无法继续记分');
       }
 
-      const fromMember = await queryRunner.manager.findOne(RoomMember, {
+      const callerMember = await queryRunner.manager.findOne(RoomMember, {
         where: {
           roomId,
           actorType: actor.actorType,
@@ -345,8 +351,26 @@ export class RoomService {
         },
       });
 
-      if (!fromMember) {
+      if (!callerMember) {
         throw new ForbiddenException('你不在该房间内，无法记分');
+      }
+
+      let fromMember = callerMember;
+
+      if (dto.fromMemberId && dto.fromMemberId !== callerMember.id) {
+        if (room.ownerMemberId !== callerMember.id) {
+          throw new ForbiddenException('只有桌主可以代替其他成员记分');
+        }
+
+        const specifiedFrom = await queryRunner.manager.findOne(RoomMember, {
+          where: { id: dto.fromMemberId, roomId, isActive: true },
+        });
+
+        if (!specifiedFrom) {
+          throw new NotFoundException('出分方成员不存在');
+        }
+
+        fromMember = specifiedFrom;
       }
 
       const toMember = await queryRunner.manager.findOne(RoomMember, {
@@ -384,7 +408,7 @@ export class RoomService {
         fromMemberId: fromMember.id,
         toMemberId: toMember.id,
         points: dto.points,
-        createdByMemberId: fromMember.id,
+        createdByMemberId: callerMember.id,
       });
 
       await queryRunner.manager.save(scoreRecord);
@@ -535,6 +559,80 @@ export class RoomService {
     return this.buildRoomPayload(roomId, actor);
   }
 
+  async addMember(req: Request, roomId: number, dto: AddMemberDto) {
+    const actor = await this.resolveActor(req);
+
+    const room = await this.roomRepository.findOne({ where: { id: roomId } });
+    if (!room) {
+      throw new NotFoundException('房间不存在');
+    }
+
+    if (room.status === ROOM_STATUS.ENDED) {
+      throw new ConflictException('房间已结束，无法添加成员');
+    }
+
+    const callerMember = await this.roomMemberRepository.findOne({
+      where: {
+        roomId,
+        actorType: actor.actorType,
+        actorRefId: actor.actorRefId,
+        isActive: true,
+      },
+    });
+
+    if (!callerMember) {
+      throw new ForbiddenException('你不在该房间内');
+    }
+
+    if (room.ownerMemberId !== callerMember.id) {
+      throw new ForbiddenException('只有桌主可以添加成员');
+    }
+
+    const existingMembers = await this.roomMemberRepository.count({
+      where: { roomId, isActive: true },
+    });
+
+    if (existingMembers >= 10) {
+      throw new BadRequestException('房间最多10人');
+    }
+
+    const nickname = (dto.nickname || '').trim().slice(0, 64);
+    if (!nickname) {
+      throw new BadRequestException('昵称不能为空');
+    }
+
+    const initials = nickname.slice(0, 2);
+
+    const maxRefResult = await this.roomMemberRepository
+      .createQueryBuilder('m')
+      .select('COALESCE(MAX(m.actorRefId), 0)', 'maxRef')
+      .where('m.roomId = :roomId AND m.actorType = :actorType', {
+        roomId,
+        actorType: ROOM_ACTOR_TYPE.VIRTUAL,
+      })
+      .getRawOne<{ maxRef: string }>();
+
+    const nextRefId = Number(maxRefResult?.maxRef || 0) + 1;
+
+    const member = this.roomMemberRepository.create({
+      roomId,
+      actorType: ROOM_ACTOR_TYPE.VIRTUAL,
+      actorRefId: nextRefId,
+      role: ROOM_MEMBER_ROLE.MEMBER,
+      nickname,
+      avatar: '',
+      avatarInitials: initials,
+      score: 0,
+      isActive: true,
+    });
+
+    await this.roomMemberRepository.save(member);
+
+    const payload = await this.buildRoomPayload(roomId, actor);
+    this.realtimeService.notifyRoomUpdated(payload.room.roomCode, 'member_added');
+    return payload;
+  }
+
   private buildHistorySummary(actorMemberships: RoomMember[]) {
     const totalGames = actorMemberships.length;
     const winRounds = actorMemberships.filter((item) => item.score > 0).length;
@@ -598,6 +696,7 @@ export class RoomService {
         id: room.id,
         roomCode: room.roomCode,
         roomName: room.roomName,
+        roomType: room.roomType,
         status: room.status,
         ownerMemberId: room.ownerMemberId,
         createdAt: room.createdAt,

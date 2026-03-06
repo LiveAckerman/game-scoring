@@ -1,3 +1,4 @@
+<page-meta page-style="{{pageFontStyle}}" />
 <view class="edit-page">
   <common-top-bar title="编辑资料" bind:back="goBack" />
 

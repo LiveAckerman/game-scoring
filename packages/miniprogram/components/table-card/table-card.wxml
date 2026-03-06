@@ -1,0 +1,29 @@
+<view class="table-card {{faded ? 'faded' : ''}}" bindtap="onCardTap">
+  <view class="card-head">
+    <view class="head-left">
+      <text class="room-code">桌号 {{roomCode}}</text>
+      <text class="type-tag {{roomType === 'SINGLE' ? 'type-single' : 'type-multi'}}">{{roomType === 'SINGLE' ? '单人' : '多人'}}</text>
+    </view>
+    <view class="head-right">
+      <text wx:if="{{scoreCount >= 0}}" class="score-count">{{scoreCount}}笔</text>
+      <text class="status-badge {{status === 'IN_PROGRESS' ? 'active' : 'ended'}}">{{statusText}}</text>
+    </view>
+  </view>
+
+  <view class="members-row">
+    <view wx:for="{{members}}" wx:key="id" class="member-col">
+      <view class="avatar-wrap">
+        <image wx:if="{{item.avatar}}" class="avatar" src="{{item.avatar}}" mode="aspectFill" />
+        <view wx:else class="avatar avatar-text"><text>{{item.avatarInitials || '游客'}}</text></view>
+        <text wx:if="{{item.isOwner}}" class="host-tag">桌主</text>
+      </view>
+      <text wx:if="{{showName}}" class="member-name">{{item.nickname}}</text>
+      <text class="member-score {{item.score > 0 ? 'pos' : (item.score < 0 ? 'neg' : 'zero')}}">{{item.score > 0 ? '+' : ''}}{{item.score}}</text>
+    </view>
+  </view>
+
+  <view class="card-foot">
+    <text class="foot-time">{{timeText}}{{durationText ? ' · ' + durationText : ''}}</text>
+    <text class="foot-my-score">我的积分 {{myScoreText}}</text>
+  </view>
+</view>

@@ -1,3 +1,4 @@
+<page-meta page-style="{{pageFontStyle}}" />
 <view class="invite-page">
   <view class="bg-confetti"></view>
 
@@ -11,10 +12,10 @@
           <view class="action-icon"><view class="icon icon-invite"></view></view>
           <text>邀请</text>
         </view>
-        <view class="action-item" bindtap="onActionTap" data-action="detail">
+        <!-- <view class="action-item" bindtap="onActionTap" data-action="detail">
           <view class="action-icon"><view class="icon icon-detail"></view></view>
           <text>明细</text>
-        </view>
+        </view> -->
         <view class="action-item" bindtap="onActionTap" data-action="settings">
           <view class="action-icon"><view class="icon icon-settings"></view></view>
           <text>设置</text>

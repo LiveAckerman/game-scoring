@@ -1,6 +1,7 @@
 import { saveActorIdentity } from '../../utils/identity';
 import { buildRoomRealtimeUrl } from '../../utils/realtime';
 import { RequestError } from '../../utils/request';
+import { fontSizeBehavior } from '../../behaviors/font-size';
 import {
   addRoomScore,
   endRoom,
@@ -41,6 +42,7 @@ let realtimeRefreshing = false;
 let realtimeRefreshPending = false;
 
 Page({
+  behaviors: [fontSizeBehavior],
   data: {
     topBarTitle: '桌号：------',
     roomId: 0,
@@ -74,6 +76,7 @@ Page({
   },
 
   onShow() {
+    (this as any)._applyFontSize();
     this.connectRealtime();
   },
 

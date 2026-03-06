@@ -31,7 +31,7 @@
 }
 
 .dialog-title {
-  font-size: 30rpx;
+  font-size: var(--fs-md, 30rpx);
   font-weight: 700;
   color: #333;
 }
@@ -80,7 +80,7 @@
   margin: 0;
   background: #e63946;
   color: #fff;
-  font-size: 28rpx;
+  font-size: var(--fs-base, 28rpx);
   font-weight: 700;
   display: flex;
   align-items: center;

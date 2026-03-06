@@ -75,7 +75,7 @@
   border-radius: 16rpx;
   background: #f94144;
   color: #fff7dd;
-  font-size: 34rpx;
+  font-size: var(--fs-lg, 34rpx);
   font-weight: 700;
   transform: rotate(12deg);
   display: flex;
@@ -101,7 +101,7 @@
 }
 
 .invite-tip {
-  font-size: 24rpx;
+  font-size: var(--fs-sm, 24rpx);
   color: #888;
   margin-bottom: 18rpx;
 }
@@ -166,7 +166,7 @@
   height: 88rpx;
   line-height: 88rpx;
   border-radius: 20rpx;
-  font-size: 28rpx;
+  font-size: var(--fs-base, 28rpx);
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -198,7 +198,7 @@
   height: 88rpx;
   line-height: 88rpx;
   border-radius: 20rpx;
-  font-size: 28rpx;
+  font-size: var(--fs-base, 28rpx);
   font-weight: 700;
   text-align: center;
   padding: 0;
@@ -213,7 +213,7 @@
 }
 
 .room-status {
-  font-size: 22rpx;
+  font-size: var(--fs-sm, 24rpx);
   font-weight: 700;
 }
 

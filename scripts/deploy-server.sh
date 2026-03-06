@@ -92,9 +92,13 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 STAGE_DIR="${TMP_DIR}/server"
 mkdir -p "$STAGE_DIR"
 
+echo "==> 本地生成 package-lock.json（加速远端安装）"
+(cd "$SERVER_DIR" && npm install --package-lock-only --ignore-scripts 2>/dev/null || true)
+
 echo "==> 准备发布包"
 rsync -a --delete "$SERVER_DIR/dist/" "$STAGE_DIR/dist/"
 cp "$SERVER_DIR/package.json" "$STAGE_DIR/package.json"
+[[ -f "$SERVER_DIR/package-lock.json" ]] && cp "$SERVER_DIR/package-lock.json" "$STAGE_DIR/package-lock.json"
 cp "$SERVER_DIR/ecosystem.config.cjs" "$STAGE_DIR/ecosystem.config.cjs"
 
 if [[ "$COPY_ENV" == "1" ]]; then
@@ -120,8 +124,9 @@ echo "==> 上传发布包到 ${REMOTE_RELEASE_DIR}"
 rsync -a --delete -e "$RSYNC_RSH" "$STAGE_DIR/" "$SSH_TARGET:${REMOTE_RELEASE_DIR}/"
 
 echo "==> 远端安装依赖并启动 PM2"
-"${SSH_CMD[@]}" \
-  "REMOTE_DIR='${REMOTE_DIR}' REMOTE_RELEASE_DIR='${REMOTE_RELEASE_DIR}' APP_NAME='${APP_NAME}' APP_PORT='${APP_PORT}' REMOTE_NPM_LOGLEVEL='${REMOTE_NPM_LOGLEVEL}' REMOTE_TRACE='${REMOTE_TRACE}' bash -s" <<'EOF'
+# -tt 强制分配伪终端，让远端 npm 实时输出日志到本地终端
+"${SSH_CMD[@]}" -tt \
+  "REMOTE_DIR='${REMOTE_DIR}' REMOTE_RELEASE_DIR='${REMOTE_RELEASE_DIR}' APP_NAME='${APP_NAME}' APP_PORT='${APP_PORT}' REMOTE_NPM_LOGLEVEL='${REMOTE_NPM_LOGLEVEL}' REMOTE_TRACE='${REMOTE_TRACE}' bash -s" <<'REMOTE_SCRIPT'
 set -euo pipefail
 
 if [[ "${REMOTE_TRACE}" == "1" ]]; then
@@ -138,11 +143,35 @@ echo "[remote] 进入发布目录: ${REMOTE_RELEASE_DIR}"
 cd "${REMOTE_RELEASE_DIR}"
 ln -sfn "${REMOTE_DIR}/shared/.env" .env
 
-echo "[remote] 安装生产依赖 (npm install)"
-npm install --omit=dev --no-audit --no-fund --loglevel="${REMOTE_NPM_LOGLEVEL}"
+# ---- 核心优化：复用缓存 node_modules（npm install 增量模式） ----
+SHARED_NM="${REMOTE_DIR}/shared/node_modules"
+if [[ -d "$SHARED_NM" ]]; then
+  echo "[remote] 复用缓存 node_modules（硬链接拷贝，秒级完成）"
+  cp -al "$SHARED_NM" ./node_modules
+elif [[ -d "${REMOTE_DIR}/current/node_modules" ]]; then
+  echo "[remote] 从 current 复用 node_modules"
+  cp -al "${REMOTE_DIR}/current/node_modules" ./node_modules
+fi
+
+echo "[remote] 安装生产依赖（增量安装，仅补差异包）"
+INSTALL_START=$(date +%s)
+# 使用 npm install（非 npm ci），保留已有 node_modules，只安装差异
+npm install --omit=dev --no-audit --no-fund --loglevel="${REMOTE_NPM_LOGLEVEL}" 2>&1
+INSTALL_END=$(date +%s)
+echo "[remote] 依赖安装完成，耗时 $((INSTALL_END - INSTALL_START))s"
+
+# 更新 shared 缓存，供下次部署复用
+echo "[remote] 更新 shared/node_modules 缓存"
+rm -rf "$SHARED_NM"
+cp -al ./node_modules "$SHARED_NM"
 
 echo "[remote] 切换 current 软链"
 ln -sfn "${REMOTE_RELEASE_DIR}" "${REMOTE_DIR}/current"
+
+# 清理旧 release（保留最近 5 个）
+echo "[remote] 清理旧版本（保留最近 5 个）"
+cd "${REMOTE_DIR}/releases"
+ls -1dt */ 2>/dev/null | tail -n +6 | xargs rm -rf -- 2>/dev/null || true
 
 if ! command -v pm2 >/dev/null 2>&1; then
   echo "[remote] 安装 pm2"
@@ -154,9 +183,50 @@ cd "${REMOTE_DIR}/current"
 APP_NAME="${APP_NAME}" APP_PORT="${APP_PORT}" pm2 startOrReload ecosystem.config.cjs --update-env
 pm2 save
 pm2 status "${APP_NAME}"
-EOF
 
-echo "==> 部署完成"
-echo "服务目录: ${REMOTE_DIR}/current"
-echo "端口: ${APP_PORT}"
-echo "健康检查: http://${DEPLOY_HOST}:${APP_PORT}/api-docs"
+echo ""
+echo "[remote] ========== 健康检查 =========="
+MAX_RETRIES=5
+HEALTHY=0
+for i in $(seq 1 $MAX_RETRIES); do
+  sleep 2
+  if curl -sf "http://127.0.0.1:${APP_PORT}/api-docs" >/dev/null 2>&1; then
+    HEALTHY=1
+    break
+  fi
+  echo "[remote] 第 ${i}/${MAX_RETRIES} 次检查未通过，等待重试..."
+done
+
+if [[ "$HEALTHY" == "1" ]]; then
+  echo "[remote] ✅ API 服务正常响应"
+else
+  echo "[remote] ⚠️  API 服务未响应，开始排查..."
+  echo ""
+  echo "[remote] ---------- PM2 状态 ----------"
+  pm2 status "${APP_NAME}" 2>&1 || true
+  echo ""
+  echo "[remote] ---------- PM2 错误日志（最后 50 行） ----------"
+  pm2 logs "${APP_NAME}" --err --nostream --lines 50 2>&1 || true
+  echo ""
+  echo "[remote] ---------- PM2 输出日志（最后 30 行） ----------"
+  pm2 logs "${APP_NAME}" --out --nostream --lines 30 2>&1 || true
+  echo ""
+  echo "[remote] ---------- 直接启动测试 ----------"
+  cd "${REMOTE_DIR}/current"
+  timeout 8 node dist/main.js 2>&1 || echo "[remote] 进程退出码: $?"
+  echo ""
+  echo "[remote] ---------- 系统 OOM 检查 ----------"
+  dmesg -T 2>/dev/null | grep -i "oom\|kill" | tail -5 || true
+fi
+
+exit 0
+REMOTE_SCRIPT
+
+echo ""
+echo "========================================"
+echo "  ✅ 部署完成"
+echo "========================================"
+echo "  服务目录: ${REMOTE_DIR}/current"
+echo "  端口:     ${APP_PORT}"
+echo "  Swagger:  http://${DEPLOY_HOST}:${APP_PORT}/api-docs"
+echo "========================================"

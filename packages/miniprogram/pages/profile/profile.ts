@@ -1,5 +1,6 @@
 import { clearGuestIdentity, getAccessToken, getGuestProfile } from '../../utils/identity';
 import { request, RequestError } from '../../utils/request';
+import { fontSizeBehavior, buildStyle } from '../../behaviors/font-size';
 
 interface ProfileInfo {
   id: number;
@@ -12,20 +13,31 @@ interface ProfileInfo {
   winRate: string;
 }
 const SHARE_PROMO_IMAGE = '/assets/images/share-promo.jpg';
+const FONT_LABELS: Record<string, string> = { small: '小', medium: '中（默认）', large: '大' };
 
 Page({
+  behaviors: [fontSizeBehavior],
   data: {
     userInfo: null as ProfileInfo | null,
     isGuest: false,
     showLoginCard: false,
+    showQrPopup: false,
+    fontLabel: '中（默认）',
   },
 
   onLoad() {
     this.enableShareMenus();
+    this.initFontLevel();
   },
 
   onShow() {
+    (this as any)._applyFontSize();
     this.fetchUserInfo();
+  },
+
+  initFontLevel() {
+    const level = wx.getStorageSync('fontSizeLevel') || 'medium';
+    this.setData({ fontLabel: FONT_LABELS[level] || '中（默认）' });
   },
 
   enableShareMenus() {
@@ -139,6 +151,86 @@ Page({
       return;
     }
     wx.navigateTo({ url: '/subpkg/profile-edit/profile-edit' });
+  },
+
+  // ---- 字体设置 ----
+  showFontSettings() {
+    const app = getApp<IAppOption>();
+    const current = app.globalData.fontSizeLevel || 'medium';
+    const levels = ['small', 'medium', 'large'] as const;
+    const labels = levels.map(l => FONT_LABELS[l] + (l === current ? ' ✓' : ''));
+
+    wx.showActionSheet({
+      itemList: labels,
+      success: (res) => {
+        const selected = levels[res.tapIndex];
+        app.globalData.fontSizeLevel = selected;
+        wx.setStorageSync('fontSizeLevel', selected);
+        this.setData({
+          fontLabel: FONT_LABELS[selected],
+          pageFontStyle: buildStyle(selected),
+        });
+        wx.showToast({ title: `已切换为${FONT_LABELS[selected]}字体`, icon: 'none' });
+      },
+    });
+  },
+
+  // ---- 物料码弹窗 ----
+  showQrCode() {
+    this.setData({ showQrPopup: true });
+  },
+
+  hideQrCode() {
+    this.setData({ showQrPopup: false });
+  },
+
+  // ---- 战绩榜 ----
+  goToLeaderboard() {
+    wx.navigateTo({ url: '/subpkg/leaderboard/leaderboard' });
+  },
+
+  // ---- 我的战绩 ----
+  goToMyRecords() {
+    wx.switchTab({ url: '/pages/records/records' });
+  },
+
+  // ---- 数据恢复（游客 → 微信账号） ----
+  async handleDataRestore() {
+    if (!getAccessToken()) {
+      wx.showToast({ title: '请先登录微信账号再恢复数据', icon: 'none' });
+      return;
+    }
+    wx.showLoading({ title: '检测中...' });
+    try {
+      const res = await request<{ hasData: boolean; guestGames: number }>({
+        url: '/user/check-guest-data',
+      });
+      wx.hideLoading();
+      if (!res.hasData) {
+        wx.showToast({ title: '未检测到可恢复的游客数据', icon: 'none' });
+        return;
+      }
+      wx.showModal({
+        title: '发现游客数据',
+        content: `检测到 ${res.guestGames} 场游客对局数据，是否导入到当前账号？`,
+        success: async (modalRes) => {
+          if (!modalRes.confirm) return;
+          wx.showLoading({ title: '导入中...' });
+          try {
+            await request({ url: '/user/restore-guest-data', method: 'POST' });
+            wx.hideLoading();
+            wx.showToast({ title: '数据恢复成功', icon: 'success' });
+            this.fetchUserInfo();
+          } catch (err) {
+            wx.hideLoading();
+            wx.showToast({ title: '数据恢复失败', icon: 'none' });
+          }
+        },
+      });
+    } catch (err) {
+      wx.hideLoading();
+      wx.showToast({ title: '检测失败', icon: 'none' });
+    }
   },
 
   handleLogout() {

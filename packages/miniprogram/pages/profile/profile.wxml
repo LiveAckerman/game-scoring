@@ -1,3 +1,4 @@
+<page-meta page-style="{{pageFontStyle}}" />
 <view class="profile-page">
   <common-top-bar title="个人中心" showBack="{{false}}" />
 
@@ -41,11 +42,11 @@
       </view>
       <view class="stats">
         <view class="stat split-r">
-          <text class="v">{{userInfo.totalGames || 128}}</text>
+          <text class="v">{{userInfo.totalGames}}</text>
           <text class="k">场次</text>
         </view>
         <view class="stat">
-          <text class="v">{{userInfo.winRate || '45%'}} </text>
+          <text class="v">{{userInfo.winRate}} </text>
           <text class="k">胜率</text>
         </view>
       </view>
@@ -54,9 +55,9 @@
     <view class="service-card">
       <text class="block-title">我的服务</text>
       <view class="service-grid">
-        <view class="service-item"><view class="box red"><view class="icon icon-trophy"></view></view><text>我的战绩</text></view>
-        <view class="service-item"><view class="box orange"><view class="icon icon-chart"></view></view><text>战绩榜</text></view>
-        <view class="service-item"><view class="box yellow"><view class="icon icon-restore"></view></view><text>数据恢复</text></view>
+        <view class="service-item" bindtap="goToMyRecords"><view class="box red"><view class="icon icon-trophy"></view></view><text>我的战绩</text></view>
+        <view class="service-item" bindtap="goToLeaderboard"><view class="box orange"><view class="icon icon-chart"></view></view><text>战绩榜</text></view>
+        <view class="service-item" bindtap="handleDataRestore"><view class="box yellow"><view class="icon icon-restore"></view></view><text>数据恢复</text></view>
         <view class="service-item"><view class="box green"><view class="icon icon-tag"></view></view><text>标签设置</text></view>
         <view class="service-item"><view class="box blue"><view class="icon icon-help"></view></view><text>使用帮助</text></view>
         <view class="service-item"><view class="box purple"><view class="icon icon-forum"></view></view><text>问题反馈</text></view>
@@ -70,9 +71,19 @@
         <view class="left"><view class="mini icon icon-share"></view><text>分享应用</text></view>
         <view class="mini icon icon-arrow"></view>
       </button>
-      <view class="menu-item border"><view class="left"><view class="mini icon icon-qr"></view><text>物料码</text></view><view class="mini icon icon-arrow"></view></view>
-      <view class="menu-item border"><view class="left"><view class="mini icon icon-font"></view><text>字体设置</text></view><view class="mini icon icon-arrow"></view></view>
+      <view class="menu-item border" bindtap="showQrCode"><view class="left"><view class="mini icon icon-qr"></view><text>物料码</text></view><view class="mini icon icon-arrow"></view></view>
+      <view class="menu-item border" bindtap="showFontSettings"><view class="left"><view class="mini icon icon-font"></view><text>字体设置</text></view><view class="right-info"><text class="menu-meta">{{fontLabel}}</text><view class="mini icon icon-arrow"></view></view></view>
       <view class="menu-item" bindtap="handleLogout"><view class="left"><view class="mini icon icon-logout"></view><text>{{isGuest ? '退出游客身份' : '退出登录'}}</text></view><view class="mini icon icon-arrow"></view></view>
+    </view>
+
+    <!-- 物料码弹窗 -->
+    <view class="popup-mask" wx:if="{{showQrPopup}}" bindtap="hideQrCode">
+      <view class="popup-body" catchtap="">
+        <text class="popup-title">小程序码</text>
+        <text class="popup-desc">长按识别或扫描分享给好友</text>
+        <image class="qr-preview" src="/assets/images/code.jpg" mode="aspectFit" show-menu-by-longpress="{{true}}" />
+        <button class="popup-close-btn" bindtap="hideQrCode">关闭</button>
+      </view>
     </view>
 
     <text class="version">v1.2.0 Build 2024</text>

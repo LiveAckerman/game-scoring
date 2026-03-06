@@ -220,7 +220,7 @@
 }
 
 .subtitle {
-  font-size: 26rpx;
+  font-size: var(--fs-base, 28rpx);
   color: rgba(74, 44, 44, 0.6);
   font-weight: 500;
   letter-spacing: 2rpx;
@@ -256,7 +256,7 @@
   justify-content: center;
   gap: 24rpx;
   color: #fff;
-  font-size: 34rpx;
+  font-size: var(--fs-lg, 34rpx);
   font-weight: bold;
 }
 
@@ -290,12 +290,12 @@
 }
 
 .agreement-text {
-  font-size: 22rpx;
+  font-size: var(--fs-sm, 24rpx);
   color: #8d8d8d;
 }
 
 .link {
-  font-size: 22rpx;
+  font-size: var(--fs-sm, 24rpx);
   color: #e63946;
   font-weight: 700;
 }
@@ -304,6 +304,6 @@
   display: block;
   text-align: center;
   margin-top: 8rpx;
-  font-size: 20rpx;
+  font-size: var(--fs-xs, 20rpx);
   color: #c0c0c0;
 }

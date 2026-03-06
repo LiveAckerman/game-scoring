@@ -11,7 +11,7 @@ page {
     Segoe UI, Arial, Roboto, 'PingFang SC', 'miui', 'Hiragino Sans GB', 'Microsoft Yahei',
     sans-serif;
   background-color: #f8f8f8;
-  font-size: 28rpx;
+  font-size: var(--fs-base, 28rpx);
   color: #333;
 }
 

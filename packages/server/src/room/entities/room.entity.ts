@@ -17,6 +17,13 @@ export const ROOM_STATUS = {
 
 export type RoomStatus = (typeof ROOM_STATUS)[keyof typeof ROOM_STATUS];
 
+export const ROOM_TYPE = {
+  MULTI: 'MULTI',
+  SINGLE: 'SINGLE',
+} as const;
+
+export type RoomType = (typeof ROOM_TYPE)[keyof typeof ROOM_TYPE];
+
 @Entity('rooms')
 export class Room {
   @ApiProperty({ description: '房间ID' })
@@ -30,6 +37,10 @@ export class Room {
   @ApiProperty({ description: '房间名称' })
   @Column({ length: 64, default: '' })
   roomName: string;
+
+  @ApiProperty({ description: '房间类型 MULTI/SINGLE' })
+  @Column({ type: 'varchar', length: 16, default: ROOM_TYPE.MULTI })
+  roomType: RoomType;
 
   @ApiProperty({ description: '房间状态' })
   @Column({ type: 'varchar', length: 16, default: ROOM_STATUS.IN_PROGRESS })

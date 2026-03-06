@@ -1,8 +1,14 @@
 import { login } from '../../utils/auth';
+import { fontSizeBehavior } from '../../behaviors/font-size';
 
 Page({
+  behaviors: [fontSizeBehavior],
   data: {
     isAgreed: false
+  },
+
+  onShow() {
+    (this as any)._applyFontSize();
   },
 
   handleAgreementChange(e: any) {

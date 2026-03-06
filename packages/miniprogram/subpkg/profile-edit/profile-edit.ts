@@ -1,7 +1,9 @@
 import { request } from '../../utils/request';
 import { uploadFile } from '../../utils/upload';
+import { fontSizeBehavior } from '../../behaviors/font-size';
 
 Page({
+  behaviors: [fontSizeBehavior],
   data: {
     saving: false,
     nicknameFocus: false,
@@ -12,6 +14,10 @@ Page({
       gender: 0,
       title: '小财神'
     }
+  },
+
+  onShow() {
+    (this as any)._applyFontSize();
   },
 
   onLoad() {

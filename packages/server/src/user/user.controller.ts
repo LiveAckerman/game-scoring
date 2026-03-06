@@ -3,6 +3,7 @@ import {
   Get,
   Put,
   Post,
+  Query,
   Body,
   UseGuards,
   UseInterceptors,
@@ -103,5 +104,35 @@ export class UserController {
     const host = req.headers['x-forwarded-host'] || req.headers.host;
     const url = `${protocol}://${host}/uploads/avatars/${file.filename}`;
     return { url };
+  }
+
+  @Get('leaderboard')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: '战绩排行榜', description: '获取与当前用户同场对局过的所有玩家的排行' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  async getLeaderboard(
+    @Request() req: any,
+    @Query('sort') sort: string,
+  ) {
+    return this.userService.getLeaderboard(req.user.id, sort || 'score');
+  }
+
+  @Get('check-guest-data')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: '检查游客数据', description: '检查当前设备是否有可恢复的游客对局数据' })
+  @ApiResponse({ status: 200, description: '检查成功' })
+  async checkGuestData(@Request() req: any) {
+    return this.userService.checkGuestData(req.user.id);
+  }
+
+  @Post('restore-guest-data')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: '恢复游客数据', description: '将游客对局数据导入到当前登录账号' })
+  @ApiResponse({ status: 200, description: '恢复成功' })
+  async restoreGuestData(@Request() req: any) {
+    return this.userService.restoreGuestData(req.user.id);
   }
 }

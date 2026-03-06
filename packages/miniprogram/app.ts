@@ -4,6 +4,7 @@ App<IAppOption>({
     userInfo: null,
     guestProfile: null,
     token: '',
+    fontSizeLevel: 'medium' as 'small' | 'medium' | 'large',
   },
   onLaunch() {
     const logs: number[] = wx.getStorageSync('logs') || [];
@@ -24,5 +25,8 @@ App<IAppOption>({
     if (guestProfile) {
       this.globalData.guestProfile = guestProfile as AppGuestProfile;
     }
+
+    const fontSizeLevel = wx.getStorageSync('fontSizeLevel') || 'medium';
+    this.globalData.fontSizeLevel = fontSizeLevel;
   },
 });

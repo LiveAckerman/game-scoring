@@ -1,3 +1,4 @@
+<page-meta page-style="{{pageFontStyle}}" />
 <view class="records-page">
   <common-top-bar title="计分记录" showBack="{{false}}" />
 
@@ -38,41 +39,23 @@
     <view wx:if="{{loading}}" class="page-tip">加载中...</view>
     <view wx:elif="{{records.length === 0}}" class="page-tip">暂无对局记录</view>
 
-    <view
+    <table-card
       wx:for="{{records}}"
       wx:key="roomId"
-      class="record-card {{item.status === 'ENDED' ? 'soft' : ''}}"
-      bindtap="openRoomFromRecord"
+      roomCode="{{item.roomCode}}"
+      status="{{item.status}}"
+      statusText="{{item.statusText}}"
+      roomType="{{item.roomType || 'MULTI'}}"
+      members="{{item.members}}"
+      timeText="{{item.startText}}"
+      durationText="{{item.durationText}}"
+      myScoreText="{{item.myScoreText}}"
+      scoreCount="{{item.scoreRecordCount}}"
+      showName="{{true}}"
+      faded="{{item.status === 'ENDED'}}"
+      bind:cardtap="openRoomFromRecord"
       data-room-code="{{item.roomCode}}"
       data-status="{{item.status}}"
-    >
-      <view class="record-head">
-        <view class="title-row">
-          <text class="record-title">桌号 {{item.roomCode}}</text>
-          <text class="badge {{item.statusClass}}">{{item.statusText}}</text>
-        </view>
-        <view class="record-meta">
-          <text class="meta">我的积分 {{item.myScoreText}}</text>
-          <text class="meta">{{item.scoreRecordCount}} 笔记分</text>
-        </view>
-      </view>
-
-      <view class="players">
-        <view wx:for="{{item.members}}" wx:key="id" class="p-item">
-          <view class="avatar-box">
-            <image wx:if="{{item.avatar}}" class="avatar" src="{{item.avatar}}" mode="aspectFill" />
-            <view wx:else class="avatar avatar-text"><text>{{item.avatarInitials || '游客'}}</text></view>
-            <text wx:if="{{item.isOwner}}" class="host">桌主</text>
-          </view>
-          <text class="name">{{item.nickname}}</text>
-          <text class="score {{item.score > 0 ? 'red' : (item.score < 0 ? 'dark' : 'zero')}}">{{item.score > 0 ? '+' : ''}}{{item.score}}</text>
-        </view>
-      </view>
-
-      <view class="card-foot">
-        <text>{{item.startText}}</text>
-        <text>{{item.durationText}}</text>
-      </view>
-    </view>
+    />
   </scroll-view>
 </view>
