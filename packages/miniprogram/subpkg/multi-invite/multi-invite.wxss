@@ -554,6 +554,39 @@
   border: none;
 }
 
+.invite-popup-footer {
+  display: flex;
+  gap: 12rpx;
+  padding-top: 4rpx;
+}
+
+.invite-popup-btn {
+  flex: 1;
+  height: 84rpx;
+  border-radius: 18rpx;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background: #e63946;
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 84rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.invite-popup-btn.ghost {
+  background: #f6f2eb;
+  color: #666;
+}
+
+.invite-popup-btn::after {
+  border: none;
+}
+
 .icon {
   background-size: contain;
   background-repeat: no-repeat;

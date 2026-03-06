@@ -15,6 +15,11 @@ App<IAppOption>({
       this.globalData.token = token;
     }
 
+    const userInfo = wx.getStorageSync('userInfo');
+    if (userInfo) {
+      this.globalData.userInfo = userInfo as AppUserInfo;
+    }
+
     const guestProfile = wx.getStorageSync('guestProfile');
     if (guestProfile) {
       this.globalData.guestProfile = guestProfile as AppGuestProfile;

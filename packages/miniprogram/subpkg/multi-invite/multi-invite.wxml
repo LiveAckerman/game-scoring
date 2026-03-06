@@ -141,6 +141,10 @@
       tipText="复制房间号，发送给好友在首页加入"
       bind:share="handleShareInvite"
     />
+    <view slot="footer" class="invite-popup-footer">
+      <button class="invite-popup-btn ghost" bindtap="handleShareInvite">复制房间号</button>
+      <button class="invite-popup-btn" open-type="share">微信分享</button>
+    </view>
   </common-dialog>
 
   <view wx:if="{{scoreDialogVisible}}" class="score-mask" bindtap="closeScoreDialog">

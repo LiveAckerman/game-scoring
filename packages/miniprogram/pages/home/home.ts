@@ -39,6 +39,7 @@ interface InputDialogOptions {
 }
 
 let inputDialogResolver: ((value: string | null) => void) | null = null;
+const SHARE_PROMO_IMAGE = '/assets/images/share-promo.jpg';
 
 Page({
   data: {
@@ -61,6 +62,11 @@ Page({
     inputDialogConfirmText: '确定',
     inputDialogValue: '',
     inputDialogRequired: false,
+  },
+
+  onLoad(options: Record<string, string | undefined>) {
+    this.enableShareMenus();
+    this.handleShareRoomEntry(options);
   },
 
   onShow() {
@@ -253,16 +259,55 @@ Page({
       });
     } catch (error) {
       const requestError = error as RequestError;
-      if (requestError.statusCode === 401) {
-        wx.showToast({
-          title: requestError.message || '加入房间失败',
-          icon: 'none',
-        });
-      }
+      wx.showToast({
+        title: requestError.message || '加入房间失败',
+        icon: 'none',
+      });
     } finally {
       wx.hideLoading();
       this.setData({ joiningRoom: false });
     }
+  },
+
+  handleShareRoomEntry(options: Record<string, string | undefined>) {
+    const shareRoomCode = String(options.roomCode || '').replace(/\D/g, '').slice(0, 6);
+    if (!/^\d{6}$/.test(shareRoomCode)) {
+      return;
+    }
+
+    const joinCodeDigits = Array.from({ length: 6 }, (_, index) => shareRoomCode[index] || '');
+    this.setData({
+      joinDialogVisible: true,
+      joinRoomCode: shareRoomCode,
+      joinCodeDigits,
+      joinCodeFocus: false,
+      autoJoinTriedCode: shareRoomCode,
+    }, () => {
+      this.attemptJoinRoom(shareRoomCode, 'auto');
+    });
+  },
+
+  enableShareMenus() {
+    wx.showShareMenu({
+      withShareTicket: true,
+      menus: ['shareAppMessage', 'shareTimeline'],
+    });
+  },
+
+  onShareAppMessage() {
+    return {
+      title: '欢乐记分馆',
+      path: '/pages/home/home',
+      imageUrl: SHARE_PROMO_IMAGE,
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: '欢乐记分馆',
+      query: '',
+      imageUrl: SHARE_PROMO_IMAGE,
+    };
   },
 
   closeOngoingDialog() {

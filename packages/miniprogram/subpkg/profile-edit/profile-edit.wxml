@@ -2,7 +2,7 @@
   <common-top-bar title="编辑资料" bind:back="goBack" />
 
   <scroll-view class="edit-scroll" scroll-y>
-    <view class="avatar-section" bindtap="chooseAvatar">
+    <view class="avatar-section" bindtap="onAvatarTap">
       <view class="avatar-shell">
         <view class="avatar-ring">
           <image class="avatar" src="{{userInfo.avatar || '../../assets/stitch/avatars/avatar-main.png'}}" mode="aspectFill" />
@@ -13,10 +13,23 @@
     </view>
 
     <view class="form-group">
-      <text class="label">昵称</text>
+      <view class="label-row">
+        <text class="label" bindtap="handleNicknameTap">昵称</text>
+        <text class="quick-link" bindtap="handleNicknameTap">微信昵称</text>
+      </view>
       <view class="input-box">
-        <input class="input" value="{{userInfo.nickname}}" placeholder="请输入昵称" bindinput="onNicknameInput" />
-        <view class="icon icon-edit"></view>
+        <input
+          class="input"
+          type="nickname"
+          value="{{userInfo.nickname}}"
+          placeholder="请输入昵称（可手动编辑）"
+          focus="{{nicknameFocus}}"
+          bindfocus="onNicknameFocus"
+          bindblur="onNicknameBlur"
+          bindinput="onNicknameInput"
+          catchtap="stopTap"
+        />
+        <view class="icon icon-edit" catchtap="handleNicknameTap"></view>
       </view>
     </view>
 
@@ -67,7 +80,7 @@
       </view>
     </view>
 
-    <button class="save" bindtap="handleSave">
+    <button class="save" bindtap="handleSave" loading="{{saving}}" disabled="{{saving}}">
       <view class="icon icon-save"></view>
       <text>保存修改</text>
     </button>

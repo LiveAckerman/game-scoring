@@ -20,6 +20,7 @@ const ROOM_CODE_LENGTH = 6;
 const REALTIME_RECONNECT_BASE_MS = 1000;
 const REALTIME_RECONNECT_MAX_MS = 10000;
 const REALTIME_HEARTBEAT_MS = 20000;
+const SHARE_PROMO_IMAGE = '/assets/images/share-promo.jpg';
 
 interface RealtimeMessage {
   type?: string;
@@ -63,6 +64,7 @@ Page({
   },
 
   onLoad(options: Record<string, string | undefined>) {
+    this.enableShareMenus();
     this.disconnectRealtime(true);
     const roomCode = (options.roomCode || '').replace(/\D/g, '').slice(0, ROOM_CODE_LENGTH);
     if (roomCode.length === ROOM_CODE_LENGTH) {
@@ -191,8 +193,15 @@ Page({
     wx.setClipboardData({
       data: roomCode,
       success: () => {
-        wx.showToast({ title: `已复制房间号 ${roomCode}`, icon: 'none' });
+        wx.showToast({ title: `已复制房间号 ${roomCode}，可微信分享`, icon: 'none' });
       },
+    });
+  },
+
+  enableShareMenus() {
+    wx.showShareMenu({
+      withShareTicket: true,
+      menus: ['shareAppMessage', 'shareTimeline'],
     });
   },
 
@@ -659,5 +668,39 @@ Page({
     const minute = formatTwoDigits(date.getMinutes());
 
     return `${month}-${day} ${hour}:${minute}`;
+  },
+
+  onShareAppMessage() {
+    const roomCode = this.data.roomCode;
+    if (/^\d{6}$/.test(roomCode)) {
+      return {
+        title: `邀请你加入桌号 ${roomCode}`,
+        path: `/pages/home/home?roomCode=${roomCode}`,
+        imageUrl: SHARE_PROMO_IMAGE,
+      };
+    }
+
+    return {
+      title: '欢乐记分馆',
+      path: '/pages/home/home',
+      imageUrl: SHARE_PROMO_IMAGE,
+    };
+  },
+
+  onShareTimeline() {
+    const roomCode = this.data.roomCode;
+    if (/^\d{6}$/.test(roomCode)) {
+      return {
+        title: `邀请你加入桌号 ${roomCode}`,
+        query: `roomCode=${roomCode}`,
+        imageUrl: SHARE_PROMO_IMAGE,
+      };
+    }
+
+    return {
+      title: '欢乐记分馆',
+      query: '',
+      imageUrl: SHARE_PROMO_IMAGE,
+    };
   },
 });

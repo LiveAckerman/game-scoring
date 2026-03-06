@@ -1,5 +1,5 @@
 import { clearGuestIdentity, getAccessToken, getGuestProfile } from '../../utils/identity';
-import { request } from '../../utils/request';
+import { request, RequestError } from '../../utils/request';
 
 interface ProfileInfo {
   id: number;
@@ -11,15 +11,28 @@ interface ProfileInfo {
   wins: number;
   winRate: string;
 }
+const SHARE_PROMO_IMAGE = '/assets/images/share-promo.jpg';
 
 Page({
   data: {
     userInfo: null as ProfileInfo | null,
     isGuest: false,
+    showLoginCard: false,
+  },
+
+  onLoad() {
+    this.enableShareMenus();
   },
 
   onShow() {
     this.fetchUserInfo();
+  },
+
+  enableShareMenus() {
+    wx.showShareMenu({
+      withShareTicket: true,
+      menus: ['shareAppMessage', 'shareTimeline'],
+    });
   },
 
   async fetchUserInfo() {
@@ -28,10 +41,40 @@ Page({
         const userInfo = await request<ProfileInfo>({
           url: '/user/profile',
         });
-        this.setData({ userInfo, isGuest: false });
+        wx.setStorageSync('userInfo', userInfo);
+        const app = getApp<IAppOption>();
+        app.globalData.userInfo = {
+          id: userInfo.id,
+          nickname: userInfo.nickname,
+          avatar: userInfo.avatar,
+          gender: userInfo.gender,
+          title: userInfo.title,
+          totalGames: userInfo.totalGames,
+          wins: userInfo.wins,
+        };
+        this.setData({ userInfo, isGuest: false, showLoginCard: false });
         return;
       } catch (err) {
+        const requestError = err as RequestError;
         console.error('获取用户信息失败', err);
+
+        if (requestError.statusCode === 401) {
+          wx.removeStorageSync('token');
+          wx.removeStorageSync('userInfo');
+          const app = getApp<IAppOption>();
+          app.globalData.token = '';
+          app.globalData.userInfo = null;
+        } else {
+          const cachedLoginProfile = this.getCachedLoginProfile();
+          if (cachedLoginProfile) {
+            this.setData({
+              userInfo: cachedLoginProfile,
+              isGuest: false,
+              showLoginCard: false,
+            });
+            return;
+          }
+        }
       }
     }
 
@@ -49,6 +92,7 @@ Page({
           winRate: '--',
         },
         isGuest: true,
+        showLoginCard: false,
       });
       return;
     }
@@ -56,7 +100,37 @@ Page({
     this.setData({
       userInfo: null,
       isGuest: false,
+      showLoginCard: true,
     });
+  },
+
+  goToLogin() {
+    wx.navigateTo({ url: '/subpkg/login/login' });
+  },
+
+  getCachedLoginProfile(): ProfileInfo | null {
+    const app = getApp<IAppOption>();
+    const fromGlobal = app.globalData.userInfo;
+    const fromStorage = wx.getStorageSync('userInfo') as AppUserInfo | undefined;
+    const source = fromGlobal || fromStorage;
+    if (!source || !source.id) {
+      return null;
+    }
+
+    const winRateValue = source.totalGames > 0
+      ? `${Math.round((source.wins / source.totalGames) * 100)}%`
+      : '0%';
+
+    return {
+      id: source.id,
+      nickname: source.nickname || `玩家${source.id}`,
+      avatar: source.avatar || '',
+      gender: source.gender || 0,
+      title: source.title || '小财神',
+      totalGames: source.totalGames || 0,
+      wins: source.wins || 0,
+      winRate: winRateValue,
+    };
   },
 
   goToEdit() {
@@ -85,6 +159,7 @@ Page({
         }
 
         wx.removeStorageSync('token');
+        wx.removeStorageSync('userInfo');
         clearGuestIdentity();
 
         const app = getApp<IAppOption>();
@@ -96,5 +171,21 @@ Page({
         this.fetchUserInfo();
       },
     });
+  },
+
+  onShareAppMessage() {
+    return {
+      title: '欢乐记分馆',
+      path: '/pages/home/home',
+      imageUrl: SHARE_PROMO_IMAGE,
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: '欢乐记分馆',
+      query: '',
+      imageUrl: SHARE_PROMO_IMAGE,
+    };
   },
 });

@@ -365,14 +365,14 @@ export class RoomService {
         throw new BadRequestException('不能给自己记分');
       }
 
-      await queryRunner.manager.increment(
+      await queryRunner.manager.decrement(
         RoomMember,
         { id: fromMember.id },
         'score',
         dto.points,
       );
 
-      await queryRunner.manager.decrement(
+      await queryRunner.manager.increment(
         RoomMember,
         { id: toMember.id },
         'score',

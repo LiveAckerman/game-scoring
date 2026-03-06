@@ -33,6 +33,7 @@ const EMPTY_SUMMARY: RoomHistorySummary = {
   totalLosePoints: 0,
   totalScore: 0,
 };
+const SHARE_PROMO_IMAGE = '/assets/images/share-promo.jpg';
 
 Page({
   data: {
@@ -41,6 +42,10 @@ Page({
     summary: EMPTY_SUMMARY,
     totalRecords: 0,
     records: [] as RecordCardView[],
+  },
+
+  onLoad() {
+    this.enableShareMenus();
   },
 
   onShow() {
@@ -164,5 +169,28 @@ Page({
       return `0${value}`;
     }
     return `${value}`;
+  },
+
+  enableShareMenus() {
+    wx.showShareMenu({
+      withShareTicket: true,
+      menus: ['shareAppMessage', 'shareTimeline'],
+    });
+  },
+
+  onShareAppMessage() {
+    return {
+      title: '欢乐记分馆',
+      path: '/pages/home/home',
+      imageUrl: SHARE_PROMO_IMAGE,
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: '欢乐记分馆',
+      query: '',
+      imageUrl: SHARE_PROMO_IMAGE,
+    };
   },
 });

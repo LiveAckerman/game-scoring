@@ -1,4 +1,5 @@
-export const API_BASE_URL = 'http://192.168.110.79:8040/api';
+export const API_BASE_URL = 'https://jf.leviackerman.site/api';
+// export const API_BASE_URL = 'http://192.168.110.79:8040/api';
 
 interface RequestOptions {
   url: string;
