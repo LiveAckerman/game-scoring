@@ -176,14 +176,11 @@ if ! command -v pm2 >/dev/null 2>&1; then
   npm install -g pm2
 fi
 
-echo "[remote] 启动/重载 PM2 应用: ${APP_NAME}"
+echo "[remote] 启动 PM2 应用: ${APP_NAME}"
 cd "${REMOTE_DIR}/current"
-PM2_STATUS=$(pm2 jlist 2>/dev/null | grep -o "\"name\":\"${APP_NAME}\"[^}]*\"status\":\"[^\"]*\"" | grep -o '"status":"[^"]*"' | head -1 || true)
-if echo "$PM2_STATUS" | grep -q 'errored\|stopped'; then
-  echo "[remote] 检测到 ${APP_NAME} 处于异常状态，先删除再重建"
-  pm2 delete "${APP_NAME}" 2>/dev/null || true
-fi
-APP_NAME="${APP_NAME}" APP_PORT="${APP_PORT}" pm2 startOrReload ecosystem.config.cjs --update-env
+echo "[remote] 先删除旧进程，确保 cwd 指向最新 release"
+pm2 delete "${APP_NAME}" 2>/dev/null || true
+APP_NAME="${APP_NAME}" APP_PORT="${APP_PORT}" pm2 start ecosystem.config.cjs --update-env
 pm2 save
 pm2 status "${APP_NAME}"
 
