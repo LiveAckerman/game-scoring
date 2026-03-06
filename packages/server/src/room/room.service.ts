@@ -274,6 +274,26 @@ export class RoomService {
       order: { id: 'ASC' },
     });
 
+    const histUserRefIds = members
+      .filter((m) => m.actorType === ROOM_ACTOR_TYPE.USER)
+      .map((m) => m.actorRefId);
+    if (histUserRefIds.length > 0) {
+      const uniqueIds = [...new Set(histUserRefIds)];
+      const latestUsers = await this.userRepository.find({
+        where: { id: In(uniqueIds) },
+      });
+      const userMap = new Map<number, User>();
+      latestUsers.forEach((u) => userMap.set(u.id, u));
+      for (const member of members) {
+        if (member.actorType !== ROOM_ACTOR_TYPE.USER) continue;
+        const user = userMap.get(member.actorRefId);
+        if (!user) continue;
+        member.nickname = user.nickname || member.nickname;
+        member.avatar = user.avatar || '';
+        member.avatarInitials = this.guestService.buildInitials(member.nickname);
+      }
+    }
+
     const roomMemberMap = new Map<number, RoomMember[]>();
     members.forEach((member) => {
       const roomMembers = roomMemberMap.get(member.roomId) || [];
@@ -1189,6 +1209,37 @@ export class RoomService {
       where: { roomId, isActive: true },
       order: { id: 'ASC' },
     });
+
+    const userRefIds = members
+      .filter((m) => m.actorType === ROOM_ACTOR_TYPE.USER)
+      .map((m) => m.actorRefId);
+
+    if (userRefIds.length > 0) {
+      const latestUsers = await this.userRepository.find({
+        where: { id: In(userRefIds) },
+      });
+      const userMap = new Map<number, User>();
+      latestUsers.forEach((u) => userMap.set(u.id, u));
+
+      for (const member of members) {
+        if (member.actorType !== ROOM_ACTOR_TYPE.USER) continue;
+        const user = userMap.get(member.actorRefId);
+        if (!user) continue;
+        const latestNickname = user.nickname || member.nickname;
+        const latestAvatar = user.avatar || '';
+        const latestInitials = this.guestService.buildInitials(latestNickname);
+        if (
+          member.nickname !== latestNickname ||
+          member.avatar !== latestAvatar ||
+          member.avatarInitials !== latestInitials
+        ) {
+          member.nickname = latestNickname;
+          member.avatar = latestAvatar;
+          member.avatarInitials = latestInitials;
+          await this.roomMemberRepository.save(member);
+        }
+      }
+    }
 
     const memberNameMap = new Map<number, string>();
     members.forEach((item) => {

@@ -1,6 +1,6 @@
 import { saveActorIdentity } from '../../utils/identity';
 import { buildRoomRealtimeUrl } from '../../utils/realtime';
-import { RequestError } from '../../utils/request';
+import { request, RequestError } from '../../utils/request';
 import { fontSizeBehavior } from '../../behaviors/font-size';
 import {
   addRoomScore,
@@ -89,6 +89,7 @@ Page({
 
   onShow() {
     (this as any)._applyFontSize();
+    this.refreshRoomState(true);
     this.connectRealtime();
   },
 
@@ -688,6 +689,7 @@ Page({
     wx.showLoading({ title: '开启中...' });
     try {
       const payload = await startPoolRound(this.data.roomId);
+      wx.hideLoading();
       if (payload.round) {
         this.setData({
           activePoolRound: {
@@ -702,9 +704,8 @@ Page({
         });
       }
     } catch (error) {
-      wx.showToast({ title: (error as RequestError).message || '开启失败', icon: 'none' });
-    } finally {
       wx.hideLoading();
+      wx.showToast({ title: (error as RequestError).message || '开启失败', icon: 'none' });
     }
   },
 
@@ -736,7 +737,7 @@ Page({
   async loadPoolRounds() {
     if (!this.data.roomId) return;
     try {
-      const res = await (await import('../../utils/request')).request<{ rounds: any[] }>({
+      const res = await request<{ rounds: any[] }>({
         url: `/rooms/${this.data.roomId}/pool/rounds`,
         method: 'GET',
       });

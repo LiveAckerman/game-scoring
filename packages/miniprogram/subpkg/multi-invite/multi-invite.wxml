@@ -137,7 +137,7 @@
           <text>{{pm.winRate || '0%'}}</text>
         </view>
       </view>
-      <view wx:for="{{poolRounds}}" wx:for-item="rd" wx:key="id" class="pool-stats-row">
+      <view wx:for="{{poolRounds}}" wx:for-item="rd" wx:key="id" class="pool-stats-row clickable" bindtap="goToRoundDetail" data-round-id="{{rd.id}}">
         <view class="pool-stats-cell label-cell">
           <text class="round-time">{{rd.timeText}}</text>
           <text>第{{rd.roundNumber}}圈</text>

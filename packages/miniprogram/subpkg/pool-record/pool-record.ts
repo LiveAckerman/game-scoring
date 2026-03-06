@@ -64,10 +64,15 @@ Page({
   },
 
   applyPayload(payload: PoolRoundPayload) {
-    const records: RecordView[] = (payload.records || []).map((r) => ({
-      ...r,
-      displayTime: this.formatTime(r.createdAt),
-    }));
+    const rawRecords = payload.records || [];
+    const records: RecordView[] = rawRecords
+      .slice()
+      .reverse()
+      .map((r, idx) => ({
+        ...r,
+        seq: rawRecords.length - idx,
+        displayTime: this.formatTime(r.createdAt),
+      }));
 
     const currentMember = payload.members.find((m) => m.id === payload.currentMemberId);
     const isSpectator = currentMember ? currentMember.isSpectator : false;

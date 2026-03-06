@@ -8,7 +8,7 @@ import { GuestModule } from './guest/guest.module';
 import { RoomModule } from './room/room.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { GuestUser } from './guest/entities/guest-user.entity';
-import { Room, RoomMember, RoomScoreRecord } from './room/entities';
+import { Room, RoomMember, RoomScoreRecord, PoolRound, PoolRecord } from './room/entities';
 
 @Module({
   imports: [
@@ -36,7 +36,7 @@ import { Room, RoomMember, RoomScoreRecord } from './room/entities';
               'DB_DATABASE',
               'happy_score_hall',
             ),
-            entities: [User, GuestUser, Room, RoomMember, RoomScoreRecord],
+            entities: [User, GuestUser, Room, RoomMember, RoomScoreRecord, PoolRound, PoolRecord],
             synchronize: true, // 开发环境自动同步，生产环境请关闭
             charset: 'utf8mb4',
           };
@@ -49,7 +49,7 @@ import { Room, RoomMember, RoomScoreRecord } from './room/entities';
             'DB_DATABASE',
             'happy_score_hall.sqlite',
           ),
-          entities: [User, GuestUser, Room, RoomMember, RoomScoreRecord],
+          entities: [User, GuestUser, Room, RoomMember, RoomScoreRecord, PoolRound, PoolRecord],
           synchronize: true,
         };
       },

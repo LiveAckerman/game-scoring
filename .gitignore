@@ -37,3 +37,5 @@ coverage/
 
 
 server.env
+
+server/uploads/
