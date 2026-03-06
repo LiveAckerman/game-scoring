@@ -640,3 +640,280 @@
   height: 26rpx;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f4a261'%3E%3Cpath d='M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-2.67 0-8 1.34-8 4v1h16v-1c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E");
 }
+
+/* ───────── 台板头像 ───────── */
+.table-icon {
+  background: #4caf50 !important;
+  border-color: #4caf50 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.table-icon-text {
+  color: #fff;
+  font-size: 44rpx;
+  font-weight: 700;
+}
+.spectator-tag {
+  position: absolute;
+  left: -6rpx;
+  top: -6rpx;
+  background: #e63946;
+  color: #fff;
+  font-size: 16rpx;
+  font-weight: 700;
+  padding: 2rpx 10rpx;
+  border-radius: 12rpx;
+  border: 2rpx solid #fff;
+  z-index: 2;
+}
+.player-card.spectator {
+  opacity: 0.7;
+}
+
+/* ───────── 分数池操作栏 ───────── */
+.pool-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+.pool-action-btn {
+  height: 64rpx;
+  line-height: 64rpx;
+  padding: 0 28rpx;
+  border-radius: 16rpx;
+  font-size: var(--fs-sm, 24rpx);
+  font-weight: 700;
+  text-align: center;
+}
+.pool-action-btn.outline {
+  border: 2rpx solid #333;
+  color: #333;
+  background: #fff;
+}
+.pool-action-btn.danger {
+  border: 2rpx solid #e63946;
+  color: #e63946;
+  background: #fff;
+}
+.pool-action-btn.disabled {
+  opacity: 0.4;
+}
+.pool-table-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  height: 64rpx;
+  padding: 0 20rpx;
+  border-radius: 16rpx;
+  border: 2rpx solid #ddd;
+  background: #fff;
+  font-size: var(--fs-sm, 24rpx);
+  font-weight: 700;
+  color: #333;
+}
+.toggle-track {
+  width: 72rpx;
+  height: 36rpx;
+  border-radius: 18rpx;
+  background: #ccc;
+  position: relative;
+  transition: background 0.2s;
+}
+.toggle-track.on {
+  background: #4caf50;
+}
+.toggle-thumb {
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 14rpx;
+  background: #fff;
+  position: absolute;
+  top: 4rpx;
+  left: 4rpx;
+  transition: left 0.2s;
+}
+.toggle-track.on .toggle-thumb {
+  left: 40rpx;
+}
+
+/* ───────── 底部操作栏 ───────── */
+.pool-bottom-bar {
+  padding: 16rpx 24rpx;
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+}
+.pool-bottom-btn {
+  height: 96rpx;
+  line-height: 96rpx;
+  background: #4caf50;
+  color: #fff;
+  border-radius: 48rpx;
+  text-align: center;
+  font-size: var(--fs-base, 28rpx);
+  font-weight: 700;
+}
+.pool-bottom-btn.active {
+  background: #4caf50;
+}
+
+/* ───────── 圈次统计表 ───────── */
+.pool-stats-card {
+  background: #fff;
+  border-radius: 20rpx;
+  margin-top: 16rpx;
+  padding: 16rpx 0;
+  border: 2rpx solid rgba(230, 57, 70, 0.1);
+  overflow-x: auto;
+}
+.pool-stats-head {
+  display: flex;
+  align-items: center;
+  border-bottom: 2rpx solid #f0f0f0;
+  padding: 8rpx 16rpx 12rpx;
+}
+.pool-stats-row {
+  display: flex;
+  align-items: center;
+  padding: 10rpx 16rpx;
+  border-bottom: 1rpx solid #f8f8f8;
+}
+.pool-stats-row:last-child { border-bottom: none; }
+.winrate-row { background: #fafafa; }
+.pool-stats-cell {
+  flex: 1;
+  min-width: 80rpx;
+  text-align: center;
+  font-size: var(--fs-sm, 24rpx);
+  color: #333;
+}
+.pool-stats-cell.head-cell {
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+}
+.pool-stats-cell.label-cell {
+  text-align: left;
+  font-weight: 600;
+  color: #666;
+  display: flex;
+  flex-direction: column;
+}
+.round-time {
+  font-size: var(--fs-xs, 20rpx);
+  color: #aaa;
+}
+.mini-avatar {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 28rpx;
+  border: 2rpx solid #ddd;
+}
+.mini-avatar-text {
+  background: linear-gradient(135deg, #f4a261, #e63946);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18rpx;
+  font-weight: 700;
+}
+.mini-table-icon {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 12rpx;
+  background: #4caf50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: var(--fs-base, 28rpx);
+  font-weight: 700;
+}
+
+/* ───────── 旁观者弹窗 ───────── */
+.spectator-modal {
+  width: 100%;
+  background: #fff;
+  border-radius: 26rpx;
+  padding: 28rpx;
+  box-sizing: border-box;
+}
+.spectator-title {
+  display: block;
+  font-size: var(--fs-lg, 34rpx);
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+  margin-bottom: 12rpx;
+}
+.spectator-desc {
+  display: block;
+  color: #9a9a9a;
+  font-size: var(--fs-sm, 24rpx);
+  margin-bottom: 24rpx;
+  line-height: 1.5;
+}
+.spectator-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24rpx;
+  justify-content: center;
+  margin-bottom: 24rpx;
+}
+.spectator-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  min-width: 100rpx;
+}
+.spectator-avatar-wrap {
+  position: relative;
+}
+.spectator-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 48rpx;
+  border: 4rpx solid #eee;
+}
+.spectator-avatar.table-icon {
+  border-radius: 16rpx;
+  background: #4caf50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-color: #4caf50;
+}
+.spectator-avatar-text {
+  background: linear-gradient(135deg, #f4a261, #e63946);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-sm, 24rpx);
+  font-weight: 700;
+}
+.spectator-badge {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(230, 57, 70, 0.85);
+  color: #fff;
+  font-size: 18rpx;
+  font-weight: 700;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+}
+.spectator-name {
+  font-size: var(--fs-xs, 20rpx);
+  color: #666;
+  max-width: 100rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

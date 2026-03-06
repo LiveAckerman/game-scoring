@@ -44,6 +44,10 @@
   background: #fff4e6;
   color: #e67e22;
 }
+.type-pool {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
 .score-count {
   font-size: var(--fs-xs, 20rpx);
   color: #aaa;

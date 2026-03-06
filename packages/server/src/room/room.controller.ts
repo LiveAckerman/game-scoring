@@ -18,6 +18,11 @@ import {
   JoinRoomDto,
   ListRoomHistoryQueryDto,
   TransferOwnerDto,
+  PoolGiveDto,
+  PoolTakeDto,
+  PoolTableTakeDto,
+  ToggleTableFeeDto,
+  SetSpectatorsDto,
 } from './dto';
 
 @ApiTags('房间')
@@ -115,5 +120,133 @@ export class RoomController {
     @Param('roomId', ParseIntPipe) roomId: number,
   ) {
     return this.roomService.hideInviteCard(req, roomId);
+  }
+
+  // ───────── 分数池 API ─────────
+
+  @Post(':roomId/pool/round')
+  @ApiOperation({ summary: '开启新的一圈（仅桌主）' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiResponse({ status: 201, description: '开启成功' })
+  startPoolRound(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+  ) {
+    return this.roomService.startPoolRound(req, roomId);
+  }
+
+  @Get(':roomId/pool/round/current')
+  @ApiOperation({ summary: '获取当前进行中的圈' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiResponse({ status: 200, description: '查询成功' })
+  getCurrentPoolRound(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+  ) {
+    return this.roomService.getCurrentPoolRound(req, roomId);
+  }
+
+  @Get(':roomId/pool/round/:roundId')
+  @ApiOperation({ summary: '获取指定圈信息' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiParam({ name: 'roundId', description: '圈ID' })
+  @ApiResponse({ status: 200, description: '查询成功' })
+  getPoolRound(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+    @Param('roundId', ParseIntPipe) roundId: number,
+  ) {
+    return this.roomService.getPoolRound(req, roomId, roundId);
+  }
+
+  @Get(':roomId/pool/rounds')
+  @ApiOperation({ summary: '获取所有圈摘要' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiResponse({ status: 200, description: '查询成功' })
+  getPoolRounds(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+  ) {
+    return this.roomService.getPoolRounds(req, roomId);
+  }
+
+  @Post(':roomId/pool/give')
+  @ApiOperation({ summary: '给分到分数池' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiBody({ type: PoolGiveDto })
+  @ApiResponse({ status: 200, description: '给分成功' })
+  poolGive(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+    @Body() dto: PoolGiveDto,
+  ) {
+    return this.roomService.poolGive(req, roomId, dto);
+  }
+
+  @Post(':roomId/pool/take')
+  @ApiOperation({ summary: '从分数池取分' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiBody({ type: PoolTakeDto })
+  @ApiResponse({ status: 200, description: '取分成功' })
+  poolTake(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+    @Body() dto: PoolTakeDto,
+  ) {
+    return this.roomService.poolTake(req, roomId, dto);
+  }
+
+  @Post(':roomId/pool/table-take')
+  @ApiOperation({ summary: '台板取分' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiBody({ type: PoolTableTakeDto })
+  @ApiResponse({ status: 200, description: '台板取分成功' })
+  poolTableTake(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+    @Body() dto: PoolTableTakeDto,
+  ) {
+    return this.roomService.poolTableTake(req, roomId, dto);
+  }
+
+  @Post(':roomId/pool/round/:roundId/end')
+  @ApiOperation({ summary: '结束本圈（仅桌主）' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiParam({ name: 'roundId', description: '圈ID' })
+  @ApiResponse({ status: 200, description: '结束成功' })
+  endPoolRound(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+    @Param('roundId', ParseIntPipe) roundId: number,
+  ) {
+    return this.roomService.endPoolRound(req, roomId, roundId);
+  }
+
+  // ───────── 台板 / 旁观者 API ─────────
+
+  @Post(':roomId/table-fee')
+  @ApiOperation({ summary: '开关台板（仅桌主）' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiBody({ type: ToggleTableFeeDto })
+  @ApiResponse({ status: 200, description: '操作成功' })
+  toggleTableFee(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+    @Body() dto: ToggleTableFeeDto,
+  ) {
+    return this.roomService.toggleTableFee(req, roomId, dto);
+  }
+
+  @Post(':roomId/spectators')
+  @ApiOperation({ summary: '设置旁观者（仅桌主）' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiBody({ type: SetSpectatorsDto })
+  @ApiResponse({ status: 200, description: '设置成功' })
+  setSpectators(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+    @Body() dto: SetSpectatorsDto,
+  ) {
+    return this.roomService.setSpectators(req, roomId, dto);
   }
 }

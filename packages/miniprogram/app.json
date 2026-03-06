@@ -12,7 +12,8 @@
         "multi-invite/multi-invite",
         "profile-edit/profile-edit",
         "leaderboard/leaderboard",
-        "single-score/single-score"
+        "single-score/single-score",
+        "pool-record/pool-record"
       ]
     }
   ],

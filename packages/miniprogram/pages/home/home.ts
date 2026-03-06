@@ -475,8 +475,46 @@ Page({
     }
   },
 
-  startPoolMode() {
-    wx.showToast({ title: '分数池功能开发中', icon: 'none' });
+  async startPoolMode() {
+    if (this.data.creatingRoom) {
+      return;
+    }
+
+    const hasIdentity = Boolean(getAccessToken() || getGuestToken());
+    let guestNickname: string | undefined;
+
+    if (!hasIdentity) {
+      const inputNickname = await this.openInputDialog({
+        title: '游客昵称',
+        tip: '创建分数池房间前，请先输入昵称',
+        placeholder: '请输入昵称',
+        confirmText: '继续',
+        required: true,
+      });
+      if (!inputNickname) {
+        return;
+      }
+      guestNickname = inputNickname;
+    }
+
+    this.setData({ creatingRoom: true });
+    wx.showLoading({ title: '创建房间中...' });
+
+    try {
+      const payload = await createRoom(guestNickname, '分数池', 'POOL');
+      saveActorIdentity(payload.actor);
+      wx.navigateTo({
+        url: `/subpkg/multi-invite/multi-invite?roomCode=${payload.room.roomCode}`,
+      });
+    } catch (error) {
+      wx.showToast({
+        title: (error as RequestError).message || '创建房间失败',
+        icon: 'none',
+      });
+    } finally {
+      wx.hideLoading();
+      this.setData({ creatingRoom: false });
+    }
   },
 
   viewAllRecords() {
@@ -491,9 +529,12 @@ Page({
       return;
     }
 
-    const page = roomType === 'SINGLE'
-      ? `/subpkg/single-score/single-score?roomCode=${roomCode}`
-      : `/subpkg/multi-invite/multi-invite?roomCode=${roomCode}`;
+    let page: string;
+    if (roomType === 'SINGLE') {
+      page = `/subpkg/single-score/single-score?roomCode=${roomCode}`;
+    } else {
+      page = `/subpkg/multi-invite/multi-invite?roomCode=${roomCode}`;
+    }
 
     wx.navigateTo({ url: page });
   },

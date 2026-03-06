@@ -4,3 +4,8 @@ export * from './add-score.dto';
 export * from './add-member.dto';
 export * from './transfer-owner.dto';
 export * from './list-room-history-query.dto';
+export * from './pool-give.dto';
+export * from './pool-take.dto';
+export * from './pool-table-take.dto';
+export * from './toggle-table-fee.dto';
+export * from './set-spectators.dto';

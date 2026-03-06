@@ -18,7 +18,7 @@ export class CreateRoomDto {
   })
   @IsOptional()
   @IsString()
-  @IsIn(['MULTI', 'SINGLE'])
+  @IsIn(['MULTI', 'SINGLE', 'POOL'])
   roomType?: string;
 
   @ApiProperty({

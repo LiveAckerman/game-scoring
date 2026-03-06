@@ -1,0 +1,79 @@
+<page-meta page-style="{{pageFontStyle}}" />
+<view class="pool-record-page">
+  <!-- 顶部操作栏 -->
+  <view class="top-bar" wx:if="{{round && round.status === 'IN_PROGRESS'}}">
+    <view wx:if="{{tableFeeEnabled && isOwner}}" class="top-btn table-take-btn" bindtap="handleTableTake">台板取分</view>
+    <view wx:if="{{isOwner}}" class="top-btn end-round-btn" bindtap="handleEndRound">结束本圈</view>
+  </view>
+
+  <!-- 圈次信息 -->
+  <view class="round-info">
+    <text wx:if="{{round}}" class="round-title">第{{round.roundNumber}}圈 | 分数池总分：</text>
+    <text wx:if="{{round}}" class="round-balance">{{round.poolBalance}}</text>
+    <text wx:if="{{round}}" class="round-unit">分</text>
+    <text wx:if="{{!round}}" class="round-title">暂无进行中的圈</text>
+  </view>
+
+  <!-- 圈结束提示 -->
+  <view wx:if="{{round && round.status === 'ENDED'}}" class="round-ended-tip">
+    <text>本圈计分已结束</text>
+    <view class="back-btn" bindtap="goBack">返回牌桌</view>
+  </view>
+
+  <!-- 记录列表 -->
+  <scroll-view class="records-list" scroll-y>
+    <view wx:for="{{records}}" wx:key="id" class="record-card">
+      <view class="record-header">
+        <text class="record-seq">{{item.seq}}</text>
+        <text class="record-time">{{item.displayTime}}</text>
+      </view>
+      <view class="record-body">
+        <view class="record-actor">
+          <view wx:if="{{item.memberActorType === 'VIRTUAL' && item.memberNickname === '台板'}}" class="record-avatar table-icon-sm">
+            <text>台</text>
+          </view>
+          <image wx:elif="{{item.memberAvatar}}" class="record-avatar" src="{{item.memberAvatar}}" mode="aspectFill" />
+          <view wx:else class="record-avatar record-avatar-text"><text>{{item.memberAvatarInitials}}</text></view>
+          <text class="record-nickname">{{item.memberNickname}}</text>
+        </view>
+        <text class="record-type {{item.type === 'TAKE' ? 'take' : 'give'}}">{{item.type === 'GIVE' ? '给分' : '取分'}}</text>
+        <view class="record-points-wrap">
+          <text class="record-points">{{item.points}}</text>
+          <text class="record-points-unit">分</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{records.length === 0}}" class="empty-records">暂无记录</view>
+    <view wx:if="{{records.length > 0}}" class="records-end">已加载全部记录</view>
+  </scroll-view>
+
+  <!-- 底部操作按钮（仅非旁观者可见 & 圈进行中） -->
+  <view wx:if="{{round && round.status === 'IN_PROGRESS' && !isSpectator}}" class="bottom-bar">
+    <view class="bottom-btn take-btn" bindtap="openTakeDialog">从分数池<text class="bold">取分</text></view>
+    <view class="bottom-btn give-btn" bindtap="openGiveDialog">
+      <text class="bold">给分</text>到分数池
+    </view>
+  </view>
+
+  <!-- 给分/取分弹窗 -->
+  <view wx:if="{{pointsDialogVisible}}" class="dialog-mask" bindtap="closePointsDialog">
+    <view class="dialog-modal" catchtap="noop">
+      <text class="dialog-title">{{pointsDialogTitle}}</text>
+      <text class="dialog-desc">请输入分值</text>
+      <input
+        class="dialog-input"
+        type="number"
+        maxlength="6"
+        value="{{pointsDialogValue}}"
+        focus="{{pointsDialogVisible}}"
+        placeholder="请输入分值"
+        bindinput="onPointsInput"
+      />
+      <view class="dialog-actions">
+        <button class="dialog-btn ghost" bindtap="closePointsDialog">取消</button>
+        <button class="dialog-btn" bindtap="confirmPoints">确认</button>
+      </view>
+    </view>
+  </view>
+</view>

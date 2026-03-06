@@ -1,8 +1,8 @@
 import { request } from './request';
 
 export type RoomStatus = 'IN_PROGRESS' | 'ENDED';
-export type RoomType = 'MULTI' | 'SINGLE';
-export type RoomActorType = 'USER' | 'GUEST';
+export type RoomType = 'MULTI' | 'SINGLE' | 'POOL';
+export type RoomActorType = 'USER' | 'GUEST' | 'VIRTUAL';
 
 export interface RoomMember {
   id: number;
@@ -15,6 +15,7 @@ export interface RoomMember {
   avatarInitials: string;
   score: number;
   inviteCardHidden: boolean;
+  isSpectator: boolean;
   joinedAt: string;
 }
 
@@ -29,6 +30,13 @@ export interface RoomScoreRecord {
   createdAt: string;
 }
 
+export interface ActivePoolRound {
+  id: number;
+  roundNumber: number;
+  poolBalance: number;
+  status: 'IN_PROGRESS' | 'ENDED';
+}
+
 export interface RoomData {
   id: number;
   roomCode: string;
@@ -36,6 +44,8 @@ export interface RoomData {
   roomType: RoomType;
   status: RoomStatus;
   ownerMemberId: number | null;
+  tableFeeEnabled: boolean;
+  activePoolRound: ActivePoolRound | null;
   members: RoomMember[];
   scoreRecords: RoomScoreRecord[];
   createdAt: string;
@@ -245,5 +255,115 @@ export const getRoomHistory = (params?: {
   return request<RoomHistoryPayload>({
     url: `/rooms/history?page=${page}&pageSize=${pageSize}&status=${status}`,
     method: 'GET',
+  });
+};
+
+// ───────── 分数池 API ─────────
+
+export interface PoolRoundRecord {
+  id: number;
+  seq: number;
+  memberId: number;
+  memberNickname: string;
+  memberAvatar: string;
+  memberAvatarInitials: string;
+  memberActorType: string;
+  type: 'GIVE' | 'TAKE';
+  points: number;
+  createdAt: string;
+}
+
+export interface PoolRoundMember {
+  id: number;
+  nickname: string;
+  avatar: string;
+  avatarInitials: string;
+  actorType: string;
+  score: number;
+  isSpectator: boolean;
+  isOwner: boolean;
+}
+
+export interface PoolRoundPayload {
+  round: {
+    id: number;
+    roundNumber: number;
+    poolBalance: number;
+    status: 'IN_PROGRESS' | 'ENDED';
+    createdAt: string;
+    endedAt: string | null;
+  } | null;
+  records: PoolRoundRecord[];
+  members: PoolRoundMember[];
+  currentMemberId: number | null;
+  isOwner: boolean;
+  tableFeeEnabled: boolean;
+}
+
+export const startPoolRound = (roomId: number): Promise<PoolRoundPayload> => {
+  return request<PoolRoundPayload>({
+    url: `/rooms/${roomId}/pool/round`,
+    method: 'POST',
+  });
+};
+
+export const getCurrentPoolRound = (roomId: number): Promise<PoolRoundPayload> => {
+  return request<PoolRoundPayload>({
+    url: `/rooms/${roomId}/pool/round/current`,
+    method: 'GET',
+  });
+};
+
+export const getPoolRound = (roomId: number, roundId: number): Promise<PoolRoundPayload> => {
+  return request<PoolRoundPayload>({
+    url: `/rooms/${roomId}/pool/round/${roundId}`,
+    method: 'GET',
+  });
+};
+
+export const poolGive = (roomId: number, points: number): Promise<PoolRoundPayload> => {
+  return request<PoolRoundPayload>({
+    url: `/rooms/${roomId}/pool/give`,
+    method: 'POST',
+    data: { points },
+  });
+};
+
+export const poolTake = (roomId: number, points: number): Promise<PoolRoundPayload> => {
+  return request<PoolRoundPayload>({
+    url: `/rooms/${roomId}/pool/take`,
+    method: 'POST',
+    data: { points },
+  });
+};
+
+export const poolTableTake = (roomId: number, points: number): Promise<PoolRoundPayload> => {
+  return request<PoolRoundPayload>({
+    url: `/rooms/${roomId}/pool/table-take`,
+    method: 'POST',
+    data: { points },
+  });
+};
+
+export const endPoolRound = (roomId: number, roundId: number): Promise<PoolRoundPayload> => {
+  return request<PoolRoundPayload>({
+    url: `/rooms/${roomId}/pool/round/${roundId}/end`,
+    method: 'POST',
+  });
+};
+
+export const toggleTableFee = (roomId: number, enabled: boolean): Promise<RoomPayload> => {
+  return request<RoomPayload>({
+    url: `/rooms/${roomId}/table-fee`,
+    method: 'POST',
+    data: { enabled },
+  });
+};
+
+export const setSpectators = (roomId: number, memberIds: number[]): Promise<RoomPayload> => {
+  return request<RoomPayload>({
+    url: `/rooms/${roomId}/spectators`,
+    method: 'POST',
+    data: { memberIds },
   });
 };

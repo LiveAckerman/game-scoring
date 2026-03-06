@@ -5,7 +5,7 @@ export interface GuestProfile {
 }
 
 export interface ActorPayload {
-  type: 'USER' | 'GUEST';
+  type: 'USER' | 'GUEST' | 'VIRTUAL';
   id: number;
   nickname: string;
   avatarInitials: string;

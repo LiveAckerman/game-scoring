@@ -92,13 +92,11 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 STAGE_DIR="${TMP_DIR}/server"
 mkdir -p "$STAGE_DIR"
 
-echo "==> 本地生成 package-lock.json（加速远端安装）"
-(cd "$SERVER_DIR" && npm install --package-lock-only --ignore-scripts 2>/dev/null || true)
+echo "==> 准备构建产物"
 
 echo "==> 准备发布包"
 rsync -a --delete "$SERVER_DIR/dist/" "$STAGE_DIR/dist/"
 cp "$SERVER_DIR/package.json" "$STAGE_DIR/package.json"
-[[ -f "$SERVER_DIR/package-lock.json" ]] && cp "$SERVER_DIR/package-lock.json" "$STAGE_DIR/package-lock.json"
 cp "$SERVER_DIR/ecosystem.config.cjs" "$STAGE_DIR/ecosystem.config.cjs"
 
 if [[ "$COPY_ENV" == "1" ]]; then
@@ -154,8 +152,8 @@ elif [[ -d "${REMOTE_DIR}/current/node_modules" ]]; then
 fi
 
 echo "[remote] 安装生产依赖（增量安装，仅补差异包）"
+rm -f package-lock.json
 INSTALL_START=$(date +%s)
-# 使用 npm install（非 npm ci），保留已有 node_modules，只安装差异
 npm install --omit=dev --no-audit --no-fund --loglevel="${REMOTE_NPM_LOGLEVEL}" 2>&1
 INSTALL_END=$(date +%s)
 echo "[remote] 依赖安装完成，耗时 $((INSTALL_END - INSTALL_START))s"
@@ -180,6 +178,11 @@ fi
 
 echo "[remote] 启动/重载 PM2 应用: ${APP_NAME}"
 cd "${REMOTE_DIR}/current"
+PM2_STATUS=$(pm2 jlist 2>/dev/null | grep -o "\"name\":\"${APP_NAME}\"[^}]*\"status\":\"[^\"]*\"" | grep -o '"status":"[^"]*"' | head -1 || true)
+if echo "$PM2_STATUS" | grep -q 'errored\|stopped'; then
+  echo "[remote] 检测到 ${APP_NAME} 处于异常状态，先删除再重建"
+  pm2 delete "${APP_NAME}" 2>/dev/null || true
+fi
 APP_NAME="${APP_NAME}" APP_PORT="${APP_PORT}" pm2 startOrReload ecosystem.config.cjs --update-env
 pm2 save
 pm2 status "${APP_NAME}"

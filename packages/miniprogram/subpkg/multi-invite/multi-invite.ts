@@ -11,6 +11,10 @@ import {
   RoomPayload,
   RoomScoreRecord,
   transferRoomOwner,
+  toggleTableFee,
+  setSpectators,
+  startPoolRound,
+  getPoolRound,
 } from '../../utils/room';
 
 interface RoomScoreRecordView extends RoomScoreRecord {
@@ -63,6 +67,14 @@ Page({
     scoreTargetMemberId: 0,
     scoreTargetName: '',
     scoreValue: '',
+    isPoolMode: false,
+    tableFeeEnabled: false,
+    activePoolRound: null as { id: number; roundNumber: number; poolBalance: number; status: string } | null,
+    poolRounds: [] as any[],
+    poolStatsMembers: [] as any[],
+    spectatorDialogVisible: false,
+    spectatorCandidates: [] as any[],
+    roomType: 'MULTI' as string,
   },
 
   onLoad(options: Record<string, string | undefined>) {
@@ -146,6 +158,11 @@ Page({
 
     if (action === 'end') {
       this.handleEndRoom();
+      return;
+    }
+
+    if (action === 'manage') {
+      this.openSpectatorDialog();
       return;
     }
 
@@ -377,6 +394,7 @@ Page({
     saveActorIdentity(payload.actor);
 
     const currentMemberId = payload.currentMemberId || 0;
+    const isPoolMode = payload.room.roomType === 'POOL';
     const sortedMembers = this.sortMembersForView(
       payload.room.members,
       currentMemberId,
@@ -397,12 +415,13 @@ Page({
       ? Boolean(currentMember.inviteCardHidden)
       : false;
     const showInlineInviteCard =
-      sortedMembers.length === 1 && !inviteCardHiddenBySelf;
+      !isPoolMode && sortedMembers.length === 1 && !inviteCardHiddenBySelf;
 
     this.setData({
       roomId: payload.room.id,
       roomCode: payload.room.roomCode,
       roomStatus: payload.room.status,
+      roomType: payload.room.roomType,
       topBarTitle: `桌号：${payload.room.roomCode}`,
       codeDigits: Array.from({ length: ROOM_CODE_LENGTH }, (_, index) => {
         return payload.room.roomCode[index] || '';
@@ -413,7 +432,14 @@ Page({
       isOwner: payload.room.ownerMemberId === currentMemberId,
       inviteCardHiddenBySelf,
       showInlineInviteCard,
+      isPoolMode,
+      tableFeeEnabled: payload.room.tableFeeEnabled || false,
+      activePoolRound: (payload.room as any).activePoolRound || null,
     });
+
+    if (isPoolMode) {
+      this.loadPoolRounds();
+    }
   },
 
   sortMembersForView(
@@ -650,6 +676,171 @@ Page({
           this.handleRealtimeRoomUpdated();
         }
       });
+  },
+
+  // ───────── 分数池功能 ─────────
+
+  async handleStartPoolRound() {
+    if (!this.data.isOwner) {
+      wx.showToast({ title: '只有桌主可以开启新圈', icon: 'none' });
+      return;
+    }
+    wx.showLoading({ title: '开启中...' });
+    try {
+      const payload = await startPoolRound(this.data.roomId);
+      if (payload.round) {
+        this.setData({
+          activePoolRound: {
+            id: payload.round.id,
+            roundNumber: payload.round.roundNumber,
+            poolBalance: payload.round.poolBalance,
+            status: payload.round.status,
+          },
+        });
+        wx.navigateTo({
+          url: `/subpkg/pool-record/pool-record?roomId=${this.data.roomId}&roundId=${payload.round.id}`,
+        });
+      }
+    } catch (error) {
+      wx.showToast({ title: (error as RequestError).message || '开启失败', icon: 'none' });
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
+  goToPoolRecord() {
+    const round = this.data.activePoolRound;
+    if (!round) return;
+    wx.navigateTo({
+      url: `/subpkg/pool-record/pool-record?roomId=${this.data.roomId}&roundId=${round.id}`,
+    });
+  },
+
+  async handleToggleTableFee() {
+    if (!this.data.isOwner) {
+      wx.showToast({ title: '只有桌主可以操作台板', icon: 'none' });
+      return;
+    }
+    const newEnabled = !this.data.tableFeeEnabled;
+    wx.showLoading({ title: '处理中...' });
+    try {
+      const payload = await toggleTableFee(this.data.roomId, newEnabled);
+      this.applyRoomPayload(payload);
+    } catch (error) {
+      wx.showToast({ title: (error as RequestError).message || '操作失败', icon: 'none' });
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
+  async loadPoolRounds() {
+    if (!this.data.roomId) return;
+    try {
+      const res = await (await import('../../utils/request')).request<{ rounds: any[] }>({
+        url: `/rooms/${this.data.roomId}/pool/rounds`,
+        method: 'GET',
+      });
+
+      const members = this.data.members;
+      const activeMemberIds = members.filter((m: any) => !m.isSpectator).map((m: any) => m.id);
+      const poolStatsMembers = members
+        .filter((m: any) => activeMemberIds.indexOf(m.id) >= 0)
+        .map((m: any) => {
+          const totalRounds = res.rounds.length;
+          const wonRounds = res.rounds.filter((rd: any) => {
+            const sc = rd.memberScores.find((s: any) => s.memberId === m.id);
+            return sc && sc.score > 0;
+          }).length;
+          return {
+            id: m.id,
+            nickname: m.nickname,
+            avatar: m.avatar,
+            avatarInitials: m.avatarInitials,
+            actorType: m.actorType || 'USER',
+            winRate: totalRounds > 0 ? Math.round((wonRounds / totalRounds) * 100) + '%' : '0%',
+          };
+        });
+
+      const poolRounds = res.rounds.map((rd: any) => {
+        const memberScoreMap: Record<number, number> = {};
+        rd.memberScores.forEach((s: any) => {
+          memberScoreMap[s.memberId] = s.score;
+        });
+        const createdAt = new Date(rd.createdAt);
+        const h = createdAt.getHours();
+        const min = createdAt.getMinutes();
+        const sec = createdAt.getSeconds();
+        const timeText = `${h < 10 ? '0' + h : h}:${min < 10 ? '0' + min : min}:${sec < 10 ? '0' + sec : sec}`;
+        return {
+          id: rd.id,
+          roundNumber: rd.roundNumber,
+          poolBalance: rd.poolBalance,
+          status: rd.status,
+          timeText,
+          memberScoreMap,
+        };
+      });
+
+      this.setData({ poolRounds, poolStatsMembers });
+    } catch (error) {
+      // silent
+    }
+  },
+
+  // ───────── 旁观者功能 ─────────
+
+  openSpectatorDialog() {
+    if (!this.data.isOwner) {
+      wx.showToast({ title: '只有桌主可以管理旁观者', icon: 'none' });
+      return;
+    }
+    const candidates = this.data.members.map((m: any) => ({
+      id: m.id,
+      nickname: m.nickname,
+      avatar: m.avatar,
+      avatarInitials: m.avatarInitials,
+      actorType: m.actorType || 'USER',
+      isSpectatorSelected: Boolean(m.isSpectator),
+      isOwner: m.isOwner,
+    }));
+
+    this.setData({
+      spectatorDialogVisible: true,
+      spectatorCandidates: candidates,
+    });
+  },
+
+  closeSpectatorDialog() {
+    this.setData({ spectatorDialogVisible: false });
+  },
+
+  toggleSpectatorCandidate(e: any) {
+    const memberId = Number(e.currentTarget.dataset.memberId || 0);
+    const candidates = this.data.spectatorCandidates.map((c: any) => {
+      if (c.id === memberId && !c.isOwner) {
+        return { ...c, isSpectatorSelected: !c.isSpectatorSelected };
+      }
+      return c;
+    });
+    this.setData({ spectatorCandidates: candidates });
+  },
+
+  async confirmSpectators() {
+    const spectatorIds = this.data.spectatorCandidates
+      .filter((c: any) => c.isSpectatorSelected)
+      .map((c: any) => c.id);
+
+    wx.showLoading({ title: '设置中...' });
+    try {
+      const payload = await setSpectators(this.data.roomId, spectatorIds);
+      this.applyRoomPayload(payload);
+      this.closeSpectatorDialog();
+      wx.showToast({ title: '设置成功', icon: 'success' });
+    } catch (error) {
+      wx.showToast({ title: (error as RequestError).message || '设置失败', icon: 'none' });
+    } finally {
+      wx.hideLoading();
+    }
   },
 
   formatTime(dateText: string): string {

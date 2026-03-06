@@ -2,7 +2,7 @@
   <view class="card-head">
     <view class="head-left">
       <text class="room-code">桌号 {{roomCode}}</text>
-      <text class="type-tag {{roomType === 'SINGLE' ? 'type-single' : 'type-multi'}}">{{roomType === 'SINGLE' ? '单人' : '多人'}}</text>
+      <text class="type-tag {{roomType === 'SINGLE' ? 'type-single' : (roomType === 'POOL' ? 'type-pool' : 'type-multi')}}">{{roomType === 'SINGLE' ? '单人' : (roomType === 'POOL' ? '池模式' : '多人')}}</text>
     </view>
     <view class="head-right">
       <text wx:if="{{scoreCount >= 0}}" class="score-count">{{scoreCount}}笔</text>

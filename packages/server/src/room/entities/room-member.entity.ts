@@ -75,6 +75,10 @@ export class RoomMember {
   @Column({ default: false })
   inviteCardHidden: boolean;
 
+  @ApiProperty({ description: '是否为旁观者' })
+  @Column({ default: false })
+  isSpectator: boolean;
+
   @ApiProperty({ description: '是否在线' })
   @Column({ default: true })
   isActive: boolean;

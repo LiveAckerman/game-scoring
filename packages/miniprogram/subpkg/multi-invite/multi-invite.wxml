@@ -5,17 +5,26 @@
   <common-top-bar title="{{topBarTitle}}" bind:back="goBack" />
 
   <scroll-view class="content" scroll-y>
-    <view class="action-strip-wrap">
+    <!-- 分数池模式操作栏 -->
+    <view wx:if="{{isPoolMode}}" class="pool-action-bar">
+      <view class="pool-action-btn outline" bindtap="onActionTap" data-action="manage">牌桌管理</view>
+      <view class="pool-table-toggle" bindtap="handleToggleTableFee">
+        <text>台板</text>
+        <view class="toggle-track {{tableFeeEnabled ? 'on' : ''}}">
+          <view class="toggle-thumb"></view>
+        </view>
+      </view>
+      <view class="pool-action-btn danger {{!isOwner ? 'disabled' : ''}}" bindtap="onActionTap" data-action="end">结束本桌</view>
+    </view>
+
+    <!-- 多人模式操作栏 -->
+    <view wx:else class="action-strip-wrap">
       <view class="action-strip-shadow"></view>
       <view class="action-strip">
         <view class="action-item" bindtap="onActionTap" data-action="invite">
           <view class="action-icon"><view class="icon icon-invite"></view></view>
           <text>邀请</text>
         </view>
-        <!-- <view class="action-item" bindtap="onActionTap" data-action="detail">
-          <view class="action-icon"><view class="icon icon-detail"></view></view>
-          <text>明细</text>
-        </view> -->
         <view class="action-item" bindtap="onActionTap" data-action="settings">
           <view class="action-icon"><view class="icon icon-settings"></view></view>
           <text>设置</text>
@@ -61,12 +70,16 @@
       <view
         wx:for="{{members}}"
         wx:key="id"
-        class="player-card {{item.id === currentMemberId ? 'self' : ''}}"
+        class="player-card {{item.id === currentMemberId ? 'self' : ''}} {{item.isSpectator ? 'spectator' : ''}}"
       >
         <view class="avatar-wrap">
-          <image wx:if="{{item.avatar}}" class="avatar" src="{{item.avatar}}" mode="aspectFill" />
+          <view wx:if="{{item.actorType === 'VIRTUAL' && item.nickname === '台板'}}" class="avatar table-icon">
+            <text class="table-icon-text">台</text>
+          </view>
+          <image wx:elif="{{item.avatar}}" class="avatar" src="{{item.avatar}}" mode="aspectFill" />
           <view wx:else class="avatar avatar-text"><text>{{item.avatarInitials || '游客'}}</text></view>
           <text wx:if="{{item.isOwner}}" class="host-tag">桌主</text>
+          <text wx:if="{{item.isSpectator}}" class="spectator-tag">旁观</text>
         </view>
 
         <view class="player-info">
@@ -74,7 +87,7 @@
             <text class="player-name">{{item.nickname}}</text>
             <text wx:if="{{item.id === currentMemberId}}" class="self-tag">我</text>
           </view>
-          <text class="player-desc">{{item.isOwner ? '房间管理员' : '普通玩家'}}</text>
+          <text class="player-desc">{{item.isOwner ? '房间管理员' : (item.isSpectator ? '旁观者' : '普通玩家')}}</text>
         </view>
 
         <view class="score-wrap">
@@ -82,7 +95,7 @@
           <text class="score-label">积分</text>
         </view>
 
-        <view class="member-actions" wx:if="{{item.id !== currentMemberId}}">
+        <view class="member-actions" wx:if="{{!isPoolMode && item.id !== currentMemberId && !item.isSpectator}}">
           <view
             class="tiny-btn give-btn"
             bindtap="openScoreDialog"
@@ -106,7 +119,37 @@
       </view>
     </view>
 
-    <view class="records-card">
+    <!-- 分数池模式：圈次统计表 -->
+    <view wx:if="{{isPoolMode && poolRounds.length > 0}}" class="pool-stats-card">
+      <view class="pool-stats-head">
+        <view class="pool-stats-cell head-cell">圈数</view>
+        <view wx:for="{{poolStatsMembers}}" wx:for-item="pm" wx:key="id" class="pool-stats-cell head-cell">
+          <view wx:if="{{pm.actorType === 'VIRTUAL' && pm.nickname === '台板'}}" class="mini-table-icon">
+            <text>台</text>
+          </view>
+          <image wx:elif="{{pm.avatar}}" class="mini-avatar" src="{{pm.avatar}}" mode="aspectFill" />
+          <view wx:else class="mini-avatar mini-avatar-text"><text>{{pm.avatarInitials}}</text></view>
+        </view>
+      </view>
+      <view class="pool-stats-row winrate-row">
+        <view class="pool-stats-cell label-cell">胜率</view>
+        <view wx:for="{{poolStatsMembers}}" wx:for-item="pm" wx:key="id" class="pool-stats-cell">
+          <text>{{pm.winRate || '0%'}}</text>
+        </view>
+      </view>
+      <view wx:for="{{poolRounds}}" wx:for-item="rd" wx:key="id" class="pool-stats-row">
+        <view class="pool-stats-cell label-cell">
+          <text class="round-time">{{rd.timeText}}</text>
+          <text>第{{rd.roundNumber}}圈</text>
+        </view>
+        <view wx:for="{{poolStatsMembers}}" wx:for-item="pm" wx:key="id" class="pool-stats-cell">
+          <text>{{rd.memberScoreMap[pm.id] || '-'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 多人模式：记分明细 -->
+    <view wx:if="{{!isPoolMode}}" class="records-card">
       <view class="records-head">
         <text>记分明细</text>
       </view>
@@ -123,6 +166,16 @@
       </view>
     </view>
   </scroll-view>
+
+  <!-- 分数池模式：底部按钮 -->
+  <view wx:if="{{isPoolMode && roomStatus === 'IN_PROGRESS'}}" class="pool-bottom-bar">
+    <view wx:if="{{activePoolRound}}" class="pool-bottom-btn active" bindtap="goToPoolRecord">
+      第 {{activePoolRound.roundNumber}} 圈正在记录中，点击进入
+    </view>
+    <view wx:elif="{{isOwner}}" class="pool-bottom-btn" bindtap="handleStartPoolRound">
+      开启新的一圈
+    </view>
+  </view>
 
   <common-dialog
     visible="{{invitePopupVisible}}"
@@ -165,6 +218,37 @@
       <view class="modal-actions">
         <button class="modal-btn ghost" bindtap="closeScoreDialog">取消</button>
         <button class="modal-btn" bindtap="confirmScore">确认</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 旁观者设置弹窗 -->
+  <view wx:if="{{spectatorDialogVisible}}" class="score-mask" bindtap="closeSpectatorDialog">
+    <view class="spectator-modal" catchtap="noop">
+      <text class="spectator-title">旁观者设置</text>
+      <text class="spectator-desc">旁观者不参与计分，仅可查看牌桌数据，点击头像可设置或取消旁观</text>
+      <view class="spectator-list">
+        <view
+          wx:for="{{spectatorCandidates}}"
+          wx:key="id"
+          class="spectator-item"
+          bindtap="toggleSpectatorCandidate"
+          data-member-id="{{item.id}}"
+        >
+          <view class="spectator-avatar-wrap">
+            <view wx:if="{{item.actorType === 'VIRTUAL' && item.nickname === '台板'}}" class="spectator-avatar table-icon">
+              <text class="table-icon-text">台</text>
+            </view>
+            <image wx:elif="{{item.avatar}}" class="spectator-avatar" src="{{item.avatar}}" mode="aspectFill" />
+            <view wx:else class="spectator-avatar spectator-avatar-text"><text>{{item.avatarInitials}}</text></view>
+            <text wx:if="{{item.isSpectatorSelected}}" class="spectator-badge">旁观</text>
+          </view>
+          <text class="spectator-name">{{item.nickname}}</text>
+        </view>
+      </view>
+      <view class="modal-actions">
+        <button class="modal-btn ghost" bindtap="closeSpectatorDialog">取消</button>
+        <button class="modal-btn" bindtap="confirmSpectators">确定</button>
       </view>
     </view>
   </view>

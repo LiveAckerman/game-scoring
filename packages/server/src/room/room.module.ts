@@ -7,11 +7,11 @@ import { User } from '../user/entities/user.entity';
 import { GuestUser } from '../guest/entities/guest-user.entity';
 import { RoomController } from './room.controller';
 import { RoomService } from './room.service';
-import { Room, RoomMember, RoomScoreRecord } from './entities';
+import { Room, RoomMember, RoomScoreRecord, PoolRound, PoolRecord } from './entities';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Room, RoomMember, RoomScoreRecord, User, GuestUser]),
+    TypeOrmModule.forFeature([Room, RoomMember, RoomScoreRecord, PoolRound, PoolRecord, User, GuestUser]),
     AuthModule,
     GuestModule,
     RealtimeModule,

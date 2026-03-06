@@ -1,0 +1,283 @@
+.pool-record-page {
+  min-height: 100vh;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ───────── 顶部操作栏 ───────── */
+.top-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12rpx;
+  padding: 16rpx 24rpx 0;
+}
+.top-btn {
+  height: 56rpx;
+  line-height: 56rpx;
+  padding: 0 24rpx;
+  border-radius: 12rpx;
+  font-size: var(--fs-sm, 24rpx);
+  font-weight: 700;
+}
+.table-take-btn {
+  border: 2rpx solid #4caf50;
+  color: #4caf50;
+  background: #fff;
+}
+.end-round-btn {
+  border: 2rpx solid #e63946;
+  color: #e63946;
+  background: #fff;
+}
+
+/* ───────── 圈次信息 ───────── */
+.round-info {
+  display: flex;
+  align-items: baseline;
+  padding: 20rpx 24rpx 12rpx;
+}
+.round-title {
+  font-size: var(--fs-base, 28rpx);
+  color: #333;
+  font-weight: 600;
+}
+.round-balance {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #e63946;
+  margin-left: 8rpx;
+}
+.round-unit {
+  font-size: var(--fs-sm, 24rpx);
+  color: #e63946;
+  margin-left: 4rpx;
+}
+
+/* ───────── 圈结束提示 ───────── */
+.round-ended-tip {
+  text-align: center;
+  padding: 24rpx;
+  color: #888;
+  font-size: var(--fs-base, 28rpx);
+}
+.back-btn {
+  display: inline-block;
+  margin-top: 16rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  padding: 0 48rpx;
+  background: #4caf50;
+  color: #fff;
+  border-radius: 36rpx;
+  font-size: var(--fs-base, 28rpx);
+  font-weight: 700;
+}
+
+/* ───────── 记录列表 ───────── */
+.records-list {
+  flex: 1;
+  padding: 0 24rpx;
+}
+.record-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 16rpx;
+  border: 1rpx solid #f0f0f0;
+}
+.record-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14rpx;
+}
+.record-seq {
+  font-size: var(--fs-base, 28rpx);
+  font-weight: 700;
+  color: #333;
+}
+.record-time {
+  font-size: var(--fs-xs, 20rpx);
+  color: #aaa;
+}
+.record-body {
+  display: flex;
+  align-items: center;
+}
+.record-actor {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+  min-width: 0;
+}
+.record-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 36rpx;
+  border: 2rpx solid #eee;
+  flex-shrink: 0;
+}
+.record-avatar-text {
+  background: linear-gradient(135deg, #f4a261, #e63946);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-sm, 24rpx);
+  font-weight: 700;
+}
+.table-icon-sm {
+  border-radius: 12rpx !important;
+  background: #4caf50 !important;
+  border-color: #4caf50 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: var(--fs-base, 28rpx);
+  font-weight: 700;
+}
+.record-nickname {
+  font-size: var(--fs-sm, 24rpx);
+  color: #666;
+  max-width: 120rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.record-type {
+  font-size: var(--fs-base, 28rpx);
+  font-weight: 700;
+  color: #333;
+  margin: 0 16rpx;
+}
+.record-type.take {
+  color: #e63946;
+}
+.record-type.give {
+  color: #333;
+}
+.record-points-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 4rpx;
+}
+.record-points {
+  font-size: 42rpx;
+  font-weight: 700;
+  color: #333;
+}
+.record-points-unit {
+  font-size: var(--fs-sm, 24rpx);
+  color: #666;
+}
+.empty-records {
+  text-align: center;
+  padding: 60rpx 0;
+  color: #bbb;
+  font-size: var(--fs-base, 28rpx);
+}
+.records-end {
+  text-align: center;
+  padding: 24rpx 0;
+  color: #ccc;
+  font-size: var(--fs-xs, 20rpx);
+}
+
+/* ───────── 底部操作按钮 ───────── */
+.bottom-bar {
+  display: flex;
+  gap: 16rpx;
+  padding: 16rpx 24rpx;
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 1rpx solid #eee;
+}
+.bottom-btn {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 44rpx;
+  text-align: center;
+  font-size: var(--fs-base, 28rpx);
+  font-weight: 600;
+}
+.bottom-btn .bold {
+  font-weight: 700;
+}
+.take-btn {
+  border: 2rpx solid #e63946;
+  color: #e63946;
+  background: #fff;
+}
+.give-btn {
+  background: #4caf50;
+  color: #fff;
+}
+
+/* ───────── 弹窗 ───────── */
+.dialog-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.38);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+.dialog-modal {
+  width: 100%;
+  background: #fff;
+  border-radius: 26rpx;
+  padding: 28rpx;
+  box-sizing: border-box;
+}
+.dialog-title {
+  display: block;
+  font-size: var(--fs-lg, 34rpx);
+  font-weight: 700;
+  color: #333;
+}
+.dialog-desc {
+  display: block;
+  margin-top: 8rpx;
+  margin-bottom: 18rpx;
+  color: #9a9a9a;
+  font-size: var(--fs-sm, 24rpx);
+}
+.dialog-input {
+  height: 98rpx;
+  border-radius: 18rpx;
+  border: 2rpx solid rgba(76, 175, 80, 0.3);
+  background: #f9fff9;
+  text-align: center;
+  font-size: 52rpx;
+  font-weight: 700;
+  color: #4caf50;
+  margin-bottom: 18rpx;
+}
+.dialog-actions {
+  display: flex;
+  gap: 12rpx;
+}
+.dialog-btn {
+  flex: 1;
+  height: 84rpx;
+  border-radius: 18rpx;
+  margin: 0;
+  background: #4caf50;
+  color: #fff;
+  font-size: var(--fs-base, 28rpx);
+  font-weight: 700;
+}
+.dialog-btn.ghost {
+  background: #f6f2eb;
+  color: #666;
+}
+.dialog-btn::after {
+  border: none;
+}

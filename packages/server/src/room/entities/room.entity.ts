@@ -20,6 +20,7 @@ export type RoomStatus = (typeof ROOM_STATUS)[keyof typeof ROOM_STATUS];
 export const ROOM_TYPE = {
   MULTI: 'MULTI',
   SINGLE: 'SINGLE',
+  POOL: 'POOL',
 } as const;
 
 export type RoomType = (typeof ROOM_TYPE)[keyof typeof ROOM_TYPE];
@@ -38,9 +39,13 @@ export class Room {
   @Column({ length: 64, default: '' })
   roomName: string;
 
-  @ApiProperty({ description: '房间类型 MULTI/SINGLE' })
+  @ApiProperty({ description: '房间类型 MULTI/SINGLE/POOL' })
   @Column({ type: 'varchar', length: 16, default: ROOM_TYPE.MULTI })
   roomType: RoomType;
+
+  @ApiProperty({ description: '是否开启台板（仅POOL模式）' })
+  @Column({ default: false })
+  tableFeeEnabled: boolean;
 
   @ApiProperty({ description: '房间状态' })
   @Column({ type: 'varchar', length: 16, default: ROOM_STATUS.IN_PROGRESS })

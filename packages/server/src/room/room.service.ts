@@ -17,6 +17,7 @@ import { RealtimeService } from '../realtime/realtime.service';
 import {
   Room,
   RoomStatus,
+  RoomType,
   ROOM_STATUS,
   ROOM_TYPE,
   RoomMember,
@@ -24,6 +25,10 @@ import {
   RoomActorType,
   ROOM_MEMBER_ROLE,
   RoomScoreRecord,
+  PoolRound,
+  POOL_ROUND_STATUS,
+  PoolRecord,
+  POOL_RECORD_TYPE,
 } from './entities';
 import {
   AddMemberDto,
@@ -32,6 +37,11 @@ import {
   JoinRoomDto,
   ListRoomHistoryQueryDto,
   TransferOwnerDto,
+  PoolGiveDto,
+  PoolTakeDto,
+  PoolTableTakeDto,
+  ToggleTableFeeDto,
+  SetSpectatorsDto,
 } from './dto';
 
 interface ActorContext {
@@ -52,6 +62,10 @@ export class RoomService {
     private readonly roomMemberRepository: Repository<RoomMember>,
     @InjectRepository(RoomScoreRecord)
     private readonly roomScoreRecordRepository: Repository<RoomScoreRecord>,
+    @InjectRepository(PoolRound)
+    private readonly poolRoundRepository: Repository<PoolRound>,
+    @InjectRepository(PoolRecord)
+    private readonly poolRecordRepository: Repository<PoolRecord>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     @InjectRepository(GuestUser)
@@ -67,7 +81,12 @@ export class RoomService {
     const roomCode = await this.generateRoomCode();
     const roomName = this.normalizeRoomName(dto.roomName, roomCode);
 
-    const roomType = dto.roomType === ROOM_TYPE.SINGLE ? ROOM_TYPE.SINGLE : ROOM_TYPE.MULTI;
+    let roomType: RoomType = ROOM_TYPE.MULTI;
+    if (dto.roomType === ROOM_TYPE.SINGLE) {
+      roomType = ROOM_TYPE.SINGLE;
+    } else if (dto.roomType === ROOM_TYPE.POOL) {
+      roomType = ROOM_TYPE.POOL;
+    }
 
     const room = this.roomRepository.create({
       roomCode,
@@ -633,6 +652,502 @@ export class RoomService {
     return payload;
   }
 
+  // ───────── 分数池：开启新圈 ─────────
+  async startPoolRound(req: Request, roomId: number) {
+    const actor = await this.resolveActor(req);
+    const { room, member } = await this.ensurePoolOwner(roomId, actor);
+
+    const activeRound = await this.poolRoundRepository.findOne({
+      where: { roomId, status: POOL_ROUND_STATUS.IN_PROGRESS },
+    });
+    if (activeRound) {
+      throw new ConflictException('当前还有进行中的圈，请先结束');
+    }
+
+    const maxResult = await this.poolRoundRepository
+      .createQueryBuilder('r')
+      .select('COALESCE(MAX(r.roundNumber), 0)', 'maxNum')
+      .where('r.roomId = :roomId', { roomId })
+      .getRawOne<{ maxNum: string }>();
+
+    const nextNumber = Number(maxResult?.maxNum || 0) + 1;
+
+    const round = this.poolRoundRepository.create({
+      roomId,
+      roundNumber: nextNumber,
+      poolBalance: 0,
+      status: POOL_ROUND_STATUS.IN_PROGRESS,
+      endedAt: null,
+    });
+    const saved = await this.poolRoundRepository.save(round);
+
+    this.realtimeService.notifyRoomUpdated(room.roomCode, 'pool_round_started');
+    return this.buildPoolRoundPayload(saved.id, roomId, actor);
+  }
+
+  // ───────── 分数池：获取当前圈 ─────────
+  async getCurrentPoolRound(req: Request, roomId: number) {
+    const actor = await this.resolveActor(req);
+
+    const room = await this.roomRepository.findOne({ where: { id: roomId } });
+    if (!room) throw new NotFoundException('房间不存在');
+    if (room.roomType !== ROOM_TYPE.POOL) throw new BadRequestException('非分数池房间');
+
+    await this.ensureMemberInRoom(roomId, actor);
+
+    const round = await this.poolRoundRepository.findOne({
+      where: { roomId, status: POOL_ROUND_STATUS.IN_PROGRESS },
+    });
+
+    if (!round) {
+      return { round: null, records: [], members: [] };
+    }
+
+    return this.buildPoolRoundPayload(round.id, roomId, actor);
+  }
+
+  // ───────── 分数池：获取指定圈 ─────────
+  async getPoolRound(req: Request, roomId: number, roundId: number) {
+    const actor = await this.resolveActor(req);
+
+    const room = await this.roomRepository.findOne({ where: { id: roomId } });
+    if (!room) throw new NotFoundException('房间不存在');
+
+    await this.ensureMemberInRoom(roomId, actor);
+
+    const round = await this.poolRoundRepository.findOne({
+      where: { id: roundId, roomId },
+    });
+    if (!round) throw new NotFoundException('圈不存在');
+
+    return this.buildPoolRoundPayload(round.id, roomId, actor);
+  }
+
+  // ───────── 分数池：给分到池 ─────────
+  async poolGive(req: Request, roomId: number, dto: PoolGiveDto) {
+    const actor = await this.resolveActor(req);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const room = await queryRunner.manager.findOne(Room, { where: { id: roomId } });
+      if (!room) throw new NotFoundException('房间不存在');
+      if (room.roomType !== ROOM_TYPE.POOL) throw new BadRequestException('非分数池房间');
+      if (room.status === ROOM_STATUS.ENDED) throw new ConflictException('房间已结束');
+
+      const member = await queryRunner.manager.findOne(RoomMember, {
+        where: { roomId, actorType: actor.actorType, actorRefId: actor.actorRefId, isActive: true },
+      });
+      if (!member) throw new ForbiddenException('你不在该房间内');
+      if (member.isSpectator) throw new ForbiddenException('旁观者不可操作');
+
+      const round = await queryRunner.manager.findOne(PoolRound, {
+        where: { roomId, status: POOL_ROUND_STATUS.IN_PROGRESS },
+      });
+      if (!round) throw new ConflictException('没有进行中的圈');
+
+      await queryRunner.manager.decrement(RoomMember, { id: member.id }, 'score', dto.points);
+      await queryRunner.manager.increment(PoolRound, { id: round.id }, 'poolBalance', dto.points);
+
+      const record = queryRunner.manager.create(PoolRecord, {
+        roundId: round.id,
+        roomId,
+        memberId: member.id,
+        type: POOL_RECORD_TYPE.GIVE,
+        points: dto.points,
+      });
+      await queryRunner.manager.save(record);
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+
+    this.realtimeService.notifyRoomUpdated(
+      (await this.roomRepository.findOne({ where: { id: roomId } }))!.roomCode,
+      'pool_give',
+    );
+
+    const round = await this.poolRoundRepository.findOne({
+      where: { roomId, status: POOL_ROUND_STATUS.IN_PROGRESS },
+    });
+    return this.buildPoolRoundPayload(round!.id, roomId, actor);
+  }
+
+  // ───────── 分数池：从池取分 ─────────
+  async poolTake(req: Request, roomId: number, dto: PoolTakeDto) {
+    const actor = await this.resolveActor(req);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const room = await queryRunner.manager.findOne(Room, { where: { id: roomId } });
+      if (!room) throw new NotFoundException('房间不存在');
+      if (room.roomType !== ROOM_TYPE.POOL) throw new BadRequestException('非分数池房间');
+      if (room.status === ROOM_STATUS.ENDED) throw new ConflictException('房间已结束');
+
+      const member = await queryRunner.manager.findOne(RoomMember, {
+        where: { roomId, actorType: actor.actorType, actorRefId: actor.actorRefId, isActive: true },
+      });
+      if (!member) throw new ForbiddenException('你不在该房间内');
+      if (member.isSpectator) throw new ForbiddenException('旁观者不可操作');
+
+      const round = await queryRunner.manager.findOne(PoolRound, {
+        where: { roomId, status: POOL_ROUND_STATUS.IN_PROGRESS },
+      });
+      if (!round) throw new ConflictException('没有进行中的圈');
+      if (round.poolBalance < dto.points) throw new BadRequestException('分数池余额不足');
+
+      await queryRunner.manager.increment(RoomMember, { id: member.id }, 'score', dto.points);
+      await queryRunner.manager.decrement(PoolRound, { id: round.id }, 'poolBalance', dto.points);
+
+      const record = queryRunner.manager.create(PoolRecord, {
+        roundId: round.id,
+        roomId,
+        memberId: member.id,
+        type: POOL_RECORD_TYPE.TAKE,
+        points: dto.points,
+      });
+      await queryRunner.manager.save(record);
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+
+    this.realtimeService.notifyRoomUpdated(
+      (await this.roomRepository.findOne({ where: { id: roomId } }))!.roomCode,
+      'pool_take',
+    );
+
+    const round = await this.poolRoundRepository.findOne({
+      where: { roomId, status: POOL_ROUND_STATUS.IN_PROGRESS },
+    });
+    return this.buildPoolRoundPayload(round!.id, roomId, actor);
+  }
+
+  // ───────── 分数池：台板取分 ─────────
+  async poolTableTake(req: Request, roomId: number, dto: PoolTableTakeDto) {
+    const actor = await this.resolveActor(req);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const room = await queryRunner.manager.findOne(Room, { where: { id: roomId } });
+      if (!room) throw new NotFoundException('房间不存在');
+      if (room.roomType !== ROOM_TYPE.POOL) throw new BadRequestException('非分数池房间');
+      if (room.status === ROOM_STATUS.ENDED) throw new ConflictException('房间已结束');
+      if (!room.tableFeeEnabled) throw new BadRequestException('台板未开启');
+
+      const callerMember = await queryRunner.manager.findOne(RoomMember, {
+        where: { roomId, actorType: actor.actorType, actorRefId: actor.actorRefId, isActive: true },
+      });
+      if (!callerMember) throw new ForbiddenException('你不在该房间内');
+      if (room.ownerMemberId !== callerMember.id) throw new ForbiddenException('只有桌主可以操作台板取分');
+
+      const round = await queryRunner.manager.findOne(PoolRound, {
+        where: { roomId, status: POOL_ROUND_STATUS.IN_PROGRESS },
+      });
+      if (!round) throw new ConflictException('没有进行中的圈');
+      if (round.poolBalance < dto.points) throw new BadRequestException('分数池余额不足');
+
+      const tableMember = await queryRunner.manager.findOne(RoomMember, {
+        where: { roomId, actorType: ROOM_ACTOR_TYPE.VIRTUAL, nickname: '台板', isActive: true },
+      });
+      if (!tableMember) throw new BadRequestException('台板成员不存在');
+
+      await queryRunner.manager.increment(RoomMember, { id: tableMember.id }, 'score', dto.points);
+      await queryRunner.manager.decrement(PoolRound, { id: round.id }, 'poolBalance', dto.points);
+
+      const record = queryRunner.manager.create(PoolRecord, {
+        roundId: round.id,
+        roomId,
+        memberId: tableMember.id,
+        type: POOL_RECORD_TYPE.TAKE,
+        points: dto.points,
+      });
+      await queryRunner.manager.save(record);
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+
+    this.realtimeService.notifyRoomUpdated(
+      (await this.roomRepository.findOne({ where: { id: roomId } }))!.roomCode,
+      'pool_table_take',
+    );
+
+    const round = await this.poolRoundRepository.findOne({
+      where: { roomId, status: POOL_ROUND_STATUS.IN_PROGRESS },
+    });
+    return this.buildPoolRoundPayload(round!.id, roomId, actor);
+  }
+
+  // ───────── 分数池：结束本圈 ─────────
+  async endPoolRound(req: Request, roomId: number, roundId: number) {
+    const actor = await this.resolveActor(req);
+    const { room } = await this.ensurePoolOwner(roomId, actor);
+
+    const round = await this.poolRoundRepository.findOne({
+      where: { id: roundId, roomId },
+    });
+    if (!round) throw new NotFoundException('圈不存在');
+    if (round.status === POOL_ROUND_STATUS.ENDED) throw new ConflictException('该圈已结束');
+
+    round.status = POOL_ROUND_STATUS.ENDED;
+    round.endedAt = new Date();
+    await this.poolRoundRepository.save(round);
+
+    this.realtimeService.notifyRoomUpdated(room.roomCode, 'pool_round_ended');
+    return this.buildPoolRoundPayload(round.id, roomId, actor);
+  }
+
+  // ───────── 分数池：获取所有圈（摘要） ─────────
+  async getPoolRounds(req: Request, roomId: number) {
+    const actor = await this.resolveActor(req);
+
+    const room = await this.roomRepository.findOne({ where: { id: roomId } });
+    if (!room) throw new NotFoundException('房间不存在');
+
+    await this.ensureMemberInRoom(roomId, actor);
+
+    const rounds = await this.poolRoundRepository.find({
+      where: { roomId },
+      order: { roundNumber: 'ASC' },
+    });
+
+    const members = await this.roomMemberRepository.find({
+      where: { roomId, isActive: true },
+      order: { id: 'ASC' },
+    });
+
+    const memberMap = new Map<number, RoomMember>();
+    members.forEach((m) => memberMap.set(m.id, m));
+
+    const roundSummaries = [];
+    for (const round of rounds) {
+      const records = await this.poolRecordRepository.find({
+        where: { roundId: round.id },
+        order: { id: 'ASC' },
+      });
+
+      const memberScores = new Map<number, number>();
+      for (const rec of records) {
+        const current = memberScores.get(rec.memberId) || 0;
+        if (rec.type === POOL_RECORD_TYPE.GIVE) {
+          memberScores.set(rec.memberId, current - rec.points);
+        } else {
+          memberScores.set(rec.memberId, current + rec.points);
+        }
+      }
+
+      roundSummaries.push({
+        id: round.id,
+        roundNumber: round.roundNumber,
+        poolBalance: round.poolBalance,
+        status: round.status,
+        createdAt: round.createdAt,
+        endedAt: round.endedAt,
+        memberScores: Array.from(memberScores.entries()).map(([memberId, score]) => ({
+          memberId,
+          nickname: memberMap.get(memberId)?.nickname || '未知',
+          score,
+        })),
+      });
+    }
+
+    return { rounds: roundSummaries };
+  }
+
+  // ───────── 台板：开关 ─────────
+  async toggleTableFee(req: Request, roomId: number, dto: ToggleTableFeeDto) {
+    const actor = await this.resolveActor(req);
+    const { room } = await this.ensurePoolOwner(roomId, actor);
+
+    if (dto.enabled && !room.tableFeeEnabled) {
+      room.tableFeeEnabled = true;
+      await this.roomRepository.save(room);
+
+      const existing = await this.roomMemberRepository.findOne({
+        where: { roomId, actorType: ROOM_ACTOR_TYPE.VIRTUAL, nickname: '台板' },
+      });
+
+      if (existing) {
+        existing.isActive = true;
+        await this.roomMemberRepository.save(existing);
+      } else {
+        const maxRefResult = await this.roomMemberRepository
+          .createQueryBuilder('m')
+          .select('COALESCE(MAX(m.actorRefId), 0)', 'maxRef')
+          .where('m.roomId = :roomId AND m.actorType = :actorType', {
+            roomId,
+            actorType: ROOM_ACTOR_TYPE.VIRTUAL,
+          })
+          .getRawOne<{ maxRef: string }>();
+        const nextRefId = Number(maxRefResult?.maxRef || 0) + 1;
+
+        const tableMember = this.roomMemberRepository.create({
+          roomId,
+          actorType: ROOM_ACTOR_TYPE.VIRTUAL,
+          actorRefId: nextRefId,
+          role: ROOM_MEMBER_ROLE.MEMBER,
+          nickname: '台板',
+          avatar: '',
+          avatarInitials: '台',
+          score: 0,
+          isActive: true,
+        });
+        await this.roomMemberRepository.save(tableMember);
+      }
+    } else if (!dto.enabled && room.tableFeeEnabled) {
+      room.tableFeeEnabled = false;
+      await this.roomRepository.save(room);
+
+      const tableMember = await this.roomMemberRepository.findOne({
+        where: { roomId, actorType: ROOM_ACTOR_TYPE.VIRTUAL, nickname: '台板', isActive: true },
+      });
+      if (tableMember) {
+        tableMember.isActive = false;
+        await this.roomMemberRepository.save(tableMember);
+      }
+    }
+
+    const payload = await this.buildRoomPayload(roomId, actor);
+    this.realtimeService.notifyRoomUpdated(payload.room.roomCode, 'table_fee_toggled');
+    return payload;
+  }
+
+  // ───────── 旁观者：设置 ─────────
+  async setSpectators(req: Request, roomId: number, dto: SetSpectatorsDto) {
+    const actor = await this.resolveActor(req);
+
+    const room = await this.roomRepository.findOne({ where: { id: roomId } });
+    if (!room) throw new NotFoundException('房间不存在');
+
+    const callerMember = await this.roomMemberRepository.findOne({
+      where: { roomId, actorType: actor.actorType, actorRefId: actor.actorRefId, isActive: true },
+    });
+    if (!callerMember) throw new ForbiddenException('你不在该房间内');
+    if (room.ownerMemberId !== callerMember.id) throw new ForbiddenException('只有桌主可以设置旁观者');
+
+    const members = await this.roomMemberRepository.find({
+      where: { roomId, isActive: true },
+    });
+
+    const spectatorSet = new Set(dto.memberIds);
+
+    for (const member of members) {
+      if (member.id === room.ownerMemberId) continue;
+      const shouldBeSpectator = spectatorSet.has(member.id);
+      if (member.isSpectator !== shouldBeSpectator) {
+        member.isSpectator = shouldBeSpectator;
+        await this.roomMemberRepository.save(member);
+      }
+    }
+
+    const payload = await this.buildRoomPayload(roomId, actor);
+    this.realtimeService.notifyRoomUpdated(payload.room.roomCode, 'spectators_updated');
+    return payload;
+  }
+
+  // ───────── 辅助：确认 POOL 房间桌主 ─────────
+  private async ensurePoolOwner(roomId: number, actor: ActorContext) {
+    const room = await this.roomRepository.findOne({ where: { id: roomId } });
+    if (!room) throw new NotFoundException('房间不存在');
+    if (room.roomType !== ROOM_TYPE.POOL) throw new BadRequestException('非分数池房间');
+    if (room.status === ROOM_STATUS.ENDED) throw new ConflictException('房间已结束');
+
+    const member = await this.roomMemberRepository.findOne({
+      where: { roomId, actorType: actor.actorType, actorRefId: actor.actorRefId, isActive: true },
+    });
+    if (!member) throw new ForbiddenException('你不在该房间内');
+    if (room.ownerMemberId !== member.id) throw new ForbiddenException('只有桌主可以操作');
+
+    return { room, member };
+  }
+
+  // ───────── 辅助：构建圈信息 payload ─────────
+  private async buildPoolRoundPayload(roundId: number, roomId: number, actor: ActorContext) {
+    const round = await this.poolRoundRepository.findOne({ where: { id: roundId } });
+    if (!round) throw new NotFoundException('圈不存在');
+
+    const records = await this.poolRecordRepository.find({
+      where: { roundId },
+      order: { id: 'ASC' },
+    });
+
+    const members = await this.roomMemberRepository.find({
+      where: { roomId, isActive: true },
+      order: { id: 'ASC' },
+    });
+
+    const memberMap = new Map<number, { nickname: string; avatar: string; avatarInitials: string; actorType: string }>();
+    members.forEach((m) => memberMap.set(m.id, {
+      nickname: m.nickname,
+      avatar: m.avatar,
+      avatarInitials: m.avatarInitials,
+      actorType: m.actorType,
+    }));
+
+    const currentMember = members.find(
+      (m) => m.actorType === actor.actorType && m.actorRefId === actor.actorRefId,
+    );
+
+    const room = await this.roomRepository.findOne({ where: { id: roomId } });
+
+    return {
+      round: {
+        id: round.id,
+        roundNumber: round.roundNumber,
+        poolBalance: round.poolBalance,
+        status: round.status,
+        createdAt: round.createdAt,
+        endedAt: round.endedAt,
+      },
+      records: records.map((r, index) => ({
+        id: r.id,
+        seq: index + 1,
+        memberId: r.memberId,
+        memberNickname: memberMap.get(r.memberId)?.nickname || '未知',
+        memberAvatar: memberMap.get(r.memberId)?.avatar || '',
+        memberAvatarInitials: memberMap.get(r.memberId)?.avatarInitials || '',
+        memberActorType: memberMap.get(r.memberId)?.actorType || 'USER',
+        type: r.type,
+        points: r.points,
+        createdAt: r.createdAt,
+      })),
+      members: members.map((m) => ({
+        id: m.id,
+        nickname: m.nickname,
+        avatar: m.avatar,
+        avatarInitials: m.avatarInitials,
+        actorType: m.actorType,
+        score: m.score,
+        isSpectator: m.isSpectator,
+        isOwner: m.id === room?.ownerMemberId,
+      })),
+      currentMemberId: currentMember?.id || null,
+      isOwner: currentMember ? currentMember.id === room?.ownerMemberId : false,
+      tableFeeEnabled: room?.tableFeeEnabled || false,
+    };
+  }
+
   private buildHistorySummary(actorMemberships: RoomMember[]) {
     const totalGames = actorMemberships.length;
     const winRounds = actorMemberships.filter((item) => item.score > 0).length;
@@ -691,6 +1206,13 @@ export class RoomService {
         item.actorType === actor.actorType && item.actorRefId === actor.actorRefId,
     );
 
+    let activePoolRound: PoolRound | null = null;
+    if (room.roomType === ROOM_TYPE.POOL) {
+      activePoolRound = await this.poolRoundRepository.findOne({
+        where: { roomId, status: POOL_ROUND_STATUS.IN_PROGRESS },
+      });
+    }
+
     return {
       room: {
         id: room.id,
@@ -699,8 +1221,15 @@ export class RoomService {
         roomType: room.roomType,
         status: room.status,
         ownerMemberId: room.ownerMemberId,
+        tableFeeEnabled: room.tableFeeEnabled,
         createdAt: room.createdAt,
         endedAt: room.endedAt,
+        activePoolRound: activePoolRound ? {
+          id: activePoolRound.id,
+          roundNumber: activePoolRound.roundNumber,
+          poolBalance: activePoolRound.poolBalance,
+          status: activePoolRound.status,
+        } : null,
         members: members.map((item) => ({
           id: item.id,
           actorType: item.actorType,
@@ -712,6 +1241,7 @@ export class RoomService {
           avatarInitials: item.avatarInitials,
           score: item.score,
           inviteCardHidden: item.inviteCardHidden,
+          isSpectator: item.isSpectator,
           joinedAt: item.joinedAt,
         })),
         scoreRecords: records.reverse().map((record) => ({
