@@ -774,16 +774,26 @@
   display: flex;
   align-items: center;
   border-bottom: 2rpx solid #f0f0f0;
-  padding: 8rpx 16rpx 12rpx;
+  padding: 16rpx 16rpx 16rpx;
 }
 .pool-stats-row {
   display: flex;
   align-items: center;
-  padding: 10rpx 16rpx;
-  border-bottom: 1rpx solid #f8f8f8;
+  padding: 20rpx 16rpx;
+  min-height: 80rpx;
+  border-bottom: 1rpx solid #f0f0f0;
 }
 .pool-stats-row:last-child { border-bottom: none; }
-.winrate-row { background: #fafafa; }
+.pool-stats-row.clickable {
+  position: relative;
+}
+.pool-stats-row.clickable:active {
+  background: #f5f5f5;
+}
+.winrate-row {
+  background: #fafafa;
+  min-height: 72rpx;
+}
 .pool-stats-cell {
   flex: 1;
   min-width: 80rpx;

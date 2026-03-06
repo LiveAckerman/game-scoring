@@ -76,6 +76,8 @@ export class RoomService {
     private readonly dataSource: DataSource,
   ) { }
 
+  private static readonly MAX_ONGOING_PER_TYPE = 3;
+
   async createRoom(req: Request, dto: CreateRoomDto) {
     const actor = await this.resolveActor(req, dto.guestNickname);
     const roomCode = await this.generateRoomCode();
@@ -86,6 +88,28 @@ export class RoomService {
       roomType = ROOM_TYPE.SINGLE;
     } else if (dto.roomType === ROOM_TYPE.POOL) {
       roomType = ROOM_TYPE.POOL;
+    }
+
+    const ongoingMemberships = await this.roomMemberRepository.find({
+      where: { actorType: actor.actorType, actorRefId: actor.actorRefId },
+      select: ['roomId'],
+    });
+    if (ongoingMemberships.length > 0) {
+      const ongoingCount = await this.roomRepository.count({
+        where: {
+          id: In(ongoingMemberships.map((m) => m.roomId)),
+          status: ROOM_STATUS.IN_PROGRESS,
+          roomType,
+        },
+      });
+      if (ongoingCount >= RoomService.MAX_ONGOING_PER_TYPE) {
+        const typeLabel =
+          roomType === ROOM_TYPE.SINGLE ? '单人记分' :
+          roomType === ROOM_TYPE.POOL ? '分数池' : '多人对战';
+        throw new ConflictException(
+          `你已有 ${ongoingCount} 个进行中的${typeLabel}房间，请先结束部分房间再创建新的`,
+        );
+      }
     }
 
     const room = this.roomRepository.create({
@@ -227,12 +251,17 @@ export class RoomService {
     const roomWhere: {
       id: ReturnType<typeof In<number>>;
       status?: RoomStatus;
+      roomType?: RoomType;
     } = {
       id: In(roomIds),
     };
 
     if (statusFilter !== 'ALL') {
       roomWhere.status = statusFilter;
+    }
+
+    if (query.roomType) {
+      roomWhere.roomType = query.roomType;
     }
 
     const [rooms, total] = await this.roomRepository.findAndCount({

@@ -134,15 +134,11 @@
 
   <common-dialog
     visible="{{ongoingDialogVisible}}"
-    title="你有进行中的对局"
-    showFooter="{{true}}"
-    cancelText="稍后再说"
-    confirmText="开启新对局"
+    title="{{ongoingReachedLimit ? '进行中的对局已达上限' : '你有进行中的对局'}}"
+    showFooter="{{false}}"
     bind:close="closeOngoingDialog"
-    bind:cancel="closeOngoingDialog"
-    bind:confirm="handleCreateNewRoomFromDialog"
   >
-    <view class="ongoing-tip">检测到你还有正在进行中的对局，可直接进入，或新开一局。</view>
+    <view class="ongoing-tip">{{ongoingReachedLimit ? '同类型房间最多同时进行 3 个，请先结束部分对局。' : '检测到你还有正在进行中的对局，可直接进入，或新开一局。'}}</view>
     <view class="ongoing-list">
       <view
         wx:for="{{ongoingRooms}}"
@@ -150,6 +146,7 @@
         class="ongoing-item"
         bindtap="enterOngoingRoom"
         data-room-code="{{item.roomCode}}"
+        data-room-type="{{item.roomType}}"
       >
         <view class="ongoing-main">
           <text class="ongoing-room">桌号 {{item.roomCode}}</text>
@@ -157,6 +154,10 @@
         </view>
         <text class="ongoing-time">{{item.timeText}}</text>
       </view>
+    </view>
+    <view slot="footer" class="ongoing-dialog-footer">
+      <button class="ongoing-dialog-btn ghost" bindtap="closeOngoingDialog">{{ongoingReachedLimit ? '知道了' : '稍后再说'}}</button>
+      <button wx:if="{{!ongoingReachedLimit}}" class="ongoing-dialog-btn" bindtap="handleCreateNewRoomFromDialog">开启新对局</button>
     </view>
   </common-dialog>
 

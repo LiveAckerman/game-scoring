@@ -1,17 +1,19 @@
 <page-meta page-style="{{pageFontStyle}}" />
 <view class="pool-record-page">
   <!-- 顶部操作栏 -->
-  <view class="top-bar" wx:if="{{round && round.status === 'IN_PROGRESS'}}">
-    <view wx:if="{{tableFeeEnabled && isOwner}}" class="top-btn table-take-btn" bindtap="handleTableTake">台板取分</view>
-    <view wx:if="{{isOwner}}" class="top-btn end-round-btn" bindtap="handleEndRound">结束本圈</view>
+  <view class="top-bar" wx:if="{{round && round.status === 'IN_PROGRESS' && tableFeeEnabled && isOwner}}">
+    <view class="top-btn table-take-btn" bindtap="handleTableTake">台板取分</view>
   </view>
 
   <!-- 圈次信息 -->
   <view class="round-info">
-    <text wx:if="{{round}}" class="round-title">第{{round.roundNumber}}圈 | 分数池总分：</text>
-    <text wx:if="{{round}}" class="round-balance">{{round.poolBalance}}</text>
-    <text wx:if="{{round}}" class="round-unit">分</text>
-    <text wx:if="{{!round}}" class="round-title">暂无进行中的圈</text>
+    <view class="round-info-left">
+      <text wx:if="{{round}}" class="round-title">第{{round.roundNumber}}圈 | 分数池总分：</text>
+      <text wx:if="{{round}}" class="round-balance">{{round.poolBalance}}</text>
+      <text wx:if="{{round}}" class="round-unit">分</text>
+      <text wx:if="{{!round}}" class="round-title">暂无进行中的圈</text>
+    </view>
+    <view wx:if="{{round && round.status === 'IN_PROGRESS' && isOwner}}" class="end-round-btn" bindtap="handleEndRound">结束本圈</view>
   </view>
 
   <!-- 圈结束提示 -->

@@ -27,4 +27,13 @@ export class ListRoomHistoryQueryDto {
   @Transform(({ value }) => String(value || 'ALL').toUpperCase())
   @IsIn(['ALL', 'IN_PROGRESS', 'ENDED'])
   status?: 'ALL' | 'IN_PROGRESS' | 'ENDED';
+
+  @ApiPropertyOptional({
+    description: '房间类型筛选',
+    enum: ['MULTI', 'SINGLE', 'POOL'],
+  })
+  @IsOptional()
+  @Transform(({ value }) => (value ? String(value).toUpperCase() : undefined))
+  @IsIn(['MULTI', 'SINGLE', 'POOL'])
+  roomType?: 'MULTI' | 'SINGLE' | 'POOL';
 }

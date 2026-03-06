@@ -25,7 +25,7 @@
   color: #4caf50;
   background: #fff;
 }
-.end-round-btn {
+.top-bar .end-round-btn {
   border: 2rpx solid #e63946;
   color: #e63946;
   background: #fff;
@@ -34,8 +34,15 @@
 /* ───────── 圈次信息 ───────── */
 .round-info {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  justify-content: space-between;
   padding: 20rpx 24rpx 12rpx;
+}
+.round-info-left {
+  display: flex;
+  align-items: baseline;
+  flex: 1;
+  min-width: 0;
 }
 .round-title {
   font-size: var(--fs-base, 28rpx);
@@ -52,6 +59,19 @@
   font-size: var(--fs-sm, 24rpx);
   color: #e63946;
   margin-left: 4rpx;
+}
+.round-info .end-round-btn {
+  height: 64rpx;
+  line-height: 64rpx;
+  padding: 0 28rpx;
+  border-radius: 16rpx;
+  font-size: var(--fs-sm, 24rpx);
+  font-weight: 700;
+  border: 2rpx solid #e63946;
+  color: #e63946;
+  background: #fff;
+  flex-shrink: 0;
+  margin-left: 16rpx;
 }
 
 /* ───────── 圈结束提示 ───────── */

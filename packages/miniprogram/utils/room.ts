@@ -247,13 +247,19 @@ export const getRoomHistory = (params?: {
   page?: number;
   pageSize?: number;
   status?: 'ALL' | RoomStatus;
+  roomType?: RoomType;
 }): Promise<RoomHistoryPayload> => {
   const page = params?.page || 1;
   const pageSize = params?.pageSize || 20;
   const status = params?.status || 'ALL';
 
+  let url = `/rooms/history?page=${page}&pageSize=${pageSize}&status=${status}`;
+  if (params?.roomType) {
+    url += `&roomType=${params.roomType}`;
+  }
+
   return request<RoomHistoryPayload>({
-    url: `/rooms/history?page=${page}&pageSize=${pageSize}&status=${status}`,
+    url,
     method: 'GET',
   });
 };

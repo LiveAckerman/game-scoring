@@ -15,7 +15,7 @@ interface HomePreviewMember {
 interface HomeRecentCard {
   roomId: number;
   roomCode: string;
-  roomType: 'MULTI' | 'SINGLE';
+  roomType: 'MULTI' | 'SINGLE' | 'POOL';
   status: 'IN_PROGRESS' | 'ENDED';
   statusText: string;
   timeText: string;
@@ -26,6 +26,7 @@ interface HomeRecentCard {
 
 interface OngoingRoomOption {
   roomCode: string;
+  roomType: string;
   memberCount: number;
   durationMinutes: number;
   timeText: string;
@@ -57,7 +58,9 @@ Page({
     autoJoinTriedCode: '',
     ongoingDialogVisible: false,
     ongoingRooms: [] as OngoingRoomOption[],
+    ongoingReachedLimit: false,
     pendingGuestNickname: '',
+    pendingRoomType: 'MULTI' as 'MULTI' | 'SINGLE' | 'POOL',
     inputDialogVisible: false,
     inputDialogTitle: '',
     inputDialogTip: '',
@@ -129,34 +132,9 @@ Page({
       guestNickname = inputNickname;
     }
 
-    if (hasIdentity) {
-      wx.showLoading({ title: '检查进行中对局...' });
-      try {
-        const payload = await getRoomHistory({
-          page: 1,
-          pageSize: 20,
-          status: 'IN_PROGRESS',
-        });
-
-        if (payload.items.length > 0) {
-          this.setData({
-            ongoingDialogVisible: true,
-            ongoingRooms: payload.items.map((item) => this.mapOngoingRoom(item)),
-            pendingGuestNickname: guestNickname || '',
-          });
-          return;
-        }
-      } catch (error) {
-        const requestError = error as RequestError;
-        if (requestError.statusCode !== 401) {
-          wx.showToast({
-            title: requestError.message || '检查进行中对局失败',
-            icon: 'none',
-          });
-        }
-      } finally {
-        wx.hideLoading();
-      }
+    const hasOngoing = await this.checkOngoingRooms('MULTI', guestNickname);
+    if (hasOngoing) {
+      return;
     }
 
     await this.createNewRoom(guestNickname);
@@ -318,26 +296,42 @@ Page({
     this.setData({
       ongoingDialogVisible: false,
       ongoingRooms: [],
+      ongoingReachedLimit: false,
       pendingGuestNickname: '',
+      pendingRoomType: 'MULTI',
     });
   },
 
   async handleCreateNewRoomFromDialog() {
     const guestNickname = this.data.pendingGuestNickname || undefined;
+    const roomType = this.data.pendingRoomType;
     this.closeOngoingDialog();
-    await this.createNewRoom(guestNickname);
+
+    if (roomType === 'SINGLE') {
+      await this.doCreateSingleRoom(guestNickname);
+    } else if (roomType === 'POOL') {
+      await this.doCreatePoolRoom(guestNickname);
+    } else {
+      await this.createNewRoom(guestNickname);
+    }
   },
 
   enterOngoingRoom(e: WechatMiniprogram.BaseEvent) {
     const roomCode = String(e.currentTarget.dataset.roomCode || '');
+    const roomType = String(e.currentTarget.dataset.roomType || 'MULTI');
     if (!roomCode) {
       return;
     }
 
     this.closeOngoingDialog();
-    wx.navigateTo({
-      url: `/subpkg/multi-invite/multi-invite?roomCode=${roomCode}`,
-    });
+
+    let page: string;
+    if (roomType === 'SINGLE') {
+      page = `/subpkg/single-score/single-score?roomCode=${roomCode}`;
+    } else {
+      page = `/subpkg/multi-invite/multi-invite?roomCode=${roomCode}`;
+    }
+    wx.navigateTo({ url: page });
   },
 
   async createNewRoom(guestNickname?: string) {
@@ -455,6 +449,15 @@ Page({
       guestNickname = inputNickname;
     }
 
+    const hasOngoing = await this.checkOngoingRooms('SINGLE', guestNickname);
+    if (hasOngoing) {
+      return;
+    }
+
+    await this.doCreateSingleRoom(guestNickname);
+  },
+
+  async doCreateSingleRoom(guestNickname?: string) {
     this.setData({ creatingRoom: true });
     wx.showLoading({ title: '创建房间中...' });
 
@@ -497,6 +500,15 @@ Page({
       guestNickname = inputNickname;
     }
 
+    const hasOngoing = await this.checkOngoingRooms('POOL', guestNickname);
+    if (hasOngoing) {
+      return;
+    }
+
+    await this.doCreatePoolRoom(guestNickname);
+  },
+
+  async doCreatePoolRoom(guestNickname?: string) {
     this.setData({ creatingRoom: true });
     wx.showLoading({ title: '创建房间中...' });
 
@@ -515,6 +527,48 @@ Page({
       wx.hideLoading();
       this.setData({ creatingRoom: false });
     }
+  },
+
+  async checkOngoingRooms(
+    roomType: 'MULTI' | 'SINGLE' | 'POOL',
+    guestNickname?: string,
+  ): Promise<boolean> {
+    const hasIdentity = Boolean(getAccessToken() || getGuestToken());
+    if (!hasIdentity) {
+      return false;
+    }
+
+    wx.showLoading({ title: '检查进行中对局...' });
+    try {
+      const payload = await getRoomHistory({
+        page: 1,
+        pageSize: 20,
+        status: 'IN_PROGRESS',
+        roomType,
+      });
+
+      if (payload.items.length > 0) {
+        this.setData({
+          ongoingDialogVisible: true,
+          ongoingRooms: payload.items.map((item) => this.mapOngoingRoom(item)),
+          ongoingReachedLimit: payload.items.length >= 3,
+          pendingGuestNickname: guestNickname || '',
+          pendingRoomType: roomType,
+        });
+        return true;
+      }
+    } catch (error) {
+      const requestError = error as RequestError;
+      if (requestError.statusCode !== 401) {
+        wx.showToast({
+          title: requestError.message || '检查进行中对局失败',
+          icon: 'none',
+        });
+      }
+    } finally {
+      wx.hideLoading();
+    }
+    return false;
   },
 
   viewAllRecords() {
@@ -577,6 +631,7 @@ Page({
 
     return {
       roomCode: item.roomCode,
+      roomType: item.roomType || 'MULTI',
       memberCount: item.memberCount,
       durationMinutes: item.durationMinutes,
       timeText: `${month}月${day}日 ${this.pad2(hour)}:${this.pad2(minute)}`,

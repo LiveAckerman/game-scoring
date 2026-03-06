@@ -717,6 +717,14 @@ Page({
     });
   },
 
+  goToRoundDetail(e: any) {
+    const roundId = Number(e.currentTarget.dataset.roundId || 0);
+    if (!roundId) return;
+    wx.navigateTo({
+      url: `/subpkg/pool-record/pool-record?roomId=${this.data.roomId}&roundId=${roundId}`,
+    });
+  },
+
   async handleToggleTableFee() {
     if (!this.data.isOwner) {
       wx.showToast({ title: '只有桌主可以操作台板', icon: 'none' });
