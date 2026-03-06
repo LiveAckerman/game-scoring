@@ -32,8 +32,10 @@
 
   <view class="room-btn-row {{!showJoinButton || !showCopyButton ? 'single' : ''}}">
     <button wx:if="{{showJoinButton}}" class="join-btn" bindtap="onJoinTap">{{joinButtonText}}</button>
-    <button wx:if="{{showCopyButton}}" class="share-btn" bindtap="onShareTap">{{copyButtonText}}</button>
+    <button wx:if="{{showCopyButton}}" class="copy-btn" bindtap="onShareTap">{{copyButtonText}}</button>
   </view>
+
+  <button wx:if="{{showShareButton}}" class="wx-share-btn" open-type="share">分享给好友</button>
 
   <text class="room-status {{roomStatus === 'IN_PROGRESS' ? 'active' : 'ended'}}">
     {{roomStatus === 'IN_PROGRESS' ? '房间进行中' : '房间已结束'}}

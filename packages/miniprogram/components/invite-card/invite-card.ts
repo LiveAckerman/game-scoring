@@ -40,6 +40,10 @@ Component({
       type: String,
       value: '复制房间号',
     },
+    showShareButton: {
+      type: Boolean,
+      value: false,
+    },
     tipText: {
       type: String,
       value: '输入房间号加入，或复制房间号分享给好友',

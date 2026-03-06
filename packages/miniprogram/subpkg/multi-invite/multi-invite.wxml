@@ -48,6 +48,7 @@
       editable="{{false}}"
       showJoinButton="{{false}}"
       showCopyButton="{{true}}"
+      showShareButton="{{true}}"
       tipText="房间号仅用于分享邀请，加入操作请在首页完成"
       bind:share="handleShareInvite"
       bind:close="handleInlineInviteCardClose"

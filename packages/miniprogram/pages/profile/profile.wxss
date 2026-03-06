@@ -51,8 +51,9 @@
 .box.pink { background: #fdeef4; }
 .menu-card { margin-top: 14rpx; background: #fff; border-radius: 26rpx; overflow: hidden; }
 .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 32rpx 28rpx; font-size: 28rpx; color: #333; min-height: 108rpx; box-sizing: border-box; }
-.share-menu-btn { width: 100%; background: #fff; border: none; margin: 0; text-align: left; line-height: 1; }
+.share-menu-btn { width: 100% !important; background: #fff; border: none; margin: 0; padding: 0; text-align: left; line-height: 1; font-size: inherit; border-radius: 0; }
 .share-menu-btn::after { border: none; }
+.share-menu-btn.menu-item { padding: 32rpx 28rpx; }
 .menu-item.border { border-bottom: 2rpx solid #f4f4f4; }
 .left { display: flex; align-items: center; gap: 18rpx; }
 .mini { width: 34rpx; height: 34rpx; }

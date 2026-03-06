@@ -161,7 +161,7 @@
 }
 
 .join-btn,
-.share-btn {
+.copy-btn {
   flex: 1;
   height: 88rpx;
   line-height: 88rpx;
@@ -182,14 +182,33 @@
   color: #fff;
 }
 
-.share-btn {
+.copy-btn {
   background: #fff3df;
   color: #b26a2f;
   border: 2rpx solid rgba(244, 162, 97, 0.5);
 }
 
 .join-btn::after,
-.share-btn::after {
+.copy-btn::after {
+  border: none;
+}
+
+.wx-share-btn {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 20rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+  text-align: center;
+  padding: 0;
+  margin: 0 0 16rpx;
+  box-sizing: border-box;
+  background: #e63946;
+  color: #fff;
+}
+
+.wx-share-btn::after {
   border: none;
 }
 
