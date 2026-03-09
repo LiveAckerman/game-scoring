@@ -1,7 +1,7 @@
 .records-page { min-height: 100vh; background: #fffbe6; display: flex; flex-direction: column; }
 .header-bar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; padding: 22rpx 24rpx; background: rgba(255,251,230,.95); }
-.tabs { display: flex; padding: 6rpx; border-radius: 22rpx; background: #fff; border: 2rpx solid #f3ecec; }
-.tab { padding: 10rpx 24rpx; font-size: var(--fs-sm, 24rpx); color: #858585; border-radius: 18rpx; }
+.tabs { display: flex; padding: 8rpx; border-radius: 26rpx; background: #fff; border: 2rpx solid #f3ecec; }
+.tab { min-width: 140rpx; padding: 16rpx 30rpx; font-size: var(--fs-base, 28rpx); color: #858585; border-radius: 22rpx; text-align: center; box-sizing: border-box; }
 .tab.active { background: #e63946; color: #fff; font-weight: 700; }
 
 .content { flex: 1; padding: 16rpx 24rpx 26rpx; box-sizing: border-box; }
@@ -19,4 +19,3 @@
 .summary-foot { border-top: 2rpx dashed #efefef; padding-top: 12rpx; display: flex; justify-content: space-around; color: #888; font-size: var(--fs-sm, 24rpx); }
 
 .page-tip { background: #fff; border: 2rpx dashed #f0dede; border-radius: 20rpx; color: #aa8f8f; text-align: center; font-size: var(--fs-sm, 24rpx); padding: 24rpx 12rpx; margin-bottom: 14rpx; }
-
