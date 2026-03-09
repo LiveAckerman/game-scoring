@@ -259,7 +259,7 @@
 }
 
 .records-head {
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 700;
   color: #333;
   margin-bottom: 14rpx;
@@ -267,7 +267,7 @@
 
 .empty-records {
   color: #a7a7a7;
-  font-size: 22rpx;
+  font-size: 24rpx;
   padding: 12rpx 0;
 }
 
@@ -291,24 +291,24 @@
 }
 
 .record-main .name {
-  font-size: 24rpx;
+  font-size: 26rpx;
   font-weight: 700;
   color: #333;
 }
 
 .record-main .action {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #8e8e8e;
 }
 
 .record-main .points {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #e63946;
   font-weight: 700;
 }
 
 .record-item .time {
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #b3b3b3;
   flex-shrink: 0;
 }

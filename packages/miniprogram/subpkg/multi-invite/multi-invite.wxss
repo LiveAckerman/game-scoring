@@ -439,7 +439,7 @@
 }
 
 .records-head {
-  font-size: var(--fs-base, 28rpx);
+  font-size: var(--fs-lg, 30rpx);
   font-weight: 700;
   color: #333;
   margin-bottom: 14rpx;
@@ -447,7 +447,7 @@
 
 .empty-records {
   color: #a7a7a7;
-  font-size: var(--fs-sm, 24rpx);
+  font-size: var(--fs-base, 26rpx);
   padding: 12rpx 0;
 }
 
@@ -471,24 +471,24 @@
 }
 
 .record-main .name {
-  font-size: var(--fs-sm, 24rpx);
+  font-size: var(--fs-base, 26rpx);
   font-weight: 700;
   color: #333;
 }
 
 .record-main .action {
-  font-size: var(--fs-sm, 24rpx);
+  font-size: var(--fs-base, 26rpx);
   color: #8e8e8e;
 }
 
 .record-main .points {
-  font-size: var(--fs-sm, 24rpx);
+  font-size: var(--fs-base, 26rpx);
   color: #e63946;
   font-weight: 700;
 }
 
 .record-item .time {
-  font-size: var(--fs-xs, 20rpx);
+  font-size: var(--fs-sm, 22rpx);
   color: #b3b3b3;
 }
 
