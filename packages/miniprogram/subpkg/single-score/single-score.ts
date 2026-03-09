@@ -15,7 +15,11 @@ import {
 
 interface RoomScoreRecordView extends RoomScoreRecord {
   displayTime: string;
-  displayText: string;
+}
+
+interface ScoreDialogMember extends RoomMember {
+  isSelected: boolean;
+  scoreValue: string;
 }
 
 const ROOM_CODE_LENGTH = 6;
@@ -61,9 +65,10 @@ Page({
     scoreDialogType: '' as '' | 'lose' | 'win',
     scoreDialogSourceId: 0,
     scoreDialogSourceName: '',
-    scoreDialogTargetId: 0,
+    scoreDialogTargetIds: [] as number[],
+    batchScoreEnabled: true,
     scoreDialogValue: '',
-    otherMembers: [] as RoomMember[],
+    otherMembers: [] as ScoreDialogMember[],
   },
 
   onLoad(options: Record<string, string | undefined>) {
@@ -98,11 +103,6 @@ Page({
 
     if (action === 'add') {
       this.openAddModal();
-      return;
-    }
-
-    if (action === 'detail') {
-      wx.showToast({ title: '明细已展示在下方列表', icon: 'none' });
       return;
     }
 
@@ -166,11 +166,6 @@ Page({
       .map((record) => ({
         ...record,
         displayTime: this.formatTime(record.createdAt),
-        displayText: record.recordType === 'KICK_REFUND'
-          ? `${record.fromMemberName} 被踢出，${record.fromMemberName} 返还 ${record.toMemberName} ${record.points}分`
-          : record.recordType === 'KICK_RECLAIM'
-            ? `${record.toMemberName} 被踢出，${record.fromMemberName} 回收 ${record.toMemberName} ${record.points}分`
-            : `${record.fromMemberName} 输给 ${record.toMemberName} ${record.points}分`,
       }));
 
     const currentMember = sortedMembers.find((member) => member.id === currentMemberId);
@@ -255,29 +250,59 @@ Page({
 
     if (!memberId) return;
 
-    const otherMembers = this.data.members.filter(
-      (m: RoomMember) => m.id !== memberId && !m.isSpectator,
-    );
+    const otherMembers = this.data.members
+      .filter((m: RoomMember) => m.id !== memberId && !m.isSpectator)
+      .map((member) => ({
+        ...member,
+        isSelected: false,
+        scoreValue: '',
+      }));
 
     if (otherMembers.length === 0) {
       wx.showToast({ title: '至少需要2名非旁观玩家', icon: 'none' });
       return;
     }
 
+    const scoreDialogTargetIds = otherMembers.length === 1 ? [otherMembers[0].id] : [];
+    const markedMembers = otherMembers.map((member) => ({
+      ...member,
+      isSelected: scoreDialogTargetIds.includes(member.id),
+    }));
+
     this.setData({
       scoreDialogVisible: true,
       scoreDialogType: type,
       scoreDialogSourceId: memberId,
       scoreDialogSourceName: memberName,
-      scoreDialogTargetId: otherMembers.length === 1 ? otherMembers[0].id : 0,
+      scoreDialogTargetIds,
+      batchScoreEnabled: true,
       scoreDialogValue: '',
-      otherMembers,
+      otherMembers: markedMembers,
     });
   },
 
   selectTarget(e: WechatMiniprogram.BaseEvent) {
     const targetId = Number(e.currentTarget.dataset.memberId || 0);
-    this.setData({ scoreDialogTargetId: targetId });
+    if (!targetId) {
+      return;
+    }
+
+    const selectedIds = this.data.scoreDialogTargetIds.includes(targetId)
+      ? this.data.scoreDialogTargetIds.filter((id) => id !== targetId)
+      : [...this.data.scoreDialogTargetIds, targetId];
+
+    this.setData({
+      scoreDialogTargetIds: selectedIds,
+      otherMembers: this.data.otherMembers.map((member) => ({
+        ...member,
+        isSelected: selectedIds.includes(member.id),
+      })),
+    });
+  },
+
+  onBatchScoreToggle(e: WechatMiniprogram.CustomEvent) {
+    const enabled = Boolean((e.detail as { value?: boolean }).value);
+    this.setData({ batchScoreEnabled: enabled });
   },
 
   onScoreInput(e: WechatMiniprogram.CustomEvent) {
@@ -286,13 +311,33 @@ Page({
     this.setData({ scoreDialogValue: value });
   },
 
+  onTargetScoreInput(e: WechatMiniprogram.CustomEvent) {
+    const targetId = Number(e.currentTarget.dataset.memberId || 0);
+    const rawValue = String((e.detail as { value?: string }).value || '');
+    const value = rawValue.replace(/\D/g, '').slice(0, 6);
+
+    this.setData({
+      otherMembers: this.data.otherMembers.map((member) => {
+        if (member.id !== targetId) {
+          return member;
+        }
+
+        return {
+          ...member,
+          scoreValue: value,
+        };
+      }),
+    });
+  },
+
   closeScoreDialog() {
     this.setData({
       scoreDialogVisible: false,
       scoreDialogType: '',
       scoreDialogSourceId: 0,
       scoreDialogSourceName: '',
-      scoreDialogTargetId: 0,
+      scoreDialogTargetIds: [],
+      batchScoreEnabled: true,
       scoreDialogValue: '',
       otherMembers: [],
     });
@@ -309,41 +354,78 @@ Page({
       return;
     }
 
-    const points = Number(this.data.scoreDialogValue || 0);
-    if (!Number.isInteger(points) || points <= 0) {
-      wx.showToast({ title: '请输入有效分数', icon: 'none' });
-      return;
-    }
-
-    if (!this.data.scoreDialogTargetId) {
-      wx.showToast({ title: '请选择对手', icon: 'none' });
+    if (this.data.scoreDialogTargetIds.length === 0) {
+      wx.showToast({ title: '请至少选择1个对手', icon: 'none' });
       return;
     }
 
     const sourceId = this.data.scoreDialogSourceId;
-    const targetId = this.data.scoreDialogTargetId;
     const type = this.data.scoreDialogType;
+    const selectedMembers = this.data.otherMembers.filter((member) => member.isSelected);
+    let payload: RoomPayload | null = null;
 
-    let fromMemberId: number;
-    let toMemberId: number;
+    if (this.data.batchScoreEnabled) {
+      const points = Number(this.data.scoreDialogValue || 0);
+      if (!Number.isInteger(points) || points <= 0) {
+        wx.showToast({ title: '请输入有效分数', icon: 'none' });
+        return;
+      }
 
-    if (type === 'lose') {
-      fromMemberId = sourceId;
-      toMemberId = targetId;
-    } else {
-      fromMemberId = targetId;
-      toMemberId = sourceId;
+      wx.showLoading({ title: '记分中...' });
+      try {
+        for (const targetId of this.data.scoreDialogTargetIds) {
+          const fromMemberId = type === 'lose' ? sourceId : targetId;
+          const toMemberId = type === 'lose' ? targetId : sourceId;
+          payload = await addRoomScore(
+            this.data.roomId,
+            toMemberId,
+            points,
+            fromMemberId,
+          );
+        }
+
+        if (payload) {
+          this.applyRoomPayload(payload);
+        }
+        this.closeScoreDialog();
+        wx.showToast({ title: '记分成功', icon: 'success' });
+      } catch (error) {
+        wx.showToast({
+          title: (error as RequestError).message || '记分失败',
+          icon: 'none',
+        });
+      } finally {
+        wx.hideLoading();
+      }
+      return;
+    }
+
+    for (const member of selectedMembers) {
+      const points = Number(member.scoreValue || 0);
+      if (!Number.isInteger(points) || points <= 0) {
+        wx.showToast({ title: `请给 ${member.nickname} 输入有效分数`, icon: 'none' });
+        return;
+      }
     }
 
     wx.showLoading({ title: '记分中...' });
     try {
-      const payload = await addRoomScore(
-        this.data.roomId,
-        toMemberId,
-        points,
-        fromMemberId,
-      );
-      this.applyRoomPayload(payload);
+      for (const member of selectedMembers) {
+        const targetId = member.id;
+        const points = Number(member.scoreValue || 0);
+        const fromMemberId = type === 'lose' ? sourceId : targetId;
+        const toMemberId = type === 'lose' ? targetId : sourceId;
+        payload = await addRoomScore(
+          this.data.roomId,
+          toMemberId,
+          points,
+          fromMemberId,
+        );
+      }
+
+      if (payload) {
+        this.applyRoomPayload(payload);
+      }
       this.closeScoreDialog();
       wx.showToast({ title: '记分成功', icon: 'success' });
     } catch (error) {

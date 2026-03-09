@@ -12,6 +12,7 @@
   inset: 0;
   z-index: 0;
   opacity: 0.12;
+  pointer-events: none;
   background-image: radial-gradient(#f4a261 1px, transparent 1px),
     radial-gradient(#e63946 1px, transparent 1px);
   background-size: 20px 20px;
@@ -40,6 +41,7 @@
   background: rgba(230, 57, 70, 0.16);
   border-radius: 24rpx;
   filter: blur(2rpx);
+  pointer-events: none;
 }
 
 .action-strip {
@@ -53,7 +55,7 @@
 }
 
 .single-action-strip {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .action-item {
@@ -424,6 +426,14 @@
   font-size: 34rpx;
   font-weight: 700;
   color: #333;
+  margin-bottom: 8rpx;
+}
+
+.score-dialog-tip {
+  display: block;
+  font-size: 22rpx;
+  color: #999;
+  line-height: 1.5;
   margin-bottom: 20rpx;
 }
 
@@ -508,6 +518,19 @@
   margin-bottom: 20rpx;
 }
 
+.batch-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8rpx 4rpx 20rpx;
+}
+
+.batch-score-label {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #666;
+}
+
 .score-input-label {
   display: block;
   font-size: 26rpx;
@@ -527,6 +550,45 @@
   color: #e63946;
 }
 
+.target-score-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.target-score-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 18rpx;
+  background: #fff8f0;
+  border: 2rpx solid rgba(230, 57, 70, 0.12);
+}
+
+.target-score-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.target-score-input {
+  width: 180rpx;
+  height: 72rpx;
+  border-radius: 14rpx;
+  background: #fff;
+  border: 2rpx solid rgba(230, 57, 70, 0.2);
+  text-align: center;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #e63946;
+}
+
 /* ---- 图标 ---- */
 
 .icon {
@@ -539,12 +601,6 @@
   width: 36rpx;
   height: 36rpx;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f4a261'%3E%3Cpath d='M19 11H13V5h-2v6H5v2h6v6h2v-6h6z'/%3E%3C/svg%3E");
-}
-
-.icon-detail {
-  width: 36rpx;
-  height: 36rpx;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f4a261'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16l4-4h10a2 2 0 0 0 2-2V8l-6-6z'/%3E%3C/svg%3E");
 }
 
 .icon-power {

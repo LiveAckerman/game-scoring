@@ -27,7 +27,6 @@ import {
 
 interface RoomScoreRecordView extends RoomScoreRecord {
   displayTime: string;
-  displayText: string;
 }
 
 const ROOM_CODE_LENGTH = 6;
@@ -435,8 +434,6 @@ Page({
     }
 
     const targetMemberId = this.data.memberActionTargetId;
-    const targetMemberName = this.data.memberActionTargetName;
-
     if (!targetMemberId) {
       return;
     }
@@ -560,11 +557,6 @@ Page({
       .map((record) => ({
         ...record,
         displayTime: this.formatTime(record.createdAt),
-        displayText: record.recordType === 'KICK_REFUND'
-          ? `${record.fromMemberName} 被踢出，${record.fromMemberName} 返还 ${record.toMemberName} ${record.points}分`
-          : record.recordType === 'KICK_RECLAIM'
-            ? `${record.toMemberName} 被踢出，${record.fromMemberName} 回收 ${record.toMemberName} ${record.points}分`
-            : `${record.fromMemberName} 给了 ${record.toMemberName} ${record.points}分`,
       }));
 
     const currentMember = sortedMembers.find(

@@ -16,10 +16,6 @@
           <view class="action-icon"><view class="icon icon-plus"></view></view>
           <text>添加玩家</text>
         </view>
-        <view class="action-item" bindtap="handleActionTap" data-action="detail">
-          <view class="action-icon"><view class="icon icon-detail"></view></view>
-          <text>记分明细</text>
-        </view>
         <view
           class="action-item {{!isOwner || roomStatus !== 'IN_PROGRESS' ? 'disabled' : ''}}"
           bindtap="handleActionTap"
@@ -151,12 +147,13 @@
       <text class="score-dialog-title">
         {{scoreDialogSourceName}} {{scoreDialogType === 'lose' ? '输给谁？' : '赢了谁？'}}
       </text>
+      <text class="score-dialog-tip">可多选对手，确认后会按相同分数逐个记分</text>
 
       <view class="target-picker">
         <view
           wx:for="{{otherMembers}}"
           wx:key="id"
-          class="target-item {{scoreDialogTargetId === item.id ? 'selected' : ''}}"
+          class="target-item {{item.isSelected ? 'selected' : ''}}"
           bindtap="selectTarget"
           data-member-id="{{item.id}}"
         >
@@ -168,25 +165,58 @@
             <text class="target-name">{{item.nickname}}</text>
             <text class="target-score {{item.score > 0 ? 'positive' : item.score < 0 ? 'negative' : ''}}">{{item.score > 0 ? '+' : ''}}{{item.score}}</text>
           </view>
-          <view wx:if="{{scoreDialogTargetId === item.id}}" class="target-check">
+          <view wx:if="{{item.isSelected}}" class="target-check">
             <view class="icon icon-check"></view>
           </view>
         </view>
       </view>
 
-      <view class="score-input-section">
-        <text class="score-input-label">
-          {{scoreDialogType === 'lose' ? '输了多少分？' : '赢了多少分？'}}
-        </text>
-        <input
-          class="score-input"
-          type="number"
-          maxlength="6"
-          value="{{scoreDialogValue}}"
-          placeholder="请输入分数"
-          focus="{{scoreDialogVisible && scoreDialogTargetId > 0}}"
-          bindinput="onScoreInput"
+      <view class="batch-score-row">
+        <text class="batch-score-label">批量{{scoreDialogType === 'lose' ? '扣' : '加'}}分</text>
+        <switch
+          checked="{{batchScoreEnabled}}"
+          color="#e63946"
+          bindchange="onBatchScoreToggle"
         />
+      </view>
+
+      <view class="score-input-section">
+        <block wx:if="{{batchScoreEnabled}}">
+          <text class="score-input-label">
+            {{scoreDialogType === 'lose' ? '每人扣多少分？' : '每人加多少分？'}}
+          </text>
+          <input
+            class="score-input"
+            type="number"
+            maxlength="6"
+            value="{{scoreDialogValue}}"
+            placeholder="请输入统一分数"
+            focus="{{scoreDialogVisible && scoreDialogTargetIds.length > 0}}"
+            bindinput="onScoreInput"
+          />
+        </block>
+        <block wx:else>
+          <text class="score-input-label">给每位已选玩家单独设置分数</text>
+          <view class="target-score-editor">
+            <view
+              wx:for="{{otherMembers}}"
+              wx:key="id"
+              wx:if="{{item.isSelected}}"
+              class="target-score-row"
+            >
+              <text class="target-score-name">{{item.nickname}}</text>
+              <input
+                class="target-score-input"
+                type="number"
+                maxlength="6"
+                value="{{item.scoreValue}}"
+                placeholder="分数"
+                data-member-id="{{item.id}}"
+                bindinput="onTargetScoreInput"
+              />
+            </view>
+          </view>
+        </block>
       </view>
 
       <view class="modal-actions">
