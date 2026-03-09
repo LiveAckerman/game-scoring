@@ -16,6 +16,7 @@ import {
   AddScoreDto,
   CreateRoomDto,
   JoinRoomDto,
+  KickMemberDto,
   ListRoomHistoryQueryDto,
   TransferOwnerDto,
   PoolGiveDto,
@@ -101,6 +102,19 @@ export class RoomController {
     @Body() dto: TransferOwnerDto,
   ) {
     return this.roomService.transferOwner(req, roomId, dto);
+  }
+
+  @Post(':roomId/kick-member')
+  @ApiOperation({ summary: '桌主踢出成员并原路退回积分' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiBody({ type: KickMemberDto })
+  @ApiResponse({ status: 200, description: '踢出成功' })
+  kickMember(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+    @Body() dto: KickMemberDto,
+  ) {
+    return this.roomService.kickMember(req, roomId, dto);
   }
 
   @Post(':roomId/end')

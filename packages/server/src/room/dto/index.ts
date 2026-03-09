@@ -3,6 +3,7 @@ export * from './join-room.dto';
 export * from './add-score.dto';
 export * from './add-member.dto';
 export * from './transfer-owner.dto';
+export * from './kick-member.dto';
 export * from './list-room-history-query.dto';
 export * from './pool-give.dto';
 export * from './pool-take.dto';

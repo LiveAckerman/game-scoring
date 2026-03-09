@@ -35,6 +35,7 @@ import {
   AddScoreDto,
   CreateRoomDto,
   JoinRoomDto,
+  KickMemberDto,
   ListRoomHistoryQueryDto,
   TransferOwnerDto,
   PoolGiveDto,
@@ -559,6 +560,135 @@ export class RoomService {
 
     const payload = await this.buildRoomPayload(roomId, actor);
     this.realtimeService.notifyRoomUpdated(payload.room.roomCode, 'owner_transferred');
+    return payload;
+  }
+
+  async kickMember(req: Request, roomId: number, dto: KickMemberDto) {
+    const actor = await this.resolveActor(req);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const room = await queryRunner.manager.findOne(Room, {
+        where: { id: roomId },
+      });
+
+      if (!room) {
+        throw new NotFoundException('房间不存在');
+      }
+
+      if (room.roomType === ROOM_TYPE.POOL) {
+        throw new BadRequestException('分数池模式暂不支持踢人');
+      }
+
+      if (room.status === ROOM_STATUS.ENDED) {
+        throw new ConflictException('房间已结束，无法踢人');
+      }
+
+      const operatorMember = await queryRunner.manager.findOne(RoomMember, {
+        where: {
+          roomId,
+          actorType: actor.actorType,
+          actorRefId: actor.actorRefId,
+          isActive: true,
+        },
+      });
+
+      if (!operatorMember) {
+        throw new ForbiddenException('你不在该房间内');
+      }
+
+      if (room.ownerMemberId !== operatorMember.id) {
+        throw new ForbiddenException('只有桌主可以踢人');
+      }
+
+      const targetMember = await queryRunner.manager.findOne(RoomMember, {
+        where: {
+          id: dto.targetMemberId,
+          roomId,
+          isActive: true,
+        },
+      });
+
+      if (!targetMember) {
+        throw new NotFoundException('目标成员不存在');
+      }
+
+      if (targetMember.id === operatorMember.id || targetMember.id === room.ownerMemberId) {
+        throw new BadRequestException('不能踢出桌主');
+      }
+
+      const relatedRecords = await queryRunner.manager.find(RoomScoreRecord, {
+        where: { roomId },
+        order: { id: 'ASC' },
+      });
+
+      // 仅回滚被踢成员当前仍持有的净得分，避免影响已经继续流转的积分链路。
+      const refundMap = new Map<number, number>();
+      relatedRecords.forEach((record) => {
+        if (record.toMemberId === targetMember.id) {
+          refundMap.set(
+            record.fromMemberId,
+            (refundMap.get(record.fromMemberId) || 0) + record.points,
+          );
+        } else if (record.fromMemberId === targetMember.id) {
+          refundMap.set(
+            record.toMemberId,
+            (refundMap.get(record.toMemberId) || 0) - record.points,
+          );
+        }
+      });
+
+      const reverseEntries = [...refundMap.entries()]
+        .filter(([memberId, points]) => memberId !== targetMember.id && points !== 0);
+
+      if (reverseEntries.some(([, points]) => points < 0)) {
+        throw new BadRequestException(
+          '该玩家已有已转出的积分，请先手动结清后再踢出',
+        );
+      }
+
+      const totalRefundPoints = reverseEntries.reduce((sum, [, points]) => sum + points, 0);
+
+      if (targetMember.score < 0) {
+        throw new BadRequestException('该玩家当前为负分，请先手动结清后再踢出');
+      }
+
+      if (totalRefundPoints !== targetMember.score) {
+        throw new BadRequestException(
+          '该玩家积分状态异常，请先手动结清后再踢出',
+        );
+      }
+
+      for (const [memberId, points] of reverseEntries) {
+        await queryRunner.manager.increment(RoomMember, { id: memberId }, 'score', points);
+        const refundRecord = queryRunner.manager.create(RoomScoreRecord, {
+          roomId,
+          fromMemberId: targetMember.id,
+          toMemberId: memberId,
+          points,
+          createdByMemberId: operatorMember.id,
+        });
+        await queryRunner.manager.save(refundRecord);
+      }
+
+      targetMember.score = 0;
+      targetMember.isSpectator = false;
+      targetMember.isActive = false;
+      await queryRunner.manager.save(targetMember);
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+
+    const payload = await this.buildRoomPayload(roomId, actor);
+    this.realtimeService.notifyRoomUpdated(payload.room.roomCode, 'member_kicked');
     return payload;
   }
 
@@ -1234,12 +1364,13 @@ export class RoomService {
       throw new NotFoundException('房间不存在');
     }
 
-    const members = await this.roomMemberRepository.find({
-      where: { roomId, isActive: true },
+    const allMembers = await this.roomMemberRepository.find({
+      where: { roomId },
       order: { id: 'ASC' },
     });
+    const members = allMembers.filter((member) => member.isActive);
 
-    const userRefIds = members
+    const userRefIds = allMembers
       .filter((m) => m.actorType === ROOM_ACTOR_TYPE.USER)
       .map((m) => m.actorRefId);
 
@@ -1250,7 +1381,7 @@ export class RoomService {
       const userMap = new Map<number, User>();
       latestUsers.forEach((u) => userMap.set(u.id, u));
 
-      for (const member of members) {
+      for (const member of allMembers) {
         if (member.actorType !== ROOM_ACTOR_TYPE.USER) continue;
         const user = userMap.get(member.actorRefId);
         if (!user) continue;
@@ -1271,7 +1402,7 @@ export class RoomService {
     }
 
     const memberNameMap = new Map<number, string>();
-    members.forEach((item) => {
+    allMembers.forEach((item) => {
       memberNameMap.set(item.id, item.nickname);
     });
 

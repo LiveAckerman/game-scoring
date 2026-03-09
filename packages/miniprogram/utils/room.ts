@@ -229,6 +229,19 @@ export const transferRoomOwner = (
   });
 };
 
+export const kickRoomMember = (
+  roomId: number,
+  targetMemberId: number,
+): Promise<RoomPayload> => {
+  return request<RoomPayload>({
+    url: `/rooms/${roomId}/kick-member`,
+    method: 'POST',
+    data: {
+      targetMemberId,
+    },
+  });
+};
+
 export const endRoom = (roomId: number): Promise<RoomPayload> => {
   return request<RoomPayload>({
     url: `/rooms/${roomId}/end`,

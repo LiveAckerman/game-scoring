@@ -237,6 +237,12 @@
   color: #fff;
 }
 
+.kick-btn {
+  background: rgba(230, 57, 70, 0.1);
+  color: #c8424d;
+  border: 2rpx solid rgba(230, 57, 70, 0.12);
+}
+
 .empty-hint {
   padding: 24rpx;
   text-align: center;

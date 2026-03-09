@@ -67,6 +67,13 @@
             data-member-id="{{item.id}}"
             data-member-name="{{item.nickname}}"
           >赢</view>
+          <view
+            wx:if="{{isOwner && !item.isOwner}}"
+            class="tiny-btn kick-btn"
+            bindtap="handleKickMember"
+            data-member-id="{{item.id}}"
+            data-member-name="{{item.nickname}}"
+          >踢人</view>
         </view>
       </view>
 

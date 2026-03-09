@@ -407,6 +407,11 @@
   color: #b56d34;
 }
 
+.kick-btn {
+  background: rgba(230, 57, 70, 0.1);
+  color: #c8424d;
+}
+
 .empty-seat {
   height: 108rpx;
   border-radius: 20rpx;

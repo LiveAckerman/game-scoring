@@ -95,8 +95,12 @@
           <text class="score-label">积分</text>
         </view>
 
-        <view class="member-actions" wx:if="{{!isPoolMode && item.id !== currentMemberId && !item.isSpectator}}">
+        <view
+          class="member-actions"
+          wx:if="{{!isPoolMode && item.id !== currentMemberId && (!item.isSpectator || isOwner)}}"
+        >
           <view
+            wx:if="{{!item.isSpectator}}"
             class="tiny-btn give-btn"
             bindtap="openScoreDialog"
             data-member-id="{{item.id}}"
@@ -110,6 +114,13 @@
             data-member-id="{{item.id}}"
             data-member-name="{{item.nickname}}"
           >设桌主</view>
+          <view
+            wx:if="{{isOwner && !item.isOwner && roomStatus === 'IN_PROGRESS'}}"
+            class="tiny-btn kick-btn"
+            bindtap="handleKickMember"
+            data-member-id="{{item.id}}"
+            data-member-name="{{item.nickname}}"
+          >踢人</view>
         </view>
       </view>
 

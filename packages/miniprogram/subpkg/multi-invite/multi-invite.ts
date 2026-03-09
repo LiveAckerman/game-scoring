@@ -7,6 +7,7 @@ import {
   endRoom,
   getRoomByCode,
   hideRoomInviteCard,
+  kickRoomMember,
   RoomMember,
   RoomPayload,
   RoomScoreRecord,
@@ -333,6 +334,49 @@ Page({
         } catch (error) {
           wx.showToast({
             title: (error as RequestError).message || '转移失败',
+            icon: 'none',
+          });
+        } finally {
+          wx.hideLoading();
+        }
+      },
+    });
+  },
+
+  handleKickMember(e: WechatMiniprogram.BaseEvent) {
+    if (!this.data.isOwner) {
+      wx.showToast({ title: '只有桌主可以踢人', icon: 'none' });
+      return;
+    }
+
+    if (this.data.roomStatus !== 'IN_PROGRESS') {
+      wx.showToast({ title: '房间已结束，无法踢人', icon: 'none' });
+      return;
+    }
+
+    const targetMemberId = Number(e.currentTarget.dataset.memberId || 0);
+    const targetMemberName = String(e.currentTarget.dataset.memberName || '');
+
+    if (!targetMemberId) {
+      return;
+    }
+
+    wx.showModal({
+      title: '踢出玩家',
+      content: `确认踢出 ${targetMemberName} 吗？系统会按原路退回该玩家当前持有的积分。`,
+      success: async (res: WechatMiniprogram.ShowModalSuccessCallbackResult) => {
+        if (!res.confirm) {
+          return;
+        }
+
+        wx.showLoading({ title: '处理中...' });
+        try {
+          const payload = await kickRoomMember(this.data.roomId, targetMemberId);
+          this.applyRoomPayload(payload);
+          wx.showToast({ title: '已踢出', icon: 'success' });
+        } catch (error) {
+          wx.showToast({
+            title: (error as RequestError).message || '踢人失败',
             icon: 'none',
           });
         } finally {
