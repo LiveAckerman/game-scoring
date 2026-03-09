@@ -130,11 +130,11 @@ export class UserService {
   /**
    * 检查是否有可恢复的游客数据
    */
-  async checkGuestData(userId: number, guestToken?: string) {
+  async checkGuestData(userId: number, guestToken?: string, deviceId?: string) {
     const memberRepo = this.dataSource.getRepository(RoomMember);
     await this.findById(userId);
 
-    const guest = await this.findGuestByToken(guestToken);
+    const guest = await this.findRestorableGuest(userId, guestToken, deviceId);
     if (!guest) {
       return {
         hasData: false,
@@ -159,11 +159,11 @@ export class UserService {
   /**
    * 恢复游客数据到当前登录账号（将 GUEST 类型的成员记录迁移为 USER）
    */
-  async restoreGuestData(userId: number, guestToken?: string) {
+  async restoreGuestData(userId: number, guestToken?: string, deviceId?: string) {
     const memberRepo = this.dataSource.getRepository(RoomMember);
     const guestRepo = this.dataSource.getRepository(GuestUser);
     const user = await this.findById(userId);
-    const guest = await this.findGuestByToken(guestToken);
+    const guest = await this.findRestorableGuest(userId, guestToken, deviceId);
 
     if (!guest) {
       return { migrated: 0 };
@@ -286,18 +286,83 @@ export class UserService {
     return { migrated: roomIdSet.size };
   }
 
-  private async findGuestByToken(guestToken?: string): Promise<GuestUser | null> {
+  private async findRestorableGuest(
+    userId: number,
+    guestToken?: string,
+    deviceId?: string,
+  ): Promise<GuestUser | null> {
+    const normalizedDeviceId = String(deviceId || '').trim();
     const normalizedToken = String(guestToken || '').trim();
+    const guestRepo = this.dataSource.getRepository(GuestUser);
+    const memberRepo = this.dataSource.getRepository(RoomMember);
+
+    if (normalizedDeviceId) {
+      const deviceGuests = await guestRepo.find({
+        where: {
+          deviceId: normalizedDeviceId,
+          isActive: true,
+        },
+        order: { updatedAt: 'DESC', id: 'DESC' },
+      });
+
+      if (deviceGuests.length > 0) {
+        if (normalizedToken) {
+          const exactGuest = deviceGuests.find((guest) => guest.token === normalizedToken);
+          if (exactGuest) {
+            return exactGuest;
+          }
+        }
+
+        for (const guest of deviceGuests) {
+          const hasGuestMembership = await memberRepo.exist({
+            where: {
+              actorType: ROOM_ACTOR_TYPE.GUEST,
+              actorRefId: guest.id,
+            },
+          });
+
+          if (hasGuestMembership) {
+            return guest;
+          }
+        }
+
+        return deviceGuests[0];
+      }
+    }
+
+    return this.findGuestByToken(guestToken, deviceId);
+  }
+
+  private async findGuestByToken(guestToken?: string, deviceId?: string): Promise<GuestUser | null> {
+    const normalizedToken = String(guestToken || '').trim();
+    const normalizedDeviceId = String(deviceId || '').trim();
     if (!normalizedToken) {
       return null;
     }
 
-    return this.dataSource.getRepository(GuestUser).findOne({
+    const guestRepo = this.dataSource.getRepository(GuestUser);
+    const guest = await guestRepo.findOne({
       where: {
         token: normalizedToken,
         isActive: true,
       },
     });
+
+    if (!guest) {
+      return null;
+    }
+
+    if (guest.deviceId) {
+      return normalizedDeviceId && guest.deviceId === normalizedDeviceId ? guest : null;
+    }
+
+    if (!normalizedDeviceId) {
+      return guest;
+    }
+
+    guest.deviceId = normalizedDeviceId;
+    await guestRepo.save(guest);
+    return guest;
   }
 
   private buildInitials(name: string): string {

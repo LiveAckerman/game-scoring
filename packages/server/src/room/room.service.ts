@@ -1592,10 +1592,9 @@ export class RoomService {
     }
 
     const guestToken = this.extractGuestToken(req);
+    const deviceId = this.extractDeviceId(req);
     if (guestToken) {
-      const guest = await this.guestRepository.findOne({
-        where: { token: guestToken, isActive: true },
-      });
+      const guest = await this.guestService.findByToken(guestToken, deviceId);
 
       if (!guest && !guestNickname) {
         throw new UnauthorizedException('游客身份失效，请重新输入昵称');
@@ -1626,7 +1625,7 @@ export class RoomService {
       throw new UnauthorizedException('请先登录或输入昵称后再继续');
     }
 
-    const guest = await this.guestService.createSession(guestNickname, guestToken);
+    const guest = await this.guestService.createSession(guestNickname, deviceId, guestToken);
     return {
       actorType: ROOM_ACTOR_TYPE.GUEST,
       actorRefId: guest.id,
@@ -1679,5 +1678,18 @@ export class RoomService {
     }
 
     return rawToken;
+  }
+
+  private extractDeviceId(req: Request): string | undefined {
+    const rawDeviceId = req.headers['x-device-id'];
+    if (!rawDeviceId) {
+      return undefined;
+    }
+
+    if (Array.isArray(rawDeviceId)) {
+      return rawDeviceId[0];
+    }
+
+    return rawDeviceId;
   }
 }

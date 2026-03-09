@@ -11,23 +11,26 @@ export class GuestService {
     private readonly guestRepository: Repository<GuestUser>,
   ) { }
 
-  async createSession(nickname: string, token?: string): Promise<GuestUser> {
+  async createSession(nickname: string, deviceId?: string, token?: string): Promise<GuestUser> {
     const normalizedName = this.normalizeNickname(nickname);
+    const normalizedDeviceId = this.normalizeDeviceId(deviceId);
 
     if (token) {
-      const existingGuest = await this.guestRepository.findOne({
-        where: { token },
-      });
+      const existingGuest = await this.findByToken(token, normalizedDeviceId);
 
       if (existingGuest) {
         existingGuest.nickname = normalizedName;
         existingGuest.avatarInitials = this.buildInitials(normalizedName);
+        if (normalizedDeviceId && existingGuest.deviceId !== normalizedDeviceId) {
+          existingGuest.deviceId = normalizedDeviceId;
+        }
         return this.guestRepository.save(existingGuest);
       }
     }
 
     const guest = this.guestRepository.create({
       token: await this.generateUniqueToken(),
+      deviceId: normalizedDeviceId,
       nickname: normalizedName,
       avatarInitials: this.buildInitials(normalizedName),
       isActive: true,
@@ -36,18 +39,35 @@ export class GuestService {
     return this.guestRepository.save(guest);
   }
 
-  async findByToken(token: string): Promise<GuestUser | null> {
+  async findByToken(token: string, deviceId?: string): Promise<GuestUser | null> {
     if (!token) {
       return null;
     }
 
-    return this.guestRepository.findOne({
+    const normalizedDeviceId = this.normalizeDeviceId(deviceId);
+    const guest = await this.guestRepository.findOne({
       where: { token, isActive: true },
     });
+
+    if (!guest) {
+      return null;
+    }
+
+    if (guest.deviceId) {
+      return normalizedDeviceId && guest.deviceId === normalizedDeviceId ? guest : null;
+    }
+
+    if (!normalizedDeviceId) {
+      return guest;
+    }
+
+    guest.deviceId = normalizedDeviceId;
+    await this.guestRepository.save(guest);
+    return guest;
   }
 
-  async getByTokenOrFail(token: string): Promise<GuestUser> {
-    const guest = await this.findByToken(token);
+  async getByTokenOrFail(token: string, deviceId?: string): Promise<GuestUser> {
+    const guest = await this.findByToken(token, deviceId);
     if (!guest) {
       throw new UnauthorizedException('游客身份无效，请重新输入昵称加入房间');
     }
@@ -75,6 +95,10 @@ export class GuestService {
     }
 
     return `${chars[0]}${chars[1]}`.toUpperCase();
+  }
+
+  normalizeDeviceId(deviceId?: string): string {
+    return String(deviceId || '').trim().slice(0, 80);
   }
 
   private async generateUniqueToken(): Promise<string> {
