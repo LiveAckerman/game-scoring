@@ -1,5 +1,4 @@
 import { request } from './request';
-import { clearGuestIdentity } from './identity';
 
 interface LoginResult {
   token: string;
@@ -29,7 +28,6 @@ export const login = () => {
             // 存储 Token 和用户信息
             wx.setStorageSync('token', data.token);
             wx.setStorageSync('userInfo', data.userInfo);
-            clearGuestIdentity();
             const app = getApp<IAppOption>();
             app.globalData.token = data.token;
             app.globalData.userInfo = data.userInfo;

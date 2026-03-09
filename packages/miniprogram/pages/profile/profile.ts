@@ -217,8 +217,18 @@ Page({
           if (!modalRes.confirm) return;
           wx.showLoading({ title: '导入中...' });
           try {
-            await request({ url: '/user/restore-guest-data', method: 'POST' });
+            const restoreRes = await request<{ migrated: number }>({
+              url: '/user/restore-guest-data',
+              method: 'POST',
+            });
             wx.hideLoading();
+            if (!restoreRes.migrated) {
+              wx.showToast({ title: '未找到可导入的数据', icon: 'none' });
+              return;
+            }
+            clearGuestIdentity();
+            const app = getApp<IAppOption>();
+            app.globalData.guestProfile = null;
             wx.showToast({ title: '数据恢复成功', icon: 'success' });
             this.fetchUserInfo();
           } catch (err) {

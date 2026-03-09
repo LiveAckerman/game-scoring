@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { User } from './entities/user.entity';
 import { RoomMember, ROOM_ACTOR_TYPE } from '../room/entities/room-member.entity';
+import { GuestUser } from '../guest/entities/guest-user.entity';
+import { PoolRecord, Room, RoomScoreRecord } from '../room/entities';
 import { UpdateProfileDto } from './dto';
 
 @Injectable()
@@ -128,47 +130,182 @@ export class UserService {
   /**
    * 检查是否有可恢复的游客数据
    */
-  async checkGuestData(userId: number) {
+  async checkGuestData(userId: number, guestToken?: string) {
     const memberRepo = this.dataSource.getRepository(RoomMember);
+    await this.findById(userId);
 
-    const user = await this.findById(userId);
-    const guestCount = await memberRepo
+    const guest = await this.findGuestByToken(guestToken);
+    if (!guest) {
+      return {
+        hasData: false,
+        guestGames: 0,
+      };
+    }
+
+    const rawCount = await memberRepo
       .createQueryBuilder('m')
+      .select('COUNT(DISTINCT m.roomId)', 'roomCount')
       .where('m.actorType = :type', { type: ROOM_ACTOR_TYPE.GUEST })
-      .getCount();
+      .andWhere('m.actorRefId = :guestId', { guestId: guest.id })
+      .getRawOne<{ roomCount: string }>();
+    const guestGames = Number(rawCount?.roomCount || 0);
 
     return {
-      hasData: guestCount > 0,
-      guestGames: guestCount,
+      hasData: guestGames > 0,
+      guestGames,
     };
   }
 
   /**
    * 恢复游客数据到当前登录账号（将 GUEST 类型的成员记录迁移为 USER）
    */
-  async restoreGuestData(userId: number) {
+  async restoreGuestData(userId: number, guestToken?: string) {
     const memberRepo = this.dataSource.getRepository(RoomMember);
+    const guestRepo = this.dataSource.getRepository(GuestUser);
     const user = await this.findById(userId);
+    const guest = await this.findGuestByToken(guestToken);
 
-    const result = await memberRepo
-      .createQueryBuilder()
-      .update(RoomMember)
-      .set({
-        actorType: ROOM_ACTOR_TYPE.USER,
-        actorRefId: userId,
-        nickname: user.nickname || '已恢复玩家',
-        avatar: user.avatar || '',
-      })
-      .where('actorType = :type', { type: ROOM_ACTOR_TYPE.GUEST })
-      .execute();
-
-    const migratedCount = result.affected || 0;
-
-    if (migratedCount > 0) {
-      user.totalGames = (user.totalGames || 0) + migratedCount;
-      await this.userRepository.save(user);
+    if (!guest) {
+      return { migrated: 0 };
     }
 
-    return { migrated: migratedCount };
+    const guestMembers = await memberRepo.find({
+      where: {
+        actorType: ROOM_ACTOR_TYPE.GUEST,
+        actorRefId: guest.id,
+      },
+      order: { roomId: 'ASC', id: 'ASC' },
+    });
+
+    if (guestMembers.length === 0) {
+      guest.isActive = false;
+      await guestRepo.save(guest);
+      return { migrated: 0 };
+    }
+
+    const nextNickname = user.nickname || '已恢复玩家';
+    const nextInitials = this.buildInitials(nextNickname);
+    const roomIdSet = new Set<number>();
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      for (const guestMember of guestMembers) {
+        roomIdSet.add(guestMember.roomId);
+
+        const existingUserMember = await queryRunner.manager.findOne(RoomMember, {
+          where: {
+            roomId: guestMember.roomId,
+            actorType: ROOM_ACTOR_TYPE.USER,
+            actorRefId: userId,
+          },
+        });
+
+        if (existingUserMember) {
+          existingUserMember.score += guestMember.score;
+          existingUserMember.nickname = nextNickname;
+          existingUserMember.avatar = user.avatar || '';
+          existingUserMember.avatarInitials = nextInitials;
+          existingUserMember.isActive = existingUserMember.isActive || guestMember.isActive;
+          existingUserMember.inviteCardHidden =
+            existingUserMember.inviteCardHidden && guestMember.inviteCardHidden;
+          existingUserMember.isSpectator = existingUserMember.isSpectator || guestMember.isSpectator;
+          await queryRunner.manager.save(existingUserMember);
+
+          await queryRunner.manager
+            .createQueryBuilder()
+            .update(RoomScoreRecord)
+            .set({ fromMemberId: existingUserMember.id })
+            .where('fromMemberId = :memberId', { memberId: guestMember.id })
+            .execute();
+
+          await queryRunner.manager
+            .createQueryBuilder()
+            .update(RoomScoreRecord)
+            .set({ toMemberId: existingUserMember.id })
+            .where('toMemberId = :memberId', { memberId: guestMember.id })
+            .execute();
+
+          await queryRunner.manager
+            .createQueryBuilder()
+            .update(RoomScoreRecord)
+            .set({ createdByMemberId: existingUserMember.id })
+            .where('createdByMemberId = :memberId', { memberId: guestMember.id })
+            .execute();
+
+          await queryRunner.manager
+            .createQueryBuilder()
+            .update(PoolRecord)
+            .set({ memberId: existingUserMember.id })
+            .where('memberId = :memberId', { memberId: guestMember.id })
+            .execute();
+
+          await queryRunner.manager
+            .createQueryBuilder()
+            .update(Room)
+            .set({ ownerMemberId: existingUserMember.id })
+            .where('ownerMemberId = :memberId', { memberId: guestMember.id })
+            .execute();
+
+          await queryRunner.manager.remove(guestMember);
+          continue;
+        }
+
+        guestMember.actorType = ROOM_ACTOR_TYPE.USER;
+        guestMember.actorRefId = userId;
+        guestMember.nickname = nextNickname;
+        guestMember.avatar = user.avatar || '';
+        guestMember.avatarInitials = nextInitials;
+        await queryRunner.manager.save(guestMember);
+      }
+
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update(Room)
+        .set({
+          createdByType: ROOM_ACTOR_TYPE.USER,
+          createdByRefId: userId,
+        })
+        .where('createdByType = :actorType', { actorType: ROOM_ACTOR_TYPE.GUEST })
+        .andWhere('createdByRefId = :guestId', { guestId: guest.id })
+        .execute();
+
+      guest.isActive = false;
+      await queryRunner.manager.save(guest);
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+
+    return { migrated: roomIdSet.size };
+  }
+
+  private async findGuestByToken(guestToken?: string): Promise<GuestUser | null> {
+    const normalizedToken = String(guestToken || '').trim();
+    if (!normalizedToken) {
+      return null;
+    }
+
+    return this.dataSource.getRepository(GuestUser).findOne({
+      where: {
+        token: normalizedToken,
+        isActive: true,
+      },
+    });
+  }
+
+  private buildInitials(name: string): string {
+    const normalizedName = String(name || '').trim();
+    if (!normalizedName) {
+      return '游客';
+    }
+
+    return normalizedName.slice(0, 2);
   }
 }

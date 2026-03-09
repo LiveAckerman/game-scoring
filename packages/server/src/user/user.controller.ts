@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Headers,
   Put,
   Post,
   Query,
@@ -123,8 +124,11 @@ export class UserController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: '检查游客数据', description: '检查当前设备是否有可恢复的游客对局数据' })
   @ApiResponse({ status: 200, description: '检查成功' })
-  async checkGuestData(@Request() req: any) {
-    return this.userService.checkGuestData(req.user.id);
+  async checkGuestData(
+    @Request() req: any,
+    @Headers('x-guest-token') guestToken?: string,
+  ) {
+    return this.userService.checkGuestData(req.user.id, guestToken);
   }
 
   @Post('restore-guest-data')
@@ -132,7 +136,10 @@ export class UserController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: '恢复游客数据', description: '将游客对局数据导入到当前登录账号' })
   @ApiResponse({ status: 200, description: '恢复成功' })
-  async restoreGuestData(@Request() req: any) {
-    return this.userService.restoreGuestData(req.user.id);
+  async restoreGuestData(
+    @Request() req: any,
+    @Headers('x-guest-token') guestToken?: string,
+  ) {
+    return this.userService.restoreGuestData(req.user.id, guestToken);
   }
 }
