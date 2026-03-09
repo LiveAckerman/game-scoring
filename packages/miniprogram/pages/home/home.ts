@@ -42,7 +42,7 @@ interface InputDialogOptions {
 }
 
 let inputDialogResolver: ((value: string | null) => void) | null = null;
-const SHARE_PROMO_IMAGE = '/assets/images/share-promo.jpg';
+const SHARE_PROMO_IMAGE = '/assets/stitch/avatars/avatar-main.png';
 
 Page({
   behaviors: [fontSizeBehavior],
