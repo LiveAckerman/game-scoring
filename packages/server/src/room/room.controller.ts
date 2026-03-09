@@ -17,6 +17,7 @@ import {
   CreateRoomDto,
   JoinRoomDto,
   KickMemberDto,
+  LeaveRoomResponseDto,
   ListRoomHistoryQueryDto,
   TransferOwnerDto,
   PoolGiveDto,
@@ -45,6 +46,14 @@ export class RoomController {
   @ApiResponse({ status: 200, description: '加入成功' })
   joinRoom(@Req() req: Request, @Body() dto: JoinRoomDto) {
     return this.roomService.joinRoom(req, dto);
+  }
+
+  @Post(':roomId/leave')
+  @ApiOperation({ summary: '当前成员退出房间' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiResponse({ status: 200, description: '退出成功', type: LeaveRoomResponseDto })
+  leaveRoom(@Req() req: Request, @Param('roomId', ParseIntPipe) roomId: number) {
+    return this.roomService.leaveRoom(req, roomId);
   }
 
   @Get('code/:roomCode')
