@@ -47,12 +47,47 @@
   z-index: 2;
   background: #fff;
   border-radius: 24rpx;
-  padding: 28rpx 18rpx 24rpx;
+  padding: 24rpx 18rpx;
+}
+
+.action-strip-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.action-strip-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #4b4b4b;
+}
+
+.room-status-chip {
+  height: 48rpx;
+  line-height: 48rpx;
+  padding: 0 20rpx;
+  border-radius: 24rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.room-status-chip.active {
+  background: rgba(47, 139, 69, 0.12);
+  color: #2f8b45;
+}
+
+.room-status-chip.ended {
+  background: rgba(190, 91, 91, 0.12);
+  color: #be5b5b;
+}
+
+.action-strip-grid {
   display: grid;
   gap: 12rpx;
 }
 
-.single-action-strip {
+.single-action-grid {
   grid-template-columns: repeat(3, 1fr);
 }
 
@@ -68,6 +103,15 @@
 
 .action-item.disabled {
   opacity: 0.45;
+}
+
+.action-item.disabled text {
+  color: #c2c2c2;
+}
+
+.action-item.disabled .action-icon {
+  border-color: #ececec;
+  background: #f7f7f7;
 }
 
 .action-icon {

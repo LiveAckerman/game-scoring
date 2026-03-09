@@ -7,26 +7,34 @@
   <scroll-view class="content" scroll-y>
     <view class="action-strip-wrap">
       <view class="action-strip-shadow"></view>
-      <view class="action-strip single-action-strip">
-        <view
-          class="action-item {{!isOwner || roomStatus !== 'IN_PROGRESS' || members.length >= 10 ? 'disabled' : ''}}"
-          bindtap="handleActionTap"
-          data-action="add"
-        >
-          <view class="action-icon"><view class="icon icon-plus"></view></view>
-          <text>添加玩家</text>
+      <view class="action-strip">
+        <view class="action-strip-head">
+          <text class="action-strip-title">房间操作</text>
+          <view class="room-status-chip {{roomStatus === 'IN_PROGRESS' ? 'active' : 'ended'}}">
+            <text>{{roomStatus === 'IN_PROGRESS' ? '进行中' : '已结束'}}</text>
+          </view>
         </view>
-        <view class="action-item" bindtap="handleActionTap" data-action="detail">
-          <view class="action-icon"><view class="icon icon-detail"></view></view>
-          <text>记分明细</text>
-        </view>
-        <view
-          class="action-item {{!isOwner || roomStatus !== 'IN_PROGRESS' ? 'disabled' : ''}}"
-          bindtap="handleActionTap"
-          data-action="end"
-        >
-          <view class="action-icon"><view class="icon icon-power"></view></view>
-          <text>结束</text>
+        <view class="action-strip-grid single-action-grid">
+          <view
+            class="action-item {{!isOwner || roomStatus !== 'IN_PROGRESS' || members.length >= 10 ? 'disabled' : ''}}"
+            bindtap="handleActionTap"
+            data-action="add"
+          >
+            <view class="action-icon"><view class="icon icon-plus"></view></view>
+            <text>添加玩家</text>
+          </view>
+          <view class="action-item" bindtap="handleActionTap" data-action="detail">
+            <view class="action-icon"><view class="icon icon-detail"></view></view>
+            <text>记分明细</text>
+          </view>
+          <view
+            class="action-item {{!isOwner || roomStatus !== 'IN_PROGRESS' ? 'disabled' : ''}}"
+            bindtap="handleActionTap"
+            data-action="end"
+          >
+            <view class="action-icon"><view class="icon icon-power"></view></view>
+            <text>结束</text>
+          </view>
         </view>
       </view>
     </view>

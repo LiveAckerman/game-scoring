@@ -8,18 +8,30 @@
     <!-- 分数池模式操作栏 -->
     <view wx:if="{{isPoolMode}}" class="action-strip-wrap">
       <view class="action-strip-shadow"></view>
-      <view class="action-strip pool-action-strip">
-        <view class="action-item {{!isOwner ? 'disabled' : ''}}" bindtap="onActionTap" data-action="manage">
-          <view class="action-icon"><view class="icon icon-settings"></view></view>
-          <text>牌桌管理</text>
+      <view class="action-strip">
+        <view class="action-strip-head">
+          <text class="action-strip-title">牌桌操作</text>
+          <view class="room-status-chip {{roomStatus === 'IN_PROGRESS' ? 'active' : 'ended'}}">
+            <text>{{roomStatus === 'IN_PROGRESS' ? '进行中' : '已结束'}}</text>
+          </view>
         </view>
-        <view class="action-item {{!isOwner ? 'disabled' : ''}}" bindtap="handleToggleTableFee">
-          <view class="action-icon"><view class="icon icon-board"></view></view>
-          <text>{{tableFeeEnabled ? '台板已开' : '台板未开'}}</text>
-        </view>
-        <view class="action-item {{!isOwner ? 'disabled' : ''}}" bindtap="onActionTap" data-action="end">
-          <view class="action-icon"><view class="icon icon-power"></view></view>
-          <text>结束本桌</text>
+        <view class="action-strip-grid pool-action-grid">
+          <view class="action-item {{!isOwner ? 'disabled' : ''}}" bindtap="onActionTap" data-action="manage">
+            <view class="action-icon"><view class="icon icon-settings"></view></view>
+            <text>牌桌管理</text>
+          </view>
+          <view class="action-item {{!isOwner ? 'disabled' : ''}}" bindtap="handleToggleTableFee">
+            <view class="action-icon"><view class="icon icon-board"></view></view>
+            <text>{{tableFeeEnabled ? '台板已开' : '台板未开'}}</text>
+          </view>
+          <view
+            class="action-item {{!isOwner || roomStatus !== 'IN_PROGRESS' ? 'disabled' : ''}}"
+            bindtap="onActionTap"
+            data-action="end"
+          >
+            <view class="action-icon"><view class="icon icon-power"></view></view>
+            <text>结束本桌</text>
+          </view>
         </view>
       </view>
     </view>
@@ -28,29 +40,41 @@
     <view wx:else class="action-strip-wrap">
       <view class="action-strip-shadow"></view>
       <view class="action-strip">
-        <view class="action-item" bindtap="onActionTap" data-action="invite">
-          <view class="action-icon"><view class="icon icon-invite"></view></view>
-          <text>邀请</text>
+        <view class="action-strip-head">
+          <text class="action-strip-title">房间操作</text>
+          <view class="room-status-chip {{roomStatus === 'IN_PROGRESS' ? 'active' : 'ended'}}">
+            <text>{{roomStatus === 'IN_PROGRESS' ? '进行中' : '已结束'}}</text>
+          </view>
         </view>
-        <view class="action-item" bindtap="onActionTap" data-action="settings">
-          <view class="action-icon"><view class="icon icon-settings"></view></view>
-          <text>设置</text>
-        </view>
-        <view class="action-item" bindtap="onActionTap" data-action="board">
-          <view class="action-icon"><view class="icon icon-board"></view></view>
-          <text>台板</text>
-        </view>
-        <view class="action-item {{!isOwner ? 'disabled' : ''}}" bindtap="onActionTap" data-action="end">
-          <view class="action-icon"><view class="icon icon-power"></view></view>
-          <text>结束</text>
-        </view>
-        <view class="action-item" bindtap="onActionTap" data-action="mute">
-          <view class="action-icon"><view class="icon icon-mute"></view></view>
-          <text>静音</text>
-        </view>
-        <view class="action-item" bindtap="onActionTap" data-action="more">
-          <view class="action-icon"><view class="icon icon-more"></view></view>
-          <text>更多</text>
+        <view class="action-strip-grid multi-action-grid">
+          <view class="action-item" bindtap="onActionTap" data-action="invite">
+            <view class="action-icon"><view class="icon icon-invite"></view></view>
+            <text>邀请</text>
+          </view>
+          <view class="action-item" bindtap="onActionTap" data-action="settings">
+            <view class="action-icon"><view class="icon icon-settings"></view></view>
+            <text>设置</text>
+          </view>
+          <view class="action-item" bindtap="onActionTap" data-action="board">
+            <view class="action-icon"><view class="icon icon-board"></view></view>
+            <text>台板</text>
+          </view>
+          <view
+            class="action-item {{!isOwner || roomStatus !== 'IN_PROGRESS' ? 'disabled' : ''}}"
+            bindtap="onActionTap"
+            data-action="end"
+          >
+            <view class="action-icon"><view class="icon icon-power"></view></view>
+            <text>结束</text>
+          </view>
+          <view class="action-item" bindtap="onActionTap" data-action="mute">
+            <view class="action-icon"><view class="icon icon-mute"></view></view>
+            <text>静音</text>
+          </view>
+          <view class="action-item" bindtap="onActionTap" data-action="more">
+            <view class="action-icon"><view class="icon icon-more"></view></view>
+            <text>更多</text>
+          </view>
         </view>
       </view>
     </view>
