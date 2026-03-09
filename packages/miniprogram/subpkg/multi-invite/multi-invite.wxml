@@ -33,9 +33,9 @@
           <view class="action-icon"><view class="icon icon-board"></view></view>
           <text>台板</text>
         </view>
-        <view class="action-item {{!isOwner ? 'disabled' : ''}}" bindtap="onActionTap" data-action="end">
+        <view class="action-item {{isOwner && roomStatus !== 'IN_PROGRESS' ? 'disabled' : ''}}" bindtap="onActionTap" data-action="{{isOwner ? 'end' : 'leave'}}">
           <view class="action-icon"><view class="icon icon-power"></view></view>
-          <text>结束</text>
+          <text>{{isOwner ? '结束' : '退出'}}</text>
         </view>
         <view class="action-item" bindtap="onActionTap" data-action="mute">
           <view class="action-icon"><view class="icon icon-mute"></view></view>

@@ -67,6 +67,10 @@ export interface RoomPayload {
   actor: RoomActor;
 }
 
+export interface LeaveRoomResponse {
+  success: boolean;
+}
+
 export interface HistoryMember {
   id: number;
   nickname: string;
@@ -246,6 +250,13 @@ export const kickRoomMember = (
 export const endRoom = (roomId: number): Promise<RoomPayload> => {
   return request<RoomPayload>({
     url: `/rooms/${roomId}/end`,
+    method: 'POST',
+  });
+};
+
+export const leaveRoom = (roomId: number): Promise<LeaveRoomResponse> => {
+  return request<LeaveRoomResponse>({
+    url: `/rooms/${roomId}/leave`,
     method: 'POST',
   });
 };

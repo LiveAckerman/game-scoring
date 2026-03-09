@@ -14,6 +14,7 @@ import {
   hideRoomInviteCard,
   joinRoom,
   kickRoomMember,
+  leaveRoom,
   RoomMember,
   RoomPayload,
   RoomScoreRecord,
@@ -224,6 +225,11 @@ Page({
 
     if (action === 'end') {
       this.handleEndRoom();
+      return;
+    }
+
+    if (action === 'leave') {
+      this.handleLeaveRoom();
       return;
     }
 
@@ -486,6 +492,40 @@ Page({
           });
         } finally {
           wx.hideLoading();
+        }
+      },
+    });
+  },
+
+  handleLeaveRoom() {
+    if (this.data.isOwner) {
+      wx.showToast({ title: '桌主请使用结束按钮', icon: 'none' });
+      return;
+    }
+
+    wx.showModal({
+      title: '退出房间',
+      content: '退出后将离开当前房间，是否继续？',
+      success: async (res: WechatMiniprogram.ShowModalSuccessCallbackResult) => {
+        if (!res.confirm) {
+          return;
+        }
+
+        wx.showLoading({ title: '退出中...' });
+        try {
+          await leaveRoom(this.data.roomId);
+          this.disconnectRealtime(true);
+          wx.hideLoading();
+          wx.showToast({ title: '已退出房间', icon: 'success' });
+          setTimeout(() => {
+            wx.switchTab({ url: '/pages/home/home' });
+          }, 300);
+        } catch (error) {
+          wx.hideLoading();
+          wx.showToast({
+            title: (error as RequestError).message || '退出房间失败',
+            icon: 'none',
+          });
         }
       },
     });

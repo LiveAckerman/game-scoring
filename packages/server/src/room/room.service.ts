@@ -747,6 +747,39 @@ export class RoomService {
     return payload;
   }
 
+  async leaveRoom(req: Request, roomId: number) {
+    const actor = await this.resolveActor(req);
+
+    const room = await this.roomRepository.findOne({ where: { id: roomId } });
+    if (!room) {
+      throw new NotFoundException('房间不存在');
+    }
+
+    const member = await this.roomMemberRepository.findOne({
+      where: {
+        roomId,
+        actorType: actor.actorType,
+        actorRefId: actor.actorRefId,
+        isActive: true,
+      },
+    });
+
+    if (!member) {
+      throw new ForbiddenException('你不在该房间内');
+    }
+
+    if (room.ownerMemberId === member.id) {
+      throw new ForbiddenException('桌主不能直接退出，请先结束房间或转移桌主');
+    }
+
+    member.isActive = false;
+    member.isSpectator = false;
+    await this.roomMemberRepository.save(member);
+
+    this.realtimeService.notifyRoomUpdated(room.roomCode, 'member_left');
+    return { success: true };
+  }
+
   async hideInviteCard(req: Request, roomId: number) {
     const actor = await this.resolveActor(req);
 
