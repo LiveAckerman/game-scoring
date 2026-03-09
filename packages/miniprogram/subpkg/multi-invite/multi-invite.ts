@@ -1,4 +1,9 @@
-import { saveActorIdentity } from '../../utils/identity';
+import {
+  getAccessToken,
+  getGuestToken,
+  promptGuestNickname,
+  saveActorIdentity,
+} from '../../utils/identity';
 import { buildRoomRealtimeUrl } from '../../utils/realtime';
 import { request, RequestError } from '../../utils/request';
 import { fontSizeBehavior } from '../../behaviors/font-size';
@@ -7,6 +12,7 @@ import {
   endRoom,
   getRoomByCode,
   hideRoomInviteCard,
+  joinRoom,
   kickRoomMember,
   RoomMember,
   RoomPayload,
@@ -26,7 +32,7 @@ const ROOM_CODE_LENGTH = 6;
 const REALTIME_RECONNECT_BASE_MS = 1000;
 const REALTIME_RECONNECT_MAX_MS = 10000;
 const REALTIME_HEARTBEAT_MS = 20000;
-const SHARE_PROMO_IMAGE = '/assets/images/share-promo.jpg';
+const SHARE_PROMO_IMAGE = '/assets/stitch/avatars/avatar-main.png';
 
 interface RealtimeMessage {
   type?: string;
@@ -45,6 +51,7 @@ let realtimeManualClose = false;
 let realtimeReconnectAttempt = 0;
 let realtimeRefreshing = false;
 let realtimeRefreshPending = false;
+let roomEntryLoading = false;
 
 Page({
   behaviors: [fontSizeBehavior],
@@ -84,13 +91,15 @@ Page({
     const roomCode = (options.roomCode || '').replace(/\D/g, '').slice(0, ROOM_CODE_LENGTH);
     if (roomCode.length === ROOM_CODE_LENGTH) {
       this.setRoomCode(roomCode);
-      this.refreshRoomState();
+      this.loadEntryRoom(roomCode);
     }
   },
 
   onShow() {
     (this as any)._applyFontSize();
-    this.refreshRoomState(true);
+    if (!roomEntryLoading) {
+      this.refreshRoomState(true);
+    }
     this.connectRealtime();
   },
 
@@ -143,6 +152,55 @@ Page({
       }
       wx.stopPullDownRefresh();
     }
+  },
+
+  async loadEntryRoom(roomCode: string) {
+    roomEntryLoading = true;
+    wx.showLoading({ title: '加载中...' });
+
+    try {
+      try {
+        const payload = await getRoomByCode(roomCode);
+        this.applyRoomPayload(payload);
+        return;
+      } catch (error) {
+        const requestError = error as RequestError;
+        if (!this.shouldAutoJoinEntry(requestError)) {
+          wx.showToast({
+            title: requestError.message || '拉取房间失败',
+            icon: 'none',
+          });
+          return;
+        }
+      }
+
+      await this.joinRoomFromShare(roomCode);
+    } finally {
+      wx.hideLoading();
+      roomEntryLoading = false;
+    }
+  },
+
+  shouldAutoJoinEntry(error: RequestError): boolean {
+    return error.statusCode === 401 || error.statusCode === 403;
+  },
+
+  async joinRoomFromShare(roomCode: string) {
+    let guestNickname: string | undefined;
+
+    if (!getAccessToken() && !getGuestToken()) {
+      wx.hideLoading();
+      const inputNickname = await promptGuestNickname('游客昵称', '请输入昵称后加入房间');
+      if (!inputNickname) {
+        wx.showToast({ title: '已取消加入房间', icon: 'none' });
+        return;
+      }
+      guestNickname = inputNickname;
+      wx.showLoading({ title: '加入中...' });
+    }
+
+    const payload = await joinRoom(roomCode, guestNickname);
+    this.applyRoomPayload(payload);
   },
 
   onActionTap(e: WechatMiniprogram.BaseEvent) {
@@ -922,7 +980,7 @@ Page({
     if (/^\d{6}$/.test(roomCode)) {
       return {
         title: `邀请你加入桌号 ${roomCode}`,
-        path: `/pages/home/home?roomCode=${roomCode}`,
+        path: `/pages/home/home?roomCode=${roomCode}&shareSource=app-message`,
         imageUrl: SHARE_PROMO_IMAGE,
       };
     }
@@ -939,7 +997,7 @@ Page({
     if (/^\d{6}$/.test(roomCode)) {
       return {
         title: `邀请你加入桌号 ${roomCode}`,
-        query: `roomCode=${roomCode}`,
+        query: `roomCode=${roomCode}&shareSource=timeline`,
         imageUrl: SHARE_PROMO_IMAGE,
       };
     }

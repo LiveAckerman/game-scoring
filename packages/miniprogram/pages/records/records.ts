@@ -34,7 +34,7 @@ const EMPTY_SUMMARY: RoomHistorySummary = {
   totalLosePoints: 0,
   totalScore: 0,
 };
-const SHARE_PROMO_IMAGE = '/assets/images/share-promo.jpg';
+const SHARE_PROMO_IMAGE = '/assets/stitch/avatars/avatar-main.png';
 
 Page({
   behaviors: [fontSizeBehavior],
