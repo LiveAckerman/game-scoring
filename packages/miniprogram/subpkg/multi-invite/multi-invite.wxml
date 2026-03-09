@@ -6,15 +6,22 @@
 
   <scroll-view class="content" scroll-y>
     <!-- 分数池模式操作栏 -->
-    <view wx:if="{{isPoolMode}}" class="pool-action-bar">
-      <view class="pool-action-btn outline" bindtap="onActionTap" data-action="manage">牌桌管理</view>
-      <view class="pool-table-toggle" bindtap="handleToggleTableFee">
-        <text>台板</text>
-        <view class="toggle-track {{tableFeeEnabled ? 'on' : ''}}">
-          <view class="toggle-thumb"></view>
+    <view wx:if="{{isPoolMode}}" class="action-strip-wrap">
+      <view class="action-strip-shadow"></view>
+      <view class="action-strip pool-action-strip">
+        <view class="action-item {{!isOwner ? 'disabled' : ''}}" bindtap="onActionTap" data-action="manage">
+          <view class="action-icon"><view class="icon icon-settings"></view></view>
+          <text>牌桌管理</text>
+        </view>
+        <view class="action-item {{!isOwner ? 'disabled' : ''}}" bindtap="handleToggleTableFee">
+          <view class="action-icon"><view class="icon icon-board"></view></view>
+          <text>{{tableFeeEnabled ? '台板已开' : '台板未开'}}</text>
+        </view>
+        <view class="action-item {{!isOwner ? 'disabled' : ''}}" bindtap="onActionTap" data-action="end">
+          <view class="action-icon"><view class="icon icon-power"></view></view>
+          <text>结束本桌</text>
         </view>
       </view>
-      <view class="pool-action-btn danger {{!isOwner ? 'disabled' : ''}}" bindtap="onActionTap" data-action="end">结束本桌</view>
     </view>
 
     <!-- 多人模式操作栏 -->

@@ -51,6 +51,10 @@
   gap: 12rpx;
 }
 
+.pool-action-strip {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .action-item {
   display: flex;
   flex-direction: column;
@@ -675,74 +679,6 @@
 }
 .player-card.spectator {
   opacity: 0.7;
-}
-
-/* ───────── 分数池操作栏 ───────── */
-.pool-action-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16rpx;
-  margin-bottom: 24rpx;
-}
-.pool-action-btn {
-  height: 64rpx;
-  line-height: 64rpx;
-  padding: 0 28rpx;
-  border-radius: 16rpx;
-  font-size: var(--fs-sm, 24rpx);
-  font-weight: 700;
-  text-align: center;
-}
-.pool-action-btn.outline {
-  border: 2rpx solid #333;
-  color: #333;
-  background: #fff;
-}
-.pool-action-btn.danger {
-  border: 2rpx solid #e63946;
-  color: #e63946;
-  background: #fff;
-}
-.pool-action-btn.disabled {
-  opacity: 0.4;
-}
-.pool-table-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  height: 64rpx;
-  padding: 0 20rpx;
-  border-radius: 16rpx;
-  border: 2rpx solid #ddd;
-  background: #fff;
-  font-size: var(--fs-sm, 24rpx);
-  font-weight: 700;
-  color: #333;
-}
-.toggle-track {
-  width: 72rpx;
-  height: 36rpx;
-  border-radius: 18rpx;
-  background: #ccc;
-  position: relative;
-  transition: background 0.2s;
-}
-.toggle-track.on {
-  background: #4caf50;
-}
-.toggle-thumb {
-  width: 28rpx;
-  height: 28rpx;
-  border-radius: 14rpx;
-  background: #fff;
-  position: absolute;
-  top: 4rpx;
-  left: 4rpx;
-  transition: left 0.2s;
-}
-.toggle-track.on .toggle-thumb {
-  left: 40rpx;
 }
 
 /* ───────── 底部操作栏 ───────── */

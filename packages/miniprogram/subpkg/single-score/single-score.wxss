@@ -28,57 +28,56 @@
 
 /* ---- 顶部操作栏 ---- */
 
-.action-bar {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
+.action-strip-wrap {
+  position: relative;
   margin-bottom: 24rpx;
 }
 
-.action-bar-btn {
+.action-strip-shadow {
+  position: absolute;
+  inset: 0;
+  transform: translateY(6rpx);
+  background: rgba(230, 57, 70, 0.16);
+  border-radius: 24rpx;
+  filter: blur(2rpx);
+}
+
+.action-strip {
+  position: relative;
+  z-index: 2;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 28rpx 18rpx 24rpx;
+  display: grid;
+  gap: 12rpx;
+}
+
+.single-action-strip {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.action-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8rpx;
-  height: 64rpx;
-  padding: 0 24rpx;
-  border-radius: 32rpx;
+  gap: 12rpx;
   font-size: 24rpx;
+  color: #9e9e9e;
   font-weight: 700;
 }
 
-.action-bar-btn.add-btn {
-  background: #e63946;
-  color: #fff;
-}
-
-.action-bar-btn.end-btn {
-  background: #fff1df;
-  color: #b56d34;
-  border: 2rpx solid rgba(244, 162, 97, 0.5);
-}
-
-.action-bar-btn.disabled {
+.action-item.disabled {
   opacity: 0.45;
 }
 
-.room-status-tag {
-  margin-left: auto;
-  height: 48rpx;
-  line-height: 48rpx;
-  padding: 0 20rpx;
-  border-radius: 24rpx;
-  font-size: 22rpx;
-  font-weight: 700;
-}
-
-.room-status-tag.active {
-  background: rgba(47, 139, 69, 0.12);
-  color: #2f8b45;
-}
-
-.room-status-tag.ended {
-  background: rgba(190, 91, 91, 0.12);
-  color: #be5b5b;
+.action-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 36rpx;
+  border: 2rpx solid #f6d8bb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ---- 玩家区域 ---- */
@@ -513,15 +512,21 @@
 }
 
 .icon-plus {
-  width: 28rpx;
-  height: 28rpx;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fff'%3E%3Cpath d='M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'/%3E%3C/svg%3E");
+  width: 36rpx;
+  height: 36rpx;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f4a261'%3E%3Cpath d='M19 11H13V5h-2v6H5v2h6v6h2v-6h6z'/%3E%3C/svg%3E");
+}
+
+.icon-detail {
+  width: 36rpx;
+  height: 36rpx;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f4a261'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16l4-4h10a2 2 0 0 0 2-2V8l-6-6z'/%3E%3C/svg%3E");
 }
 
 .icon-power {
-  width: 28rpx;
-  height: 28rpx;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b56d34'%3E%3Cpath d='M13 3h-2v10h2V3zm4.8 2.2-1.4 1.4A7 7 0 1 1 7.6 6.6L6.2 5.2A9 9 0 1 0 18 5.2z'/%3E%3C/svg%3E");
+  width: 36rpx;
+  height: 36rpx;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f4a261'%3E%3Cpath d='M13 3h-2v10h2V3zm4.8 2.2-1.4 1.4A7 7 0 1 1 7.6 6.6L6.2 5.2A9 9 0 1 0 18 5.2z'/%3E%3C/svg%3E");
 }
 
 .icon-check {

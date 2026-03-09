@@ -54,6 +54,24 @@ Page({
     this.refreshRoomState(true);
   },
 
+  handleActionTap(e: WechatMiniprogram.BaseEvent) {
+    const action = String(e.currentTarget.dataset.action || '');
+
+    if (action === 'add') {
+      this.openAddModal();
+      return;
+    }
+
+    if (action === 'detail') {
+      wx.showToast({ title: '明细已展示在下方列表', icon: 'none' });
+      return;
+    }
+
+    if (action === 'end') {
+      this.handleEndRoom();
+    }
+  },
+
   goBack() {
     const pages = getCurrentPages();
     if (pages.length > 1) {

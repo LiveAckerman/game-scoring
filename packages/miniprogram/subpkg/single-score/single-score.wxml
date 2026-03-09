@@ -5,25 +5,29 @@
   <common-top-bar title="{{topBarTitle}}" bind:back="goBack" />
 
   <scroll-view class="content" scroll-y>
-    <view class="action-bar">
-      <view
-        class="action-bar-btn add-btn"
-        wx:if="{{isOwner && roomStatus === 'IN_PROGRESS' && members.length < 10}}"
-        bindtap="openAddModal"
-      >
-        <view class="icon icon-plus"></view>
-        <text>添加玩家</text>
-      </view>
-      <view
-        class="action-bar-btn end-btn {{!isOwner ? 'disabled' : ''}}"
-        wx:if="{{roomStatus === 'IN_PROGRESS'}}"
-        bindtap="handleEndRoom"
-      >
-        <view class="icon icon-power"></view>
-        <text>结束</text>
-      </view>
-      <view class="room-status-tag {{roomStatus === 'IN_PROGRESS' ? 'active' : 'ended'}}">
-        <text>{{roomStatus === 'IN_PROGRESS' ? '进行中' : '已结束'}}</text>
+    <view class="action-strip-wrap">
+      <view class="action-strip-shadow"></view>
+      <view class="action-strip single-action-strip">
+        <view
+          class="action-item {{!isOwner || roomStatus !== 'IN_PROGRESS' || members.length >= 10 ? 'disabled' : ''}}"
+          bindtap="handleActionTap"
+          data-action="add"
+        >
+          <view class="action-icon"><view class="icon icon-plus"></view></view>
+          <text>添加玩家</text>
+        </view>
+        <view class="action-item" bindtap="handleActionTap" data-action="detail">
+          <view class="action-icon"><view class="icon icon-detail"></view></view>
+          <text>记分明细</text>
+        </view>
+        <view
+          class="action-item {{!isOwner || roomStatus !== 'IN_PROGRESS' ? 'disabled' : ''}}"
+          bindtap="handleActionTap"
+          data-action="end"
+        >
+          <view class="action-icon"><view class="icon icon-power"></view></view>
+          <text>结束</text>
+        </view>
       </view>
     </view>
 
