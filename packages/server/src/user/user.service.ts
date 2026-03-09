@@ -31,8 +31,9 @@ export class UserService {
    */
   async getProfile(userId: number) {
     const user = await this.findById(userId);
-    const winRate = user.totalGames > 0
-      ? Math.round((user.wins / user.totalGames) * 100)
+    const { totalGames, wins } = await this.buildProfileStats(userId);
+    const winRate = totalGames > 0
+      ? Math.round((wins / totalGames) * 100)
       : 0;
 
     return {
@@ -41,8 +42,8 @@ export class UserService {
       avatar: user.avatar,
       gender: user.gender,
       title: user.title,
-      totalGames: user.totalGames,
-      wins: user.wins,
+      totalGames,
+      wins,
       winRate: `${winRate}%`,
       createdAt: user.createdAt,
     };
@@ -307,5 +308,20 @@ export class UserService {
     }
 
     return normalizedName.slice(0, 2);
+  }
+
+  private async buildProfileStats(userId: number): Promise<{ totalGames: number; wins: number }> {
+    const memberships = await this.dataSource.getRepository(RoomMember).find({
+      where: {
+        actorType: ROOM_ACTOR_TYPE.USER,
+        actorRefId: userId,
+      },
+      select: ['score'],
+    });
+
+    return {
+      totalGames: memberships.length,
+      wins: memberships.filter((member) => member.score > 0).length,
+    };
   }
 }
