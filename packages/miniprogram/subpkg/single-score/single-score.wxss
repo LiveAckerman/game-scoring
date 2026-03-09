@@ -110,6 +110,10 @@
   box-shadow: 0 6rpx 18rpx rgba(244, 162, 97, 0.12);
 }
 
+.player-card.spectator {
+  opacity: 0.72;
+}
+
 .avatar-wrap {
   position: relative;
 }
@@ -144,6 +148,20 @@
   border-radius: 16rpx;
   border: 2rpx solid #fff;
   white-space: nowrap;
+  z-index: 2;
+}
+
+.spectator-tag {
+  position: absolute;
+  left: -6rpx;
+  top: -6rpx;
+  background: #e63946;
+  color: #fff;
+  font-size: 16rpx;
+  font-weight: 700;
+  padding: 2rpx 10rpx;
+  border-radius: 12rpx;
+  border: 2rpx solid #fff;
   z-index: 2;
 }
 
@@ -295,6 +313,12 @@
   font-size: 24rpx;
   font-weight: 700;
   color: #333;
+}
+
+.record-main .record-text {
+  font-size: 24rpx;
+  color: #333;
+  line-height: 1.5;
 }
 
 .record-main .action {

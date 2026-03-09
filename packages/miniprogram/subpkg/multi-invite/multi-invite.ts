@@ -20,6 +20,7 @@ import {
 
 interface RoomScoreRecordView extends RoomScoreRecord {
   displayTime: string;
+  displayText: string;
 }
 
 const ROOM_CODE_LENGTH = 6;
@@ -59,6 +60,7 @@ Page({
     scoreRecords: [] as RoomScoreRecordView[],
     currentMemberId: 0,
     isOwner: false,
+    currentMemberIsSpectator: false,
     inviteCardHiddenBySelf: false,
     showInlineInviteCard: false,
     invitePopupVisible: false,
@@ -75,6 +77,10 @@ Page({
     poolStatsMembers: [] as any[],
     spectatorDialogVisible: false,
     spectatorCandidates: [] as any[],
+    memberActionDialogVisible: false,
+    memberActionTargetId: 0,
+    memberActionTargetName: '',
+    memberActionType: 'transfer' as 'transfer' | 'kick',
     roomType: 'MULTI' as string,
   },
 
@@ -233,6 +239,11 @@ Page({
       return;
     }
 
+    if (this.data.currentMemberIsSpectator) {
+      wx.showToast({ title: '旁观者不能操作', icon: 'none' });
+      return;
+    }
+
     const targetMemberId = Number(e.currentTarget.dataset.memberId || 0);
     const targetMemberName = String(e.currentTarget.dataset.memberName || '');
 
@@ -274,6 +285,11 @@ Page({
       return;
     }
 
+    if (this.data.currentMemberIsSpectator) {
+      wx.showToast({ title: '旁观者不能操作', icon: 'none' });
+      return;
+    }
+
     const points = Number(this.data.scoreValue || 0);
     if (!Number.isInteger(points) || points <= 0) {
       wx.showToast({ title: '请输入有效分数', icon: 'none' });
@@ -300,14 +316,14 @@ Page({
     }
   },
 
-  handleTransferOwner(e: WechatMiniprogram.BaseEvent) {
+  openMemberActionDialog(e: WechatMiniprogram.BaseEvent) {
     if (!this.data.isOwner) {
-      wx.showToast({ title: '只有桌主可以转移桌主', icon: 'none' });
+      wx.showToast({ title: '只有桌主可以操作成员', icon: 'none' });
       return;
     }
 
     if (this.data.roomStatus !== 'IN_PROGRESS') {
-      wx.showToast({ title: '房间已结束，无法转移桌主', icon: 'none' });
+      wx.showToast({ title: '房间已结束，无法操作成员', icon: 'none' });
       return;
     }
 
@@ -318,72 +334,67 @@ Page({
       return;
     }
 
-    wx.showModal({
-      title: '转移桌主',
-      content: `确认将桌主转移给 ${targetMemberName} 吗？`,
-      success: async (res: WechatMiniprogram.ShowModalSuccessCallbackResult) => {
-        if (!res.confirm) {
-          return;
-        }
-
-        wx.showLoading({ title: '转移中...' });
-        try {
-          const payload = await transferRoomOwner(this.data.roomId, targetMemberId);
-          this.applyRoomPayload(payload);
-          wx.showToast({ title: '转移成功', icon: 'success' });
-        } catch (error) {
-          wx.showToast({
-            title: (error as RequestError).message || '转移失败',
-            icon: 'none',
-          });
-        } finally {
-          wx.hideLoading();
-        }
-      },
+    this.setData({
+      memberActionDialogVisible: true,
+      memberActionTargetId: targetMemberId,
+      memberActionTargetName: targetMemberName,
+      memberActionType: 'transfer',
     });
   },
 
-  handleKickMember(e: WechatMiniprogram.BaseEvent) {
+  closeMemberActionDialog() {
+    this.setData({
+      memberActionDialogVisible: false,
+      memberActionTargetId: 0,
+      memberActionTargetName: '',
+      memberActionType: 'transfer',
+    });
+  },
+
+  selectMemberAction(e: WechatMiniprogram.BaseEvent) {
+    const actionType = String(e.currentTarget.dataset.actionType || '') as 'transfer' | 'kick';
+    if (actionType !== 'transfer' && actionType !== 'kick') {
+      return;
+    }
+    this.setData({ memberActionType: actionType });
+  },
+
+  async confirmMemberAction() {
     if (!this.data.isOwner) {
-      wx.showToast({ title: '只有桌主可以踢人', icon: 'none' });
+      wx.showToast({ title: '只有桌主可以操作成员', icon: 'none' });
       return;
     }
 
     if (this.data.roomStatus !== 'IN_PROGRESS') {
-      wx.showToast({ title: '房间已结束，无法踢人', icon: 'none' });
+      wx.showToast({ title: '房间已结束，无法操作成员', icon: 'none' });
       return;
     }
 
-    const targetMemberId = Number(e.currentTarget.dataset.memberId || 0);
-    const targetMemberName = String(e.currentTarget.dataset.memberName || '');
+    const targetMemberId = this.data.memberActionTargetId;
+    const targetMemberName = this.data.memberActionTargetName;
 
     if (!targetMemberId) {
       return;
     }
 
-    wx.showModal({
-      title: '踢出玩家',
-      content: `确认踢出 ${targetMemberName} 吗？系统会按原路退回该玩家当前持有的积分。`,
-      success: async (res: WechatMiniprogram.ShowModalSuccessCallbackResult) => {
-        if (!res.confirm) {
-          return;
-        }
+    const isTransfer = this.data.memberActionType === 'transfer';
 
-        wx.showLoading({ title: '处理中...' });
-        try {
-          const payload = await kickRoomMember(this.data.roomId, targetMemberId);
-          this.applyRoomPayload(payload);
-          wx.showToast({ title: '已踢出', icon: 'success' });
-        } catch (error) {
-          wx.showToast({
-            title: (error as RequestError).message || '踢人失败',
-            icon: 'none',
-          });
-        } finally {
-          wx.hideLoading();
-        }
-      },
-    });
+    wx.showLoading({ title: isTransfer ? '转移中...' : '处理中...' });
+    try {
+      const payload = isTransfer
+        ? await transferRoomOwner(this.data.roomId, targetMemberId)
+        : await kickRoomMember(this.data.roomId, targetMemberId);
+      this.applyRoomPayload(payload);
+      this.closeMemberActionDialog();
+      wx.showToast({ title: isTransfer ? '转移成功' : '已踢出', icon: 'success' });
+    } catch (error) {
+      wx.showToast({
+        title: (error as RequestError).message || (isTransfer ? '转移失败' : '踢人失败'),
+        icon: 'none',
+      });
+    } finally {
+      wx.hideLoading();
+    }
   },
 
   handleEndRoom() {
@@ -451,6 +462,11 @@ Page({
       .map((record) => ({
         ...record,
         displayTime: this.formatTime(record.createdAt),
+        displayText: record.recordType === 'KICK_REFUND'
+          ? `${record.fromMemberName} 被踢出，${record.fromMemberName} 返还 ${record.toMemberName} ${record.points}分`
+          : record.recordType === 'KICK_RECLAIM'
+            ? `${record.toMemberName} 被踢出，${record.fromMemberName} 回收 ${record.toMemberName} ${record.points}分`
+            : `${record.fromMemberName} 给了 ${record.toMemberName} ${record.points}分`,
       }));
 
     const currentMember = sortedMembers.find(
@@ -475,6 +491,7 @@ Page({
       scoreRecords,
       currentMemberId,
       isOwner: payload.room.ownerMemberId === currentMemberId,
+      currentMemberIsSpectator: Boolean(currentMember?.isSpectator),
       inviteCardHiddenBySelf,
       showInlineInviteCard,
       isPoolMode,

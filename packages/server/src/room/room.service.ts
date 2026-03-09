@@ -424,6 +424,10 @@ export class RoomService {
         throw new ForbiddenException('你不在该房间内，无法记分');
       }
 
+      if (callerMember.isSpectator) {
+        throw new ForbiddenException('旁观者不可操作');
+      }
+
       let fromMember = callerMember;
 
       if (dto.fromMemberId && dto.fromMemberId !== callerMember.id) {
@@ -439,6 +443,10 @@ export class RoomService {
           throw new NotFoundException('出分方成员不存在');
         }
 
+        if (specifiedFrom.isSpectator) {
+          throw new ForbiddenException('旁观者不可操作');
+        }
+
         fromMember = specifiedFrom;
       }
 
@@ -452,6 +460,10 @@ export class RoomService {
 
       if (!toMember) {
         throw new NotFoundException('目标成员不存在');
+      }
+
+      if (toMember.isSpectator) {
+        throw new ForbiddenException('旁观者不可操作');
       }
 
       if (toMember.id === fromMember.id) {
@@ -477,6 +489,7 @@ export class RoomService {
         fromMemberId: fromMember.id,
         toMemberId: toMember.id,
         points: dto.points,
+        recordType: 'NORMAL',
         createdByMemberId: callerMember.id,
       });
 
@@ -537,6 +550,10 @@ export class RoomService {
 
       if (!targetMember) {
         throw new NotFoundException('目标成员不存在');
+      }
+
+      if (targetMember.isSpectator) {
+        throw new BadRequestException('旁观者不能设为桌主');
       }
 
       if (targetMember.id !== operatorMember.id) {
@@ -644,17 +661,7 @@ export class RoomService {
       const reverseEntries = [...refundMap.entries()]
         .filter(([memberId, points]) => memberId !== targetMember.id && points !== 0);
 
-      if (reverseEntries.some(([, points]) => points < 0)) {
-        throw new BadRequestException(
-          '该玩家已有已转出的积分，请先手动结清后再踢出',
-        );
-      }
-
       const totalRefundPoints = reverseEntries.reduce((sum, [, points]) => sum + points, 0);
-
-      if (targetMember.score < 0) {
-        throw new BadRequestException('该玩家当前为负分，请先手动结清后再踢出');
-      }
 
       if (totalRefundPoints !== targetMember.score) {
         throw new BadRequestException(
@@ -663,20 +670,32 @@ export class RoomService {
       }
 
       for (const [memberId, points] of reverseEntries) {
-        await queryRunner.manager.increment(RoomMember, { id: memberId }, 'score', points);
+        const recordType = points > 0 ? 'KICK_REFUND' : 'KICK_RECLAIM';
+        const transferPoints = Math.abs(points);
+
+        if (transferPoints === 0) {
+          continue;
+        }
+
+        if (points > 0) {
+          await queryRunner.manager.increment(RoomMember, { id: memberId }, 'score', transferPoints);
+        } else {
+          await queryRunner.manager.decrement(RoomMember, { id: memberId }, 'score', transferPoints);
+        }
+
         const refundRecord = queryRunner.manager.create(RoomScoreRecord, {
           roomId,
-          fromMemberId: targetMember.id,
-          toMemberId: memberId,
-          points,
+          fromMemberId: points > 0 ? targetMember.id : memberId,
+          toMemberId: points > 0 ? memberId : targetMember.id,
+          points: transferPoints,
+          recordType,
           createdByMemberId: operatorMember.id,
         });
         await queryRunner.manager.save(refundRecord);
       }
 
       targetMember.score = 0;
-      targetMember.isSpectator = false;
-      targetMember.isActive = false;
+      targetMember.isSpectator = true;
       await queryRunner.manager.save(targetMember);
 
       await queryRunner.commitTransaction();
@@ -1462,6 +1481,7 @@ export class RoomService {
           fromMemberName: memberNameMap.get(record.fromMemberId) || '未知玩家',
           toMemberName: memberNameMap.get(record.toMemberId) || '未知玩家',
           points: record.points,
+          recordType: record.recordType || 'NORMAL',
           createdByMemberId: record.createdByMemberId,
           createdAt: record.createdAt,
         })),

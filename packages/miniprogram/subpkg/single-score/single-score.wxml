@@ -33,12 +33,13 @@
       <view
         wx:for="{{members}}"
         wx:key="id"
-        class="player-card {{item.id === currentMemberId ? 'self' : ''}}"
+        class="player-card {{item.id === currentMemberId ? 'self' : ''}} {{item.isSpectator ? 'spectator' : ''}}"
       >
         <view class="avatar-wrap">
           <image wx:if="{{item.avatar}}" class="avatar" src="{{item.avatar}}" mode="aspectFill" />
           <view wx:else class="avatar avatar-text"><text>{{item.avatarInitials || '?'}}</text></view>
           <text wx:if="{{item.isOwner}}" class="host-tag">房主</text>
+          <text wx:if="{{item.isSpectator}}" class="spectator-tag">旁观</text>
         </view>
 
         <view class="player-info">
@@ -52,7 +53,7 @@
           </view>
         </view>
 
-        <view class="player-actions" wx:if="{{roomStatus === 'IN_PROGRESS' && members.length >= 2}}">
+        <view class="player-actions" wx:if="{{roomStatus === 'IN_PROGRESS' && members.length >= 2 && !currentMemberIsSpectator && !item.isSpectator}}">
           <view
             class="tiny-btn lose-btn"
             bindtap="openScoreDialog"
@@ -90,11 +91,31 @@
       <view wx:if="{{scoreRecords.length === 0}}" class="empty-records">暂无记分记录</view>
       <view wx:for="{{scoreRecords}}" wx:key="id" class="record-item">
         <view class="record-main">
-          <text class="name">{{item.fromMemberName}}</text>
-          <text class="action">输给</text>
-          <text class="name">{{item.toMemberName}}</text>
-          <text class="points">{{item.points}}</text>
-          <text class="action">分</text>
+          <block wx:if="{{item.recordType === 'KICK_REFUND'}}">
+            <text class="name">{{item.fromMemberName}}</text>
+            <text class="action">被踢出，</text>
+            <text class="name">{{item.fromMemberName}}</text>
+            <text class="action">返还</text>
+            <text class="name">{{item.toMemberName}}</text>
+            <text class="points">{{item.points}}</text>
+            <text class="action">分</text>
+          </block>
+          <block wx:elif="{{item.recordType === 'KICK_RECLAIM'}}">
+            <text class="name">{{item.toMemberName}}</text>
+            <text class="action">被踢出，</text>
+            <text class="name">{{item.fromMemberName}}</text>
+            <text class="action">回收</text>
+            <text class="name">{{item.toMemberName}}</text>
+            <text class="points">{{item.points}}</text>
+            <text class="action">分</text>
+          </block>
+          <block wx:else>
+            <text class="name">{{item.fromMemberName}}</text>
+            <text class="action">输给</text>
+            <text class="name">{{item.toMemberName}}</text>
+            <text class="points">{{item.points}}</text>
+            <text class="action">分</text>
+          </block>
         </view>
         <text class="time">{{item.displayTime}}</text>
       </view>

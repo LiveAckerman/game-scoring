@@ -26,6 +26,7 @@ export interface RoomScoreRecord {
   fromMemberName: string;
   toMemberName: string;
   points: number;
+  recordType: 'NORMAL' | 'KICK_REFUND' | 'KICK_RECLAIM';
   createdByMemberId: number;
   createdAt: string;
 }
