@@ -40,9 +40,9 @@
           <view class="action-icon"><view class="icon icon-board"></view></view>
           <text>台板</text>
         </view>
-        <view class="action-item {{!isOwner ? 'disabled' : ''}}" bindtap="onActionTap" data-action="end">
+        <view class="action-item {{isOwner && roomStatus !== 'IN_PROGRESS' ? 'disabled' : ''}}" bindtap="onActionTap" data-action="{{isOwner ? 'end' : 'leave'}}">
           <view class="action-icon"><view class="icon icon-power"></view></view>
-          <text>结束</text>
+          <text>{{isOwner ? '结束' : '退出'}}</text>
         </view>
         <view class="action-item" bindtap="onActionTap" data-action="mute">
           <view class="action-icon"><view class="icon icon-mute"></view></view>
@@ -104,10 +104,9 @@
 
         <view
           class="member-actions"
-          wx:if="{{!isPoolMode && item.id !== currentMemberId && (!item.isSpectator || isOwner)}}"
+          wx:if="{{!isPoolMode && !currentMemberIsSpectator && item.id !== currentMemberId && !item.isSpectator}}"
         >
           <view
-            wx:if="{{!item.isSpectator}}"
             class="tiny-btn give-btn"
             bindtap="openScoreDialog"
             data-member-id="{{item.id}}"
@@ -116,18 +115,11 @@
           >给分</view>
           <view
             wx:if="{{isOwner && !item.isOwner && roomStatus === 'IN_PROGRESS'}}"
-            class="tiny-btn owner-btn"
-            bindtap="handleTransferOwner"
+            class="tiny-btn member-op-btn"
+            bindtap="openMemberActionDialog"
             data-member-id="{{item.id}}"
             data-member-name="{{item.nickname}}"
-          >设桌主</view>
-          <view
-            wx:if="{{isOwner && !item.isOwner && roomStatus === 'IN_PROGRESS'}}"
-            class="tiny-btn kick-btn"
-            bindtap="handleKickMember"
-            data-member-id="{{item.id}}"
-            data-member-name="{{item.nickname}}"
-          >踢人</view>
+          >操作</view>
         </view>
       </view>
 
@@ -174,11 +166,31 @@
       <view wx:if="{{scoreRecords.length === 0}}" class="empty-records">暂无记分记录</view>
       <view wx:for="{{scoreRecords}}" wx:key="id" class="record-item">
         <view class="record-main">
-          <text class="name">{{item.fromMemberName}}</text>
-          <text class="action">给了</text>
-          <text class="name">{{item.toMemberName}}</text>
-          <text class="points">{{item.points}}</text>
-          <text class="action">分</text>
+          <block wx:if="{{item.recordType === 'KICK_REFUND'}}">
+            <text class="name">{{item.fromMemberName}}</text>
+            <text class="action">被踢出，</text>
+            <text class="name">{{item.fromMemberName}}</text>
+            <text class="action">返还</text>
+            <text class="name">{{item.toMemberName}}</text>
+            <text class="points">{{item.points}}</text>
+            <text class="action">分</text>
+          </block>
+          <block wx:elif="{{item.recordType === 'KICK_RECLAIM'}}">
+            <text class="name">{{item.toMemberName}}</text>
+            <text class="action">被踢出，</text>
+            <text class="name">{{item.fromMemberName}}</text>
+            <text class="action">回收</text>
+            <text class="name">{{item.toMemberName}}</text>
+            <text class="points">{{item.points}}</text>
+            <text class="action">分</text>
+          </block>
+          <block wx:else>
+            <text class="name">{{item.fromMemberName}}</text>
+            <text class="action">给了</text>
+            <text class="name">{{item.toMemberName}}</text>
+            <text class="points">{{item.points}}</text>
+            <text class="action">分</text>
+          </block>
         </view>
         <text class="time">{{item.displayTime}}</text>
       </view>
@@ -217,6 +229,33 @@
     <view slot="footer" class="invite-popup-footer">
       <button class="invite-popup-btn ghost" bindtap="handleShareInvite">复制房间号</button>
       <button class="invite-popup-btn" open-type="share">微信分享</button>
+    </view>
+  </common-dialog>
+
+  <common-dialog
+    visible="{{memberActionDialogVisible}}"
+    title="操作"
+    showClose="{{true}}"
+    showFooter="{{true}}"
+    maskClosable="{{true}}"
+    bind:close="closeMemberActionDialog"
+    bind:cancel="closeMemberActionDialog"
+    bind:confirm="confirmMemberAction"
+  >
+    <view class="member-action-dialog">
+      <text class="member-action-desc">选择对 {{memberActionTargetName}} 的操作</text>
+      <view class="member-action-options">
+        <view
+          class="member-action-option {{memberActionType === 'transfer' ? 'selected transfer' : ''}}"
+          bindtap="selectMemberAction"
+          data-action-type="transfer"
+        >设桌主</view>
+        <view
+          class="member-action-option {{memberActionType === 'kick' ? 'selected kick' : ''}}"
+          bindtap="selectMemberAction"
+          data-action-type="kick"
+        >踢人</view>
+      </view>
     </view>
   </common-dialog>
 
