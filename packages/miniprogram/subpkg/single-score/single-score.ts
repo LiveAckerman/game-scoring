@@ -1,4 +1,5 @@
 import { fontSizeBehavior } from '../../behaviors/font-size';
+import { buildRoomRealtimeUrl } from '../../utils/realtime';
 import { saveActorIdentity } from '../../utils/identity';
 import { RequestError } from '../../utils/request';
 import {
@@ -14,9 +15,31 @@ import {
 
 interface RoomScoreRecordView extends RoomScoreRecord {
   displayTime: string;
+  displayText: string;
 }
 
 const ROOM_CODE_LENGTH = 6;
+const REALTIME_RECONNECT_BASE_MS = 1000;
+const REALTIME_RECONNECT_MAX_MS = 10000;
+const REALTIME_HEARTBEAT_MS = 20000;
+
+interface RealtimeMessage {
+  type?: string;
+  roomCode?: string;
+}
+
+interface RealtimeSendMessage {
+  type: string;
+  roomCode?: string;
+}
+
+let realtimeSocketTask: WechatMiniprogram.SocketTask | null = null;
+let realtimeReconnectTimer: number | null = null;
+let realtimeHeartbeatTimer: number | null = null;
+let realtimeManualClose = false;
+let realtimeReconnectAttempt = 0;
+let realtimeRefreshing = false;
+let realtimeRefreshPending = false;
 
 Page({
   behaviors: [fontSizeBehavior],
@@ -29,6 +52,7 @@ Page({
     scoreRecords: [] as RoomScoreRecordView[],
     currentMemberId: 0,
     isOwner: false,
+    currentMemberIsSpectator: false,
 
     showAddModal: false,
     newPlayerName: '',
@@ -43,11 +67,26 @@ Page({
   },
 
   onLoad(options: Record<string, string | undefined>) {
+    this.disconnectRealtime(true);
     const roomCode = (options.roomCode || '').replace(/\D/g, '').slice(0, ROOM_CODE_LENGTH);
     if (roomCode.length === ROOM_CODE_LENGTH) {
       this.setData({ roomCode, topBarTitle: `单人记分 · ${roomCode}` });
       this.refreshRoomState();
     }
+  },
+
+  onShow() {
+    (this as any)._applyFontSize();
+    this.refreshRoomState(true);
+    this.connectRealtime();
+  },
+
+  onHide() {
+    this.disconnectRealtime(true);
+  },
+
+  onUnload() {
+    this.disconnectRealtime(true);
   },
 
   onPullDownRefresh() {
@@ -127,7 +166,14 @@ Page({
       .map((record) => ({
         ...record,
         displayTime: this.formatTime(record.createdAt),
+        displayText: record.recordType === 'KICK_REFUND'
+          ? `${record.fromMemberName} 被踢出，${record.fromMemberName} 返还 ${record.toMemberName} ${record.points}分`
+          : record.recordType === 'KICK_RECLAIM'
+            ? `${record.toMemberName} 被踢出，${record.fromMemberName} 回收 ${record.toMemberName} ${record.points}分`
+            : `${record.fromMemberName} 输给 ${record.toMemberName} ${record.points}分`,
       }));
+
+    const currentMember = sortedMembers.find((member) => member.id === currentMemberId);
 
     this.setData({
       roomId: payload.room.id,
@@ -138,6 +184,7 @@ Page({
       scoreRecords,
       currentMemberId,
       isOwner: payload.room.ownerMemberId === currentMemberId,
+      currentMemberIsSpectator: Boolean(currentMember?.isSpectator),
     });
   },
 
@@ -146,6 +193,10 @@ Page({
   openAddModal() {
     if (this.data.roomStatus !== 'IN_PROGRESS') {
       wx.showToast({ title: '房间已结束', icon: 'none' });
+      return;
+    }
+    if (this.data.currentMemberIsSpectator) {
+      wx.showToast({ title: '旁观者不能操作', icon: 'none' });
       return;
     }
     this.setData({ showAddModal: true, newPlayerName: '' });
@@ -193,18 +244,25 @@ Page({
       return;
     }
 
+    if (this.data.currentMemberIsSpectator) {
+      wx.showToast({ title: '旁观者不能操作', icon: 'none' });
+      return;
+    }
+
     const type = String(e.currentTarget.dataset.type || '') as 'lose' | 'win';
     const memberId = Number(e.currentTarget.dataset.memberId || 0);
     const memberName = String(e.currentTarget.dataset.memberName || '');
 
     if (!memberId) return;
 
-    if (this.data.members.length < 2) {
-      wx.showToast({ title: '至少需要2名玩家', icon: 'none' });
+    const otherMembers = this.data.members.filter(
+      (m: RoomMember) => m.id !== memberId && !m.isSpectator,
+    );
+
+    if (otherMembers.length === 0) {
+      wx.showToast({ title: '至少需要2名非旁观玩家', icon: 'none' });
       return;
     }
-
-    const otherMembers = this.data.members.filter((m: RoomMember) => m.id !== memberId);
 
     this.setData({
       scoreDialogVisible: true,
@@ -243,6 +301,11 @@ Page({
   async confirmScore() {
     if (!this.data.roomId) {
       wx.showToast({ title: '房间信息异常', icon: 'none' });
+      return;
+    }
+
+    if (this.data.currentMemberIsSpectator) {
+      wx.showToast({ title: '旁观者不能操作', icon: 'none' });
       return;
     }
 
@@ -374,5 +437,188 @@ Page({
 
     const pad = (v: number) => (v < 10 ? `0${v}` : `${v}`);
     return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  },
+
+  connectRealtime() {
+    const roomCode = this.data.roomCode;
+    if (roomCode.length !== ROOM_CODE_LENGTH) {
+      return;
+    }
+
+    if (realtimeSocketTask) {
+      return;
+    }
+
+    this.clearRealtimeReconnectTimer();
+    realtimeManualClose = false;
+
+    const socketTask = wx.connectSocket({
+      url: buildRoomRealtimeUrl(roomCode),
+      timeout: 10000,
+    });
+    realtimeSocketTask = socketTask;
+
+    socketTask.onOpen(() => {
+      realtimeReconnectAttempt = 0;
+      this.startRealtimeHeartbeat();
+      this.sendRealtimeMessage({
+        type: 'subscribe',
+        roomCode,
+      });
+    });
+
+    socketTask.onMessage((event: WechatMiniprogram.SocketTaskOnMessageListenerResult) => {
+      this.handleRealtimeMessage(event.data);
+    });
+
+    socketTask.onClose(() => {
+      this.handleRealtimeClose();
+    });
+
+    socketTask.onError(() => {
+      this.handleRealtimeClose();
+    });
+  },
+
+  disconnectRealtime(manualClose = true) {
+    realtimeManualClose = manualClose;
+    this.clearRealtimeReconnectTimer();
+    this.stopRealtimeHeartbeat();
+
+    if (realtimeSocketTask) {
+      try {
+        realtimeSocketTask.close({
+          code: 1000,
+          reason: 'page_closed',
+        });
+      } catch (error) {
+        // ignore close errors
+      }
+      realtimeSocketTask = null;
+    }
+
+    if (manualClose) {
+      realtimeReconnectAttempt = 0;
+      realtimeRefreshing = false;
+      realtimeRefreshPending = false;
+    }
+  },
+
+  handleRealtimeClose() {
+    this.stopRealtimeHeartbeat();
+    realtimeSocketTask = null;
+
+    if (realtimeManualClose) {
+      return;
+    }
+
+    this.scheduleRealtimeReconnect();
+  },
+
+  scheduleRealtimeReconnect() {
+    if (realtimeReconnectTimer !== null) {
+      return;
+    }
+
+    const roomCode = this.data.roomCode;
+    if (roomCode.length !== ROOM_CODE_LENGTH) {
+      return;
+    }
+
+    const waitMs = Math.min(
+      REALTIME_RECONNECT_MAX_MS,
+      REALTIME_RECONNECT_BASE_MS * (2 ** realtimeReconnectAttempt),
+    );
+    realtimeReconnectAttempt += 1;
+
+    realtimeReconnectTimer = setTimeout(() => {
+      realtimeReconnectTimer = null;
+      this.connectRealtime();
+    }, waitMs) as unknown as number;
+  },
+
+  clearRealtimeReconnectTimer() {
+    if (realtimeReconnectTimer !== null) {
+      clearTimeout(realtimeReconnectTimer);
+      realtimeReconnectTimer = null;
+    }
+  },
+
+  startRealtimeHeartbeat() {
+    this.stopRealtimeHeartbeat();
+    realtimeHeartbeatTimer = setInterval(() => {
+      this.sendRealtimeMessage({ type: 'ping' });
+    }, REALTIME_HEARTBEAT_MS) as unknown as number;
+  },
+
+  stopRealtimeHeartbeat() {
+    if (realtimeHeartbeatTimer !== null) {
+      clearInterval(realtimeHeartbeatTimer);
+      realtimeHeartbeatTimer = null;
+    }
+  },
+
+  sendRealtimeMessage(message: RealtimeSendMessage) {
+    if (!realtimeSocketTask) {
+      return;
+    }
+
+    try {
+      realtimeSocketTask.send({
+        data: JSON.stringify(message),
+      });
+    } catch (error) {
+      // ignore send errors
+    }
+  },
+
+  handleRealtimeMessage(rawData: string | ArrayBuffer) {
+    const message = this.parseRealtimeMessage(rawData);
+    if (!message || !message.type) {
+      return;
+    }
+
+    if (message.type === 'room_updated' && message.roomCode === this.data.roomCode) {
+      this.handleRealtimeRoomUpdated();
+    }
+  },
+
+  parseRealtimeMessage(rawData: string | ArrayBuffer) {
+    let messageText = '';
+    if (typeof rawData === 'string') {
+      messageText = rawData;
+    } else {
+      try {
+        messageText = String.fromCharCode.apply(null, Array.from(new Uint8Array(rawData)));
+      } catch (error) {
+        return null;
+      }
+    }
+
+    try {
+      return JSON.parse(messageText) as RealtimeMessage;
+    } catch (error) {
+      return null;
+    }
+  },
+
+  handleRealtimeRoomUpdated() {
+    if (realtimeRefreshing) {
+      realtimeRefreshPending = true;
+      return;
+    }
+
+    realtimeRefreshing = true;
+    this.refreshRoomState(true)
+      .catch(() => {
+        // 失败时保持静默，下一个实时事件或重连会继续尝试
+      })
+      .finally(() => {
+        realtimeRefreshing = false;
+        if (realtimeRefreshPending) {
+          realtimeRefreshPending = false;
+          this.handleRealtimeRoomUpdated();
+        }
+      });
   },
 });

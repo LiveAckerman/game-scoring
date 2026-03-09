@@ -37,6 +37,10 @@ export class RoomScoreRecord {
   @Column()
   points: number;
 
+  @ApiProperty({ description: '流水类型 NORMAL/KICK_REFUND/KICK_RECLAIM' })
+  @Column({ default: 'NORMAL' })
+  recordType: 'NORMAL' | 'KICK_REFUND' | 'KICK_RECLAIM';
+
   @ApiProperty({ description: '操作人成员ID' })
   @Column()
   createdByMemberId: number;
