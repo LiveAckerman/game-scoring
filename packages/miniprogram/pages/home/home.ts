@@ -2,6 +2,7 @@ import { getAccessToken, getGuestToken, saveActorIdentity } from '../../utils/id
 import { RequestError } from '../../utils/request';
 import { createRoom, getRoomHistory, joinRoom, RoomHistoryItem } from '../../utils/room';
 import { fontSizeBehavior } from '../../behaviors/font-size';
+import { buildRoomTagMap, RoomTag } from '../../utils/tags';
 
 interface HomePreviewMember {
   id: number;
@@ -22,6 +23,7 @@ interface HomeRecentCard {
   durationText: string;
   myScoreText: string;
   previewMembers: HomePreviewMember[];
+  tags: RoomTag[];
 }
 
 interface OngoingRoomOption {
@@ -94,7 +96,8 @@ Page({
 
     try {
       const payload = await getRoomHistory({ page: 1, pageSize: 5, status: 'ALL' });
-      const recentRooms = payload.items.map((item) => this.mapRoomToCard(item));
+      const tagMap = buildRoomTagMap(payload.items.map((item) => item.roomCode));
+      const recentRooms = payload.items.map((item) => this.mapRoomToCard(item, tagMap[item.roomCode] || []));
       this.setData({ recentRooms });
     } catch (error) {
       const requestError = error as RequestError;
@@ -593,7 +596,7 @@ Page({
     wx.navigateTo({ url: page });
   },
 
-  mapRoomToCard(item: RoomHistoryItem): HomeRecentCard {
+  mapRoomToCard(item: RoomHistoryItem, tags: RoomTag[]): HomeRecentCard {
     const startedDate = new Date(item.startedAt);
     const month = startedDate.getMonth() + 1;
     const day = startedDate.getDate();
@@ -619,6 +622,7 @@ Page({
         score: member.score,
         isOwner: member.isOwner,
       })),
+      tags,
     };
   },
 

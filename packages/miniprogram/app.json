@@ -13,7 +13,8 @@
         "profile-edit/profile-edit",
         "leaderboard/leaderboard",
         "single-score/single-score",
-        "pool-record/pool-record"
+        "pool-record/pool-record",
+        "tag-settings/tag-settings"
       ]
     }
   ],

@@ -8,6 +8,9 @@
       <view class="tab {{activeTab === 'ongoing' ? 'active' : ''}}" data-id="ongoing" bindtap="switchTab">进行中</view>
       <view class="tab {{activeTab === 'finished' ? 'active' : ''}}" data-id="finished" bindtap="switchTab">已结束</view>
     </view>
+    <view class="filter-btn" bindtap="openTagFilter">
+      <text>{{selectedFilterTagIds.length > 0 ? '标签筛选 · ' + selectedFilterTagIds.length : '标签筛选'}}</text>
+    </view>
   </view>
 
   <scroll-view class="content" scroll-y>
@@ -51,11 +54,76 @@
       durationText="{{item.durationText}}"
       myScoreText="{{item.myScoreText}}"
       scoreCount="{{item.scoreRecordCount}}"
+      tags="{{item.tags}}"
+      showTagAction="{{true}}"
       showName="{{true}}"
       faded="{{item.status === 'ENDED'}}"
       bind:cardtap="openRoomFromRecord"
+      bind:tagtap="openRoomTagDialog"
       data-room-code="{{item.roomCode}}"
+      data-room-type="{{item.roomType}}"
       data-status="{{item.status}}"
     />
   </scroll-view>
+
+  <view wx:if="{{tagFilterVisible}}" class="sheet-mask" bindtap="closeTagFilter">
+    <view class="sheet-panel" catchtap="">
+      <view class="sheet-head">
+        <text class="sheet-title">标签筛选</text>
+        <text class="sheet-close" bindtap="closeTagFilter">关闭</text>
+      </view>
+      <view wx:if="{{availableTags.length > 0}}" class="sheet-tag-list">
+        <view
+          wx:for="{{availableTags}}"
+          wx:key="id"
+          class="sheet-tag {{draftFilterTagIds.indexOf(item.id) >= 0 ? 'selected' : ''}}"
+          style="border-color: {{item.color}}; color: {{draftFilterTagIds.indexOf(item.id) >= 0 ? '#ffffff' : item.color}}; background: {{draftFilterTagIds.indexOf(item.id) >= 0 ? item.color : '#ffffff'}};"
+          bindtap="toggleFilterTag"
+          data-tag-id="{{item.id}}"
+        >
+          <text>{{item.name}}</text>
+        </view>
+      </view>
+      <view wx:else class="sheet-empty">
+        <text class="sheet-empty-title">还没有可筛选的标签</text>
+        <text class="sheet-empty-desc">先去标签设置页创建标签，再回来给房间打标。</text>
+        <view class="sheet-link-btn" bindtap="goToTagSettings">去创建标签</view>
+      </view>
+      <view class="sheet-actions">
+        <view class="sheet-btn ghost" bindtap="clearTagFilter">清空</view>
+        <view class="sheet-btn" bindtap="confirmTagFilter">应用</view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{roomTagVisible}}" class="sheet-mask" bindtap="closeRoomTagDialog">
+    <view class="sheet-panel" catchtap="">
+      <view class="sheet-head">
+        <text class="sheet-title">房间标签</text>
+        <text class="sheet-close" bindtap="closeRoomTagDialog">关闭</text>
+      </view>
+      <text class="sheet-room-code">桌号 {{roomTagRoomCode}}</text>
+      <view wx:if="{{availableTags.length > 0}}" class="sheet-tag-list">
+        <view
+          wx:for="{{availableTags}}"
+          wx:key="id"
+          class="sheet-tag {{roomTagDraftIds.indexOf(item.id) >= 0 ? 'selected' : ''}}"
+          style="border-color: {{item.color}}; color: {{roomTagDraftIds.indexOf(item.id) >= 0 ? '#ffffff' : item.color}}; background: {{roomTagDraftIds.indexOf(item.id) >= 0 ? item.color : '#ffffff'}};"
+          bindtap="toggleRoomTag"
+          data-tag-id="{{item.id}}"
+        >
+          <text>{{item.name}}</text>
+        </view>
+      </view>
+      <view wx:else class="sheet-empty">
+        <text class="sheet-empty-title">还没有可用标签</text>
+        <text class="sheet-empty-desc">先去标签设置页创建几个常用标签。</text>
+        <view class="sheet-link-btn" bindtap="goToTagSettings">去创建标签</view>
+      </view>
+      <view class="sheet-actions">
+        <view class="sheet-btn ghost" bindtap="closeRoomTagDialog">取消</view>
+        <view class="sheet-btn" bindtap="confirmRoomTagDialog">保存</view>
+      </view>
+    </view>
+  </view>
 </view>

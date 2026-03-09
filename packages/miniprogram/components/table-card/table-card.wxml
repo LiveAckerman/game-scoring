@@ -26,4 +26,21 @@
     <text class="foot-time">{{timeText}}{{durationText ? ' · ' + durationText : ''}}</text>
     <text class="foot-my-score">我的积分 {{myScoreText}}</text>
   </view>
+
+  <view wx:if="{{tags.length > 0 || showTagAction}}" class="tag-row">
+    <view class="tag-list">
+      <view
+        wx:for="{{tags}}"
+        wx:key="id"
+        class="tag-chip"
+        style="border-color: {{item.color}}; color: {{item.color}};"
+      >
+        <text>{{item.name}}</text>
+      </view>
+      <text wx:if="{{tags.length === 0}}" class="tag-empty">未设置标签</text>
+    </view>
+    <view wx:if="{{showTagAction}}" class="tag-action" catchtap="onTagTap">
+      <text>设置标签</text>
+    </view>
+  </view>
 </view>

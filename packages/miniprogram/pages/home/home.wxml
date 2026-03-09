@@ -85,6 +85,7 @@
       timeText="{{room.timeText}}"
       durationText="{{room.durationText}}"
       myScoreText="{{room.myScoreText}}"
+      tags="{{room.tags}}"
       faded="{{room.status === 'ENDED'}}"
       bind:cardtap="openRecentRoom"
       data-room-code="{{room.roomCode}}"

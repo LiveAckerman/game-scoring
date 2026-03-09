@@ -1,0 +1,88 @@
+<page-meta page-style="{{pageFontStyle}}" />
+<view class="tag-page">
+  <common-top-bar title="标签设置" bind:back="goBack" />
+
+  <scroll-view class="tag-scroll" scroll-y>
+    <view class="hero-card">
+      <text class="hero-title">给房间打上自己的标签</text>
+      <text class="hero-desc">适合区分牌友、玩法、预算局、练习局，也能在记录页快速筛选。</text>
+    </view>
+
+    <view class="tag-card">
+      <view class="section-head">
+        <view>
+          <text class="section-title">我的标签</text>
+          <text class="section-sub">点击标签可编辑，删除后会同步移除房间绑定</text>
+        </view>
+        <view class="create-btn" bindtap="openCreateEditor">+ 新建</view>
+      </view>
+
+      <view wx:if="{{tags.length === 0}}" class="empty-box">
+        <text class="empty-title">还没有标签</text>
+        <text class="empty-desc">先创建几个常用标签，后面给房间打标会更快。</text>
+      </view>
+
+      <view wx:else class="tag-list">
+        <view wx:for="{{tags}}" wx:key="id" class="tag-row">
+          <view
+            class="tag-chip"
+            bindtap="openEditEditor"
+            data-tag-id="{{item.id}}"
+            style="border-color: {{item.color}}; color: {{item.color}};"
+          >
+            <text>{{item.name}}</text>
+          </view>
+          <view class="tag-actions">
+            <view class="mini-btn" bindtap="openEditEditor" data-tag-id="{{item.id}}">编辑</view>
+            <view
+              class="mini-btn danger"
+              bindtap="handleDeleteTag"
+              data-tag-id="{{item.id}}"
+              data-tag-name="{{item.name}}"
+            >删除</view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view wx:if="{{editorVisible}}" class="sheet-mask" bindtap="closeEditor">
+    <view class="sheet-panel" catchtap="noop">
+      <view class="sheet-head">
+        <text class="sheet-title">{{editorMode === 'edit' ? '编辑标签' : '新建标签'}}</text>
+        <text class="sheet-close" bindtap="closeEditor">关闭</text>
+      </view>
+
+      <view class="field-block">
+        <text class="field-label">标签名称</text>
+        <input
+          class="name-input"
+          value="{{editorName}}"
+          maxlength="12"
+          placeholder="例如：常打局 / 高分局 / 娱乐局"
+          bindinput="onEditorNameInput"
+          focus="{{editorVisible}}"
+        />
+      </view>
+
+      <view class="field-block">
+        <text class="field-label">标签颜色</text>
+        <view class="color-grid">
+          <view
+            wx:for="{{colorPalette}}"
+            wx:key="*this"
+            class="color-item {{editorColor === item ? 'selected' : ''}}"
+            style="background: {{item}};"
+            bindtap="selectColor"
+            data-color="{{item}}"
+          ></view>
+        </view>
+      </view>
+
+      <view class="sheet-actions">
+        <view class="sheet-btn ghost" bindtap="closeEditor">取消</view>
+        <view class="sheet-btn" bindtap="saveTag">保存</view>
+      </view>
+    </view>
+  </view>
+</view>

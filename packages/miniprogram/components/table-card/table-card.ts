@@ -9,6 +9,8 @@ Component({
     durationText: { type: String, value: '' },
     myScoreText: { type: String, value: '' },
     scoreCount: { type: Number, value: -1 },
+    tags: { type: Array, value: [] },
+    showTagAction: { type: Boolean, value: false },
     showName: { type: Boolean, value: false },
     faded: { type: Boolean, value: false },
   },
@@ -16,6 +18,12 @@ Component({
   methods: {
     onCardTap() {
       this.triggerEvent('cardtap');
+    },
+
+    onTagTap() {
+      this.triggerEvent('tagtap', {
+        roomCode: this.properties.roomCode,
+      });
     },
   },
 });

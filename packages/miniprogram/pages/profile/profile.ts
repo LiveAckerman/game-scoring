@@ -194,6 +194,10 @@ Page({
     wx.switchTab({ url: '/pages/records/records' });
   },
 
+  goToTagSettings() {
+    wx.navigateTo({ url: '/subpkg/tag-settings/tag-settings' });
+  },
+
   // ---- 数据恢复（游客 → 微信账号） ----
   async handleDataRestore() {
     if (!getAccessToken()) {
