@@ -1,8 +1,26 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
 
 export class ListRoomHistoryQueryDto {
+  @ApiPropertyOptional({
+    description: '是否启用分页，默认 true；传 false 时返回全部符合条件的数据',
+    example: true,
+    default: true,
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') {
+      return true;
+    }
+    if (typeof value === 'boolean') {
+      return value;
+    }
+    return String(value).toLowerCase() !== 'false';
+  })
+  @IsBoolean()
+  paginate?: boolean;
+
   @ApiPropertyOptional({ description: '页码，从1开始', example: 1, default: 1 })
   @IsOptional()
   @Type(() => Number)

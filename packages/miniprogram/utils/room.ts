@@ -269,16 +269,21 @@ export const hideRoomInviteCard = (roomId: number): Promise<RoomPayload> => {
 };
 
 export const getRoomHistory = (params?: {
+  paginate?: boolean;
   page?: number;
   pageSize?: number;
   status?: 'ALL' | RoomStatus;
   roomType?: RoomType;
 }): Promise<RoomHistoryPayload> => {
+  const paginate = params?.paginate !== false;
   const page = params?.page || 1;
   const pageSize = params?.pageSize || 20;
   const status = params?.status || 'ALL';
 
-  let url = `/rooms/history?page=${page}&pageSize=${pageSize}&status=${status}`;
+  let url = `/rooms/history?paginate=${paginate ? 'true' : 'false'}&status=${status}`;
+  if (paginate) {
+    url += `&page=${page}&pageSize=${pageSize}`;
+  }
   if (params?.roomType) {
     url += `&roomType=${params.roomType}`;
   }

@@ -67,18 +67,18 @@
   </scroll-view>
 
   <view wx:if="{{tagFilterVisible}}" class="sheet-mask" bindtap="closeTagFilter">
-    <view class="sheet-panel" catchtap="">
+    <view class="sheet-panel" catchtap="noop">
       <view class="sheet-head">
         <text class="sheet-title">标签筛选</text>
         <text class="sheet-close" bindtap="closeTagFilter">关闭</text>
       </view>
-      <view wx:if="{{availableTags.length > 0}}" class="sheet-tag-list">
+      <view wx:if="{{filterTagOptions.length > 0}}" class="sheet-tag-list">
         <view
-          wx:for="{{availableTags}}"
+          wx:for="{{filterTagOptions}}"
           wx:key="id"
-          class="sheet-tag {{draftFilterTagIds.indexOf(item.id) >= 0 ? 'selected' : ''}}"
-          style="border-color: {{item.color}}; color: {{draftFilterTagIds.indexOf(item.id) >= 0 ? '#ffffff' : item.color}}; background: {{draftFilterTagIds.indexOf(item.id) >= 0 ? item.color : '#ffffff'}};"
-          bindtap="toggleFilterTag"
+          class="sheet-tag {{item.selected ? 'selected' : ''}}"
+          style="border-color: {{item.color}}; color: {{item.selected ? '#ffffff' : item.color}}; background-color: {{item.selected ? item.color : '#ffffff'}};"
+          catchtap="toggleFilterTag"
           data-tag-id="{{item.id}}"
         >
           <text>{{item.name}}</text>
@@ -97,19 +97,19 @@
   </view>
 
   <view wx:if="{{roomTagVisible}}" class="sheet-mask" bindtap="closeRoomTagDialog">
-    <view class="sheet-panel" catchtap="">
+    <view class="sheet-panel" catchtap="noop">
       <view class="sheet-head">
         <text class="sheet-title">房间标签</text>
         <text class="sheet-close" bindtap="closeRoomTagDialog">关闭</text>
       </view>
       <text class="sheet-room-code">桌号 {{roomTagRoomCode}}</text>
-      <view wx:if="{{availableTags.length > 0}}" class="sheet-tag-list">
+      <view wx:if="{{roomTagOptions.length > 0}}" class="sheet-tag-list">
         <view
-          wx:for="{{availableTags}}"
+          wx:for="{{roomTagOptions}}"
           wx:key="id"
-          class="sheet-tag {{roomTagDraftIds.indexOf(item.id) >= 0 ? 'selected' : ''}}"
-          style="border-color: {{item.color}}; color: {{roomTagDraftIds.indexOf(item.id) >= 0 ? '#ffffff' : item.color}}; background: {{roomTagDraftIds.indexOf(item.id) >= 0 ? item.color : '#ffffff'}};"
-          bindtap="toggleRoomTag"
+          class="sheet-tag {{item.selected ? 'selected' : ''}}"
+          style="border-color: {{item.color}}; color: {{item.selected ? '#ffffff' : item.color}}; background-color: {{item.selected ? item.color : '#ffffff'}};"
+          catchtap="toggleRoomTag"
           data-tag-id="{{item.id}}"
         >
           <text>{{item.name}}</text>

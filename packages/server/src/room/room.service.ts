@@ -210,8 +210,9 @@ export class RoomService {
 
   async getHistory(req: Request, query: ListRoomHistoryQueryDto) {
     const actor = await this.resolveActor(req);
+    const paginate = query.paginate !== false;
     const page = query.page || 1;
-    const pageSize = query.pageSize || 20;
+    const pageSize = paginate ? (query.pageSize || 20) : 0;
     const statusFilter = query.status || 'ALL';
 
     const actorMemberships = await this.roomMemberRepository.find({
@@ -265,12 +266,18 @@ export class RoomService {
       roomWhere.roomType = query.roomType;
     }
 
-    const [rooms, total] = await this.roomRepository.findAndCount({
+    const roomsQuery = {
       where: roomWhere,
-      order: { createdAt: 'DESC' },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    });
+      order: { createdAt: 'DESC' as const },
+    };
+
+    const [rooms, total] = paginate
+      ? await this.roomRepository.findAndCount({
+        ...roomsQuery,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      })
+      : await this.roomRepository.findAndCount(roomsQuery);
 
     const summaryRooms = await this.roomRepository.find({
       where: roomWhere,
@@ -285,10 +292,10 @@ export class RoomService {
       return {
         summary: this.buildHistorySummary(summaryMemberships),
         pagination: {
-          page,
-          pageSize,
+          page: paginate ? page : 1,
+          pageSize: paginate ? pageSize : total,
           total,
-          totalPages: Math.ceil(total / pageSize),
+          totalPages: paginate ? Math.ceil(total / pageSize) : (total > 0 ? 1 : 0),
         },
         items: [],
       };
@@ -382,10 +389,10 @@ export class RoomService {
     return {
       summary: this.buildHistorySummary(summaryMemberships),
       pagination: {
-        page,
-        pageSize,
+        page: paginate ? page : 1,
+        pageSize: paginate ? pageSize : total,
         total,
-        totalPages: Math.ceil(total / pageSize),
+        totalPages: paginate ? Math.ceil(total / pageSize) : (total > 0 ? 1 : 0),
       },
       items,
     };

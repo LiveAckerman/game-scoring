@@ -26,14 +26,6 @@ interface HomeRecentCard {
   tags: RoomTag[];
 }
 
-interface OngoingRoomOption {
-  roomCode: string;
-  roomType: string;
-  memberCount: number;
-  durationMinutes: number;
-  timeText: string;
-}
-
 interface InputDialogOptions {
   title: string;
   tip: string;
@@ -59,7 +51,7 @@ Page({
     joiningRoom: false,
     autoJoinTriedCode: '',
     ongoingDialogVisible: false,
-    ongoingRooms: [] as OngoingRoomOption[],
+    ongoingRooms: [] as HomeRecentCard[],
     ongoingReachedLimit: false,
     pendingGuestNickname: '',
     pendingRoomType: 'MULTI' as 'MULTI' | 'SINGLE' | 'POOL',
@@ -553,7 +545,7 @@ Page({
       if (payload.items.length > 0) {
         this.setData({
           ongoingDialogVisible: true,
-          ongoingRooms: payload.items.map((item) => this.mapOngoingRoom(item)),
+          ongoingRooms: payload.items.map((item) => this.mapRoomToCard(item, [])),
           ongoingReachedLimit: payload.items.length >= 3,
           pendingGuestNickname: guestNickname || '',
           pendingRoomType: roomType,
@@ -623,22 +615,6 @@ Page({
         isOwner: member.isOwner,
       })),
       tags,
-    };
-  },
-
-  mapOngoingRoom(item: RoomHistoryItem): OngoingRoomOption {
-    const startedDate = new Date(item.startedAt);
-    const month = startedDate.getMonth() + 1;
-    const day = startedDate.getDate();
-    const hour = startedDate.getHours();
-    const minute = startedDate.getMinutes();
-
-    return {
-      roomCode: item.roomCode,
-      roomType: item.roomType || 'MULTI',
-      memberCount: item.memberCount,
-      durationMinutes: item.durationMinutes,
-      timeText: `${month}月${day}日 ${this.pad2(hour)}:${this.pad2(minute)}`,
     };
   },
 

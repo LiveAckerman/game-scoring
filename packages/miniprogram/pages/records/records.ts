@@ -34,6 +34,10 @@ interface RecordCardView {
   tags: RoomTag[];
 }
 
+interface TagOptionView extends RoomTag {
+  selected: boolean;
+}
+
 const EMPTY_SUMMARY: RoomHistorySummary = {
   totalGames: 0,
   winRounds: 0,
@@ -55,12 +59,14 @@ Page({
     rawItems: [] as RoomHistoryItem[],
     records: [] as RecordCardView[],
     availableTags: [] as RoomTag[],
+    filterTagOptions: [] as TagOptionView[],
     tagFilterVisible: false,
     selectedFilterTagIds: [] as string[],
     draftFilterTagIds: [] as string[],
     roomTagVisible: false,
     roomTagRoomCode: '',
     roomTagDraftIds: [] as string[],
+    roomTagOptions: [] as TagOptionView[],
   },
 
   onLoad() {
@@ -108,8 +114,7 @@ Page({
 
     try {
       const payload = await getRoomHistory({
-        page: 1,
-        pageSize: 200,
+        paginate: false,
         status: this.getApiStatus(),
       });
       this.setData({ rawItems: payload.items });
@@ -248,6 +253,14 @@ Page({
       selectedFilterTagIds: this.data.selectedFilterTagIds.filter((tagId) => validIds.has(tagId)),
       draftFilterTagIds: this.data.draftFilterTagIds.filter((tagId) => validIds.has(tagId)),
       roomTagDraftIds: this.data.roomTagDraftIds.filter((tagId) => validIds.has(tagId)),
+      filterTagOptions: this.buildTagOptions(
+        availableTags,
+        this.data.draftFilterTagIds.filter((tagId) => validIds.has(tagId)),
+      ),
+      roomTagOptions: this.buildTagOptions(
+        availableTags,
+        this.data.roomTagDraftIds.filter((tagId) => validIds.has(tagId)),
+      ),
     });
   },
 
@@ -256,6 +269,7 @@ Page({
     this.setData({
       tagFilterVisible: true,
       draftFilterTagIds: [...this.data.selectedFilterTagIds],
+      filterTagOptions: this.buildTagOptions(this.data.availableTags, this.data.selectedFilterTagIds),
     });
   },
 
@@ -271,7 +285,11 @@ Page({
     } else {
       selectedSet.add(tagId);
     }
-    this.setData({ draftFilterTagIds: [...selectedSet] });
+    const draftFilterTagIds = [...selectedSet];
+    this.setData({
+      draftFilterTagIds,
+      filterTagOptions: this.buildTagOptions(this.data.availableTags, draftFilterTagIds),
+    });
   },
 
   clearTagFilter() {
@@ -279,6 +297,7 @@ Page({
       selectedFilterTagIds: [],
       draftFilterTagIds: [],
       tagFilterVisible: false,
+      filterTagOptions: this.buildTagOptions(this.data.availableTags, []),
     });
     this.applyRecordViews(this.data.rawItems);
   },
@@ -302,6 +321,7 @@ Page({
       roomTagVisible: true,
       roomTagRoomCode: roomCode,
       roomTagDraftIds: [...getRoomTagIds(roomCode)],
+      roomTagOptions: this.buildTagOptions(this.data.availableTags, getRoomTagIds(roomCode)),
     });
   },
 
@@ -310,6 +330,7 @@ Page({
       roomTagVisible: false,
       roomTagRoomCode: '',
       roomTagDraftIds: [],
+      roomTagOptions: this.buildTagOptions(this.data.availableTags, []),
     });
   },
 
@@ -321,7 +342,11 @@ Page({
     } else {
       selectedSet.add(tagId);
     }
-    this.setData({ roomTagDraftIds: [...selectedSet] });
+    const roomTagDraftIds = [...selectedSet];
+    this.setData({
+      roomTagDraftIds,
+      roomTagOptions: this.buildTagOptions(this.data.availableTags, roomTagDraftIds),
+    });
   },
 
   confirmRoomTagDialog() {
@@ -337,6 +362,18 @@ Page({
       roomTagVisible: false,
     });
     wx.navigateTo({ url: '/subpkg/tag-settings/tag-settings' });
+  },
+
+  noop() {
+    // swallow panel taps so they do not bubble to the sheet mask
+  },
+
+  buildTagOptions(tags: RoomTag[], selectedIds: string[]): TagOptionView[] {
+    const selectedSet = new Set(selectedIds);
+    return tags.map((tag) => ({
+      ...tag,
+      selected: selectedSet.has(tag.id),
+    }));
   },
 
   pad2(value: number): string {
