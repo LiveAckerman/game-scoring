@@ -190,7 +190,7 @@ MAX_RETRIES=5
 HEALTHY=0
 for i in $(seq 1 $MAX_RETRIES); do
   sleep 2
-  if curl -sf "http://127.0.0.1:${APP_PORT}/api-docs" >/dev/null 2>&1; then
+  if curl -sf "http://127.0.0.1:${APP_PORT}/api-docs/v1" >/dev/null 2>&1; then
     HEALTHY=1
     break
   fi
@@ -228,5 +228,5 @@ echo "  ✅ 部署完成"
 echo "========================================"
 echo "  服务目录: ${REMOTE_DIR}/current"
 echo "  端口:     ${APP_PORT}"
-echo "  Swagger:  http://${DEPLOY_HOST}:${APP_PORT}/api-docs"
+echo "  Swagger:  http://${DEPLOY_HOST}:${APP_PORT}/api-docs/v1"
 echo "========================================"
