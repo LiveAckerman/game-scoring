@@ -13,7 +13,7 @@ interface ProfileInfo {
   wins: number;
   winRate: string;
 }
-const SHARE_PROMO_IMAGE = '/assets/stitch/avatars/avatar-main.png';
+const SHARE_PROMO_IMAGE = '/assets/images/share-promo.jpg';
 const FONT_LABELS: Record<string, string> = { small: '小', medium: '中（默认）', large: '大' };
 
 Page({

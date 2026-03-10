@@ -33,7 +33,7 @@ const ROOM_CODE_LENGTH = 6;
 const REALTIME_RECONNECT_BASE_MS = 1000;
 const REALTIME_RECONNECT_MAX_MS = 10000;
 const REALTIME_HEARTBEAT_MS = 20000;
-const SHARE_PROMO_IMAGE = '/assets/stitch/avatars/avatar-main.png';
+const SHARE_PROMO_IMAGE = '/assets/images/share-promo.jpg';
 
 interface RealtimeMessage {
   type?: string;
