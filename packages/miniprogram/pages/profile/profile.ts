@@ -1,5 +1,6 @@
 import { clearGuestIdentity, getAccessToken, getGuestProfile } from '../../utils/identity';
 import { request, RequestError } from '../../utils/request';
+import { getVersionSummary } from '../../utils/version';
 import { fontSizeBehavior, buildStyle } from '../../behaviors/font-size';
 
 interface ProfileInfo {
@@ -23,21 +24,28 @@ Page({
     showLoginCard: false,
     showQrPopup: false,
     fontLabel: '中（默认）',
+    versionSummary: '',
   },
 
   onLoad() {
     this.enableShareMenus();
     this.initFontLevel();
+    this.initVersionSummary();
   },
 
   onShow() {
     (this as any)._applyFontSize();
+    this.initVersionSummary();
     this.fetchUserInfo();
   },
 
   initFontLevel() {
     const level = wx.getStorageSync('fontSizeLevel') || 'medium';
     this.setData({ fontLabel: FONT_LABELS[level] || '中（默认）' });
+  },
+
+  initVersionSummary() {
+    this.setData({ versionSummary: getVersionSummary() });
   },
 
   enableShareMenus() {
@@ -200,6 +208,10 @@ Page({
 
   goToSupport() {
     wx.navigateTo({ url: '/subpkg/support/support' });
+  },
+
+  goToVersionInfo() {
+    wx.navigateTo({ url: '/subpkg/version-info/version-info' });
   },
 
   // ---- 数据恢复（游客 → 微信账号） ----
