@@ -25,4 +25,5 @@ interface IAppOption {
     fontSizeLevel?: 'small' | 'medium' | 'large';
   };
   userInfoReadyCallback?: WechatMiniprogram.UserInfoReadyCallback;
+  registerUpdateManager?: () => void;
 }
