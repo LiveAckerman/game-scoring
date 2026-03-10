@@ -14,7 +14,8 @@
         "leaderboard/leaderboard",
         "single-score/single-score",
         "pool-record/pool-record",
-        "tag-settings/tag-settings"
+        "tag-settings/tag-settings",
+        "support/support"
       ]
     }
   ],

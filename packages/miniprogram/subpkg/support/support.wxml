@@ -1,0 +1,36 @@
+<page-meta page-style="{{pageFontStyle}}" />
+<view class="support-page">
+  <common-top-bar title="联系客服" bind:back="goBack" />
+
+  <scroll-view class="support-scroll" scroll-y>
+    <view class="hero-card">
+      <view class="hero-badge">Support</view>
+      <text class="hero-title">遇到登录、恢复、房间或记分问题？</text>
+      <text class="hero-desc">先看下面的常见问题；如果仍未解决，再联系人工客服处理。</text>
+    </view>
+
+    <view class="faq-card">
+      <text class="section-title">常见问题</text>
+      <view wx:for="{{faqs}}" wx:key="title" class="faq-item">
+        <view class="faq-index">{{index + 1}}</view>
+        <view class="faq-content">
+          <text class="faq-title">{{item.title}}</text>
+          <text class="faq-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="tips-card">
+      <text class="section-title">联系客服前建议准备</text>
+      <text class="tip-line">房间号 / 问题发生时间 / 玩家昵称 / 错误提示截图</text>
+      <text class="tip-line">这些信息越完整，客服排查会越快。</text>
+    </view>
+  </scroll-view>
+
+  <view class="support-footer">
+    <button class="contact-btn" open-type="contact" show-message-card="{{true}}">
+      联系人工客服
+    </button>
+    <text class="footer-note">客服入口由微信原生能力提供，请先在小程序后台完成客服配置。</text>
+  </view>
+</view>

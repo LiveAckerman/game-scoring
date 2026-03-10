@@ -198,6 +198,10 @@ Page({
     wx.navigateTo({ url: '/subpkg/tag-settings/tag-settings' });
   },
 
+  goToSupport() {
+    wx.navigateTo({ url: '/subpkg/support/support' });
+  },
+
   // ---- 数据恢复（游客 → 微信账号） ----
   async handleDataRestore() {
     if (!getAccessToken()) {
