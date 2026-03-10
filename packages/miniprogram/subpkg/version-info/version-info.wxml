@@ -9,7 +9,8 @@
         <text class="env-badge">{{envVersionLabel}}</text>
       </view>
       <text class="current-version">v{{currentVersion}}</text>
-      <text class="current-desc">版本号可用于核对当前小程序发布版本；更新历史由应用内版本日志维护。</text>
+      <text class="latest-version">最新版本：v{{latestVersion}}</text>
+      <text class="current-desc">当前版本来自小程序运行时信息；版本历史与最新版本由服务端下发维护。</text>
     </view>
 
     <view class="history-card">

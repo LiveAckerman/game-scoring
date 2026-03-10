@@ -62,6 +62,14 @@
   margin-bottom: 12rpx;
 }
 
+.latest-version {
+  display: block;
+  font-size: var(--fs-sm, 24rpx);
+  color: #c45a2d;
+  font-weight: 700;
+  margin-bottom: 12rpx;
+}
+
 .current-desc {
   display: block;
   font-size: var(--fs-sm, 24rpx);

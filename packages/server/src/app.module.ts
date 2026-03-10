@@ -7,6 +7,7 @@ import { User } from './user/entities/user.entity';
 import { GuestModule } from './guest/guest.module';
 import { RoomModule } from './room/room.module';
 import { RealtimeModule } from './realtime/realtime.module';
+import { AppInfoModule } from './app-info/app-info.module';
 import { GuestUser } from './guest/entities/guest-user.entity';
 import { Room, RoomMember, RoomScoreRecord, PoolRound, PoolRecord } from './room/entities';
 
@@ -60,6 +61,7 @@ import { Room, RoomMember, RoomScoreRecord, PoolRound, PoolRecord } from './room
     UserModule,
     RoomModule,
     RealtimeModule,
+    AppInfoModule,
   ],
 })
 export class AppModule { }

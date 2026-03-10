@@ -48,6 +48,7 @@ async function bootstrap() {
     .addTag('用户', '用户信息相关接口')
     .addTag('游客', '游客身份相关接口')
     .addTag('房间', '多人记分房间相关接口')
+    .addTag('应用', '应用公共信息相关接口')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

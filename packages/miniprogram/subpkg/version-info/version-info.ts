@@ -1,11 +1,12 @@
 import { fontSizeBehavior } from '../../behaviors/font-size';
-import { getVersionPageState } from '../../utils/version';
+import { fetchVersionInfo, getVersionPageState } from '../../utils/version';
 
 Page({
   behaviors: [fontSizeBehavior],
   data: {
     currentVersion: '',
     envVersionLabel: '',
+    latestVersion: '',
     history: [],
   },
 
@@ -23,8 +24,21 @@ Page({
     this.setData({
       currentVersion: versionState.currentVersion,
       envVersionLabel: versionState.envVersionLabel,
+      latestVersion: versionState.latestVersion,
       history: versionState.history,
     });
+  },
+
+  async onReady() {
+    try {
+      const versionInfo = await fetchVersionInfo();
+      this.setData({
+        latestVersion: versionInfo.latestVersion,
+        history: versionInfo.history,
+      });
+    } catch (_error) {
+      // Keep fallback content if the request fails.
+    }
   },
 
   goBack() {

@@ -1,8 +1,15 @@
+import { request } from './request';
+
 export interface VersionHistoryItem {
   version: string;
   releaseDate: string;
   title: string;
   changes: string[];
+}
+
+export interface VersionInfoResponse {
+  latestVersion: string;
+  history: VersionHistoryItem[];
 }
 
 type EnvVersion = 'develop' | 'trial' | 'release' | 'unknown';
@@ -14,7 +21,7 @@ const ENV_LABELS: Record<EnvVersion, string> = {
   unknown: '未知环境',
 };
 
-export const VERSION_HISTORY: VersionHistoryItem[] = [
+export const FALLBACK_VERSION_HISTORY: VersionHistoryItem[] = [
   {
     version: '1.2.0',
     releaseDate: '2026-03-10',
@@ -46,7 +53,7 @@ export const VERSION_HISTORY: VersionHistoryItem[] = [
 ];
 
 const readRuntimeVersion = (): { version: string; envVersion: EnvVersion } => {
-  const fallbackVersion = VERSION_HISTORY[0]?.version || '1.0.0';
+  const fallbackVersion = FALLBACK_VERSION_HISTORY[0]?.version || '1.0.0';
 
   try {
     const accountInfo = wx.getAccountInfoSync ? wx.getAccountInfoSync() : null;
@@ -72,11 +79,25 @@ export const getVersionPageState = () => {
     currentVersion: runtime.version,
     envVersion: runtime.envVersion,
     envVersionLabel: ENV_LABELS[runtime.envVersion],
-    history: VERSION_HISTORY,
+    latestVersion: FALLBACK_VERSION_HISTORY[0]?.version || runtime.version,
+    history: FALLBACK_VERSION_HISTORY,
   };
 };
 
 export const getVersionSummary = (): string => {
   const versionState = getVersionPageState();
   return `v${versionState.currentVersion} · ${versionState.envVersionLabel}`;
+};
+
+export const fetchVersionInfo = async (): Promise<VersionInfoResponse> => {
+  const response = await request<VersionInfoResponse>({
+    url: '/app/version-info',
+  });
+
+  return {
+    latestVersion: response.latestVersion || FALLBACK_VERSION_HISTORY[0]?.version || '1.0.0',
+    history: Array.isArray(response.history) && response.history.length > 0
+      ? response.history
+      : FALLBACK_VERSION_HISTORY,
+  };
 };
