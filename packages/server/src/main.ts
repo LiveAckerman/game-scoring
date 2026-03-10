@@ -51,7 +51,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api-docs', app, document, {
+  SwaggerModule.setup('api-docs/v1', app, document, {
     swaggerOptions: {
       persistAuthorization: true,
     },
@@ -64,7 +64,7 @@ async function bootstrap() {
 
   await app.listen(port, '0.0.0.0');
   console.log(`🎮 欢乐记分馆 API 服务已启动: http://0.0.0.0:${port}`);
-  console.log(`📖 Swagger 文档: http://0.0.0.0:${port}/api-docs`);
+  console.log(`📖 Swagger 文档: http://0.0.0.0:${port}/api-docs/v1`);
   console.log(`🌐 REST API 前缀: http://0.0.0.0:${port}/api/v1`);
   console.log(`🔄 Realtime WebSocket: ws://0.0.0.0:${port}/ws`);
 }
