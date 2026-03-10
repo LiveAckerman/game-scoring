@@ -4,17 +4,22 @@
 
   <scroll-view class="support-scroll" scroll-y>
     <view class="hero-card">
-      <view class="hero-badge">Support</view>
-      <text class="hero-title">遇到登录、恢复、房间或记分问题？</text>
-      <text class="hero-desc">先看下面的常见问题；如果仍未解决，再联系人工客服处理。</text>
+      <view class="hero-badge">Guide</view>
+      <text class="hero-title">使用说明</text>
+      <text class="hero-desc">整理了常见牌桌模式、旁观权限和异常处理方式。点开问题即可查看详细说明。</text>
     </view>
 
     <view class="faq-card">
       <text class="section-title">常见问题</text>
-      <view wx:for="{{faqs}}" wx:key="title" class="faq-item">
-        <view class="faq-index">{{index + 1}}</view>
-        <view class="faq-content">
-          <text class="faq-title">{{item.title}}</text>
+      <view wx:for="{{faqs}}" wx:key="id" class="faq-panel">
+        <view class="faq-head" bindtap="toggleFaq" data-id="{{item.id}}">
+          <view class="faq-head-main">
+            <text class="faq-index">{{index + 1}}.</text>
+            <text class="faq-title">{{item.title}}</text>
+          </view>
+          <view class="faq-arrow {{item.expanded ? 'expanded' : ''}}"></view>
+        </view>
+        <view wx:if="{{item.expanded}}" class="faq-body">
           <text class="faq-desc">{{item.desc}}</text>
         </view>
       </view>
@@ -23,7 +28,7 @@
     <view class="tips-card">
       <text class="section-title">联系客服前建议准备</text>
       <text class="tip-line">房间号 / 问题发生时间 / 玩家昵称 / 错误提示截图</text>
-      <text class="tip-line">这些信息越完整，客服排查会越快。</text>
+      <text class="tip-line">描述越具体，客服定位问题会越快。</text>
     </view>
   </scroll-view>
 
