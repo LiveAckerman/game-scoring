@@ -22,6 +22,7 @@ DEPLOY_PASSWORD="${DEPLOY_PASSWORD:-}"
 REMOTE_DIR="${REMOTE_DIR:-/apps/jf}"
 APP_NAME="${APP_NAME:-jf-server}"
 APP_PORT="${APP_PORT:-9090}"
+KEEP_RELEASES="${KEEP_RELEASES:-10}"
 REMOTE_NPM_LOGLEVEL="${REMOTE_NPM_LOGLEVEL:-notice}"
 REMOTE_TRACE="${REMOTE_TRACE:-0}"
 
@@ -41,6 +42,7 @@ if [[ -z "$DEPLOY_HOST" ]]; then
   REMOTE_DIR=/apps/jf
   APP_NAME=jf-server
   APP_PORT=9090
+  KEEP_RELEASES=10
   COPY_ENV=1
 USAGE
   exit 1
@@ -124,7 +126,7 @@ rsync -a --delete -e "$RSYNC_RSH" "$STAGE_DIR/" "$SSH_TARGET:${REMOTE_RELEASE_DI
 echo "==> 远端安装依赖并启动 PM2"
 # -tt 强制分配伪终端，让远端 npm 实时输出日志到本地终端
 "${SSH_CMD[@]}" -tt \
-  "REMOTE_DIR='${REMOTE_DIR}' REMOTE_RELEASE_DIR='${REMOTE_RELEASE_DIR}' APP_NAME='${APP_NAME}' APP_PORT='${APP_PORT}' REMOTE_NPM_LOGLEVEL='${REMOTE_NPM_LOGLEVEL}' REMOTE_TRACE='${REMOTE_TRACE}' bash -s" <<'REMOTE_SCRIPT'
+  "REMOTE_DIR='${REMOTE_DIR}' REMOTE_RELEASE_DIR='${REMOTE_RELEASE_DIR}' APP_NAME='${APP_NAME}' APP_PORT='${APP_PORT}' KEEP_RELEASES='${KEEP_RELEASES}' REMOTE_NPM_LOGLEVEL='${REMOTE_NPM_LOGLEVEL}' REMOTE_TRACE='${REMOTE_TRACE}' bash -s" <<'REMOTE_SCRIPT'
 set -euo pipefail
 
 if [[ "${REMOTE_TRACE}" == "1" ]]; then
@@ -166,10 +168,11 @@ cp -al ./node_modules "$SHARED_NM"
 echo "[remote] 切换 current 软链"
 ln -sfn "${REMOTE_RELEASE_DIR}" "${REMOTE_DIR}/current"
 
-# 清理旧 release（保留最近 5 个）
-echo "[remote] 清理旧版本（保留最近 5 个）"
+# 清理旧 release（保留最近 KEEP_RELEASES 个）
+echo "[remote] 清理旧版本（保留最近 ${KEEP_RELEASES} 个）"
 cd "${REMOTE_DIR}/releases"
-ls -1dt */ 2>/dev/null | tail -n +6 | xargs rm -rf -- 2>/dev/null || true
+RELEASE_TRIM_START=$((KEEP_RELEASES + 1))
+ls -1dt */ 2>/dev/null | tail -n +"${RELEASE_TRIM_START}" | xargs rm -rf -- 2>/dev/null || true
 
 if ! command -v pm2 >/dev/null 2>&1; then
   echo "[remote] 安装 pm2"
