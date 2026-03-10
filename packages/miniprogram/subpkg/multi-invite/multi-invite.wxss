@@ -453,7 +453,7 @@
   color: #fff;
 }
 
-.owner-btn {
+.member-op-btn {
   background: #fff1df;
   color: #b56d34;
 }
@@ -521,6 +521,12 @@
   font-size: var(--fs-base, 26rpx);
   font-weight: 700;
   color: #333;
+}
+
+.record-main .record-text {
+  font-size: var(--fs-sm, 24rpx);
+  color: #333;
+  line-height: 1.5;
 }
 
 .record-main .action {
@@ -642,6 +648,48 @@
 
 .invite-popup-btn::after {
   border: none;
+}
+
+.member-action-dialog {
+  padding: 8rpx 0 4rpx;
+}
+
+.member-action-desc {
+  display: block;
+  margin-bottom: 20rpx;
+  color: #8e8e8e;
+  font-size: var(--fs-sm, 24rpx);
+  text-align: center;
+}
+
+.member-action-options {
+  display: flex;
+  gap: 16rpx;
+}
+
+.member-action-option {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 18rpx;
+  text-align: center;
+  font-size: var(--fs-base, 28rpx);
+  font-weight: 700;
+  color: #8c7b6b;
+  background: #f7f1e8;
+  border: 2rpx solid transparent;
+}
+
+.member-action-option.selected.transfer {
+  background: #fff1df;
+  color: #b56d34;
+  border-color: rgba(181, 109, 52, 0.24);
+}
+
+.member-action-option.selected.kick {
+  background: rgba(230, 57, 70, 0.1);
+  color: #c8424d;
+  border-color: rgba(230, 57, 70, 0.16);
 }
 
 .icon {

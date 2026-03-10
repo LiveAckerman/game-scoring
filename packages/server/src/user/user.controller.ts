@@ -127,8 +127,9 @@ export class UserController {
   async checkGuestData(
     @Request() req: any,
     @Headers('x-guest-token') guestToken?: string,
+    @Headers('x-device-id') deviceId?: string,
   ) {
-    return this.userService.checkGuestData(req.user.id, guestToken);
+    return this.userService.checkGuestData(req.user.id, guestToken, deviceId);
   }
 
   @Post('restore-guest-data')
@@ -139,7 +140,8 @@ export class UserController {
   async restoreGuestData(
     @Request() req: any,
     @Headers('x-guest-token') guestToken?: string,
+    @Headers('x-device-id') deviceId?: string,
   ) {
-    return this.userService.restoreGuestData(req.user.id, guestToken);
+    return this.userService.restoreGuestData(req.user.id, guestToken, deviceId);
   }
 }
