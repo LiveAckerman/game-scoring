@@ -4,7 +4,7 @@ import { AuthService } from './auth.service';
 import { WxLoginDto, LoginResponseDto } from './dto';
 
 @ApiTags('认证')
-@Controller('auth')
+@Controller({ path: 'auth', version: '1' })
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 

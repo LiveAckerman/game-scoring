@@ -34,7 +34,7 @@ if (!existsSync(UPLOAD_DIR)) {
 }
 
 @ApiTags('用户')
-@Controller('user')
+@Controller({ path: 'user', version: '1' })
 export class UserController {
   constructor(private readonly userService: UserService) { }
 

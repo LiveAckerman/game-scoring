@@ -1,7 +1,7 @@
 import { API_BASE_URL } from './request';
 
 const stripApiSuffix = (url: string): string => {
-  return url.replace(/\/api\/?$/, '');
+  return url.replace(/\/api(?:\/v\d+)?\/?$/, '');
 };
 
 const toWsBase = (url: string): string => {

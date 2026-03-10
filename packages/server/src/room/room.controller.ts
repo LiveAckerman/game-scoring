@@ -28,7 +28,7 @@ import {
 } from './dto';
 
 @ApiTags('房间')
-@Controller('rooms')
+@Controller({ path: 'rooms', version: '1' })
 export class RoomController {
   constructor(private readonly roomService: RoomService) { }
 

@@ -4,7 +4,7 @@ import { GuestService } from './guest.service';
 import { CreateGuestSessionDto } from './dto';
 
 @ApiTags('游客')
-@Controller('guest')
+@Controller({ path: 'guest', version: '1' })
 export class GuestController {
   constructor(private readonly guestService: GuestService) { }
 
