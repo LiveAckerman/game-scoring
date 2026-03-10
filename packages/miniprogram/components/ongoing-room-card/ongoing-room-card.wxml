@@ -1,0 +1,20 @@
+<view class="ongoing-room-card" bindtap="onCardTap">
+  <view class="card-head">
+    <view class="head-main">
+      <text class="room-code">桌号 {{roomCode}}</text>
+      <view class="type-badge {{roomType === 'SINGLE' ? 'type-single' : (roomType === 'POOL' ? 'type-pool' : 'type-multi')}}">
+        <text class="type-badge-text">{{roomType === 'SINGLE' ? '单人' : (roomType === 'POOL' ? '分数池' : '多人')}}</text>
+      </view>
+    </view>
+    <text class="status-badge {{status === 'IN_PROGRESS' ? 'active' : 'ended'}}">{{statusText}}</text>
+  </view>
+
+  <view class="avatar-row">
+    <view wx:for="{{members}}" wx:key="id" class="avatar-item">
+      <image wx:if="{{item.avatar}}" class="avatar" src="{{item.avatar}}" mode="aspectFill" />
+      <view wx:else class="avatar avatar-text">
+        <text>{{item.avatarInitials || '游'}}</text>
+      </view>
+    </view>
+  </view>
+</view>

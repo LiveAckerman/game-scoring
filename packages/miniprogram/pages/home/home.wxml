@@ -140,24 +140,22 @@
     bind:close="closeOngoingDialog"
   >
     <view class="ongoing-tip">{{ongoingReachedLimit ? '同类型房间最多同时进行 3 个，请先结束部分对局。' : '检测到你还有正在进行中的对局，可直接进入，或新开一局。'}}</view>
-    <view class="ongoing-list">
-      <table-card
-        wx:for="{{ongoingRooms}}"
-        wx:for-item="room"
-        wx:key="roomId"
-        roomCode="{{room.roomCode}}"
-        status="{{room.status}}"
-        statusText="{{room.statusText}}"
-        roomType="{{room.roomType || 'MULTI'}}"
-        members="{{room.previewMembers}}"
-        timeText="{{room.timeText}}"
-        durationText="{{room.durationText}}"
-        myScoreText="{{room.myScoreText}}"
-        tags="{{room.tags}}"
-        bind:cardtap="enterOngoingRoom"
-        data-room-code="{{room.roomCode}}"
-        data-room-type="{{room.roomType}}"
-      />
+    <view class="ongoing-list-scroll">
+      <view class="ongoing-list">
+        <ongoing-room-card
+          wx:for="{{ongoingRooms}}"
+          wx:for-item="room"
+          wx:key="roomId"
+          roomCode="{{room.roomCode}}"
+          status="{{room.status}}"
+          statusText="{{room.statusText}}"
+          roomType="{{room.roomType || 'MULTI'}}"
+          members="{{room.members}}"
+          bind:cardtap="enterOngoingRoom"
+          data-room-code="{{room.roomCode}}"
+          data-room-type="{{room.roomType}}"
+        />
+      </view>
     </view>
     <view slot="footer" class="ongoing-dialog-footer">
       <button class="ongoing-dialog-btn ghost" bindtap="closeOngoingDialog">{{ongoingReachedLimit ? '知道了' : '稍后再说'}}</button>

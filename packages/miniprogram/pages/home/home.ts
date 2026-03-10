@@ -26,6 +26,15 @@ interface HomeRecentCard {
   tags: RoomTag[];
 }
 
+interface OngoingRoomCardView {
+  roomId: number;
+  roomCode: string;
+  roomType: 'MULTI' | 'SINGLE' | 'POOL';
+  status: 'IN_PROGRESS' | 'ENDED';
+  statusText: string;
+  members: HomePreviewMember[];
+}
+
 interface InputDialogOptions {
   title: string;
   tip: string;
@@ -51,7 +60,7 @@ Page({
     joiningRoom: false,
     autoJoinTriedCode: '',
     ongoingDialogVisible: false,
-    ongoingRooms: [] as HomeRecentCard[],
+    ongoingRooms: [] as OngoingRoomCardView[],
     ongoingReachedLimit: false,
     pendingGuestNickname: '',
     pendingRoomType: 'MULTI' as 'MULTI' | 'SINGLE' | 'POOL',
@@ -545,7 +554,7 @@ Page({
       if (payload.items.length > 0) {
         this.setData({
           ongoingDialogVisible: true,
-          ongoingRooms: payload.items.map((item) => this.mapRoomToCard(item, [])),
+          ongoingRooms: payload.items.map((item) => this.mapOngoingRoomCard(item)),
           ongoingReachedLimit: payload.items.length >= 3,
           pendingGuestNickname: guestNickname || '',
           pendingRoomType: roomType,
@@ -615,6 +624,24 @@ Page({
         isOwner: member.isOwner,
       })),
       tags,
+    };
+  },
+
+  mapOngoingRoomCard(item: RoomHistoryItem): OngoingRoomCardView {
+    return {
+      roomId: item.roomId,
+      roomCode: item.roomCode,
+      roomType: item.roomType || 'MULTI',
+      status: item.status,
+      statusText: item.status === 'IN_PROGRESS' ? '进行中' : '已结束',
+      members: item.members.slice(0, 6).map((member) => ({
+        id: member.id,
+        nickname: member.nickname,
+        avatar: member.avatar,
+        avatarInitials: member.avatarInitials,
+        score: member.score,
+        isOwner: member.isOwner,
+      })),
     };
   },
 

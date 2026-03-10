@@ -7,16 +7,18 @@
       </view>
     </view>
 
-    <view class="dialog-body">
-      <slot></slot>
-    </view>
+    <scroll-view class="dialog-body-scroll" scroll-y>
+      <view class="dialog-body">
+        <slot></slot>
+      </view>
+    </scroll-view>
 
     <view wx:if="{{showFooter}}" class="dialog-footer">
       <button class="footer-btn ghost" bindtap="onCancelTap">{{cancelText}}</button>
       <button class="footer-btn" bindtap="onConfirmTap">{{confirmText}}</button>
     </view>
 
-    <view wx:else>
+    <view wx:else class="dialog-footer-slot">
       <slot name="footer"></slot>
     </view>
   </view>

@@ -1,3 +1,6 @@
 {
-  "navigationStyle": "custom"
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "ongoing-room-card": "/components/ongoing-room-card/ongoing-room-card"
+  }
 }
