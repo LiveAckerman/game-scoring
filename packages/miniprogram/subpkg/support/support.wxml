@@ -36,6 +36,5 @@
     <button class="contact-btn" open-type="contact" show-message-card="{{true}}">
       联系人工客服
     </button>
-    <text class="footer-note">客服入口由微信原生能力提供，请先在小程序后台完成客服配置。</text>
   </view>
 </view>

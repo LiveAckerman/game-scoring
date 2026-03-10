@@ -9,7 +9,7 @@
 
 .support-scroll {
   flex: 1;
-  padding: 20rpx 24rpx 180rpx;
+  padding: 20rpx 24rpx 200rpx;
   box-sizing: border-box;
 }
 
