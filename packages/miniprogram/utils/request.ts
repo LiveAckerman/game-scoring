@@ -1,3 +1,5 @@
+import { getDeviceId } from './identity';
+
 export const API_BASE_URL = 'https://jf.leviackerman.site/api';
 // export const API_BASE_URL = 'http://192.168.110.79:9090/api';
 
@@ -19,6 +21,7 @@ export const request = <T = unknown>(options: RequestOptions): Promise<T> => {
   const guestToken = wx.getStorageSync('guestToken');
 
   const header: WechatMiniprogram.IAnyObject = {
+    'x-device-id': getDeviceId(),
     ...options.header,
   };
 

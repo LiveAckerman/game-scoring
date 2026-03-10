@@ -17,6 +17,10 @@ export class GuestUser {
   @Column({ length: 80, unique: true })
   token: string;
 
+  @ApiProperty({ description: '设备标识' })
+  @Column({ length: 80, default: '' })
+  deviceId: string;
+
   @ApiProperty({ description: '昵称' })
   @Column({ length: 64 })
   nickname: string;

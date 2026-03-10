@@ -26,6 +26,7 @@ export interface RoomScoreRecord {
   fromMemberName: string;
   toMemberName: string;
   points: number;
+  recordType: 'NORMAL' | 'KICK_REFUND' | 'KICK_RECLAIM';
   createdByMemberId: number;
   createdAt: string;
 }
@@ -64,6 +65,10 @@ export interface RoomPayload {
   room: RoomData;
   currentMemberId: number | null;
   actor: RoomActor;
+}
+
+export interface LeaveRoomResponse {
+  success: boolean;
 }
 
 export interface HistoryMember {
@@ -245,6 +250,13 @@ export const kickRoomMember = (
 export const endRoom = (roomId: number): Promise<RoomPayload> => {
   return request<RoomPayload>({
     url: `/rooms/${roomId}/end`,
+    method: 'POST',
+  });
+};
+
+export const leaveRoom = (roomId: number): Promise<LeaveRoomResponse> => {
+  return request<LeaveRoomResponse>({
+    url: `/rooms/${roomId}/leave`,
     method: 'POST',
   });
 };

@@ -14,6 +14,7 @@ export interface ActorPayload {
 
 const GUEST_TOKEN_KEY = 'guestToken';
 const GUEST_PROFILE_KEY = 'guestProfile';
+const DEVICE_ID_KEY = 'deviceId';
 
 export const getAccessToken = (): string => {
   return wx.getStorageSync('token') || '';
@@ -39,6 +40,17 @@ export const getGuestProfile = (): GuestProfile | null => {
     nickname,
     avatarInitials: avatarInitials || '游客',
   };
+};
+
+export const getDeviceId = (): string => {
+  const cached = String(wx.getStorageSync(DEVICE_ID_KEY) || '').trim();
+  if (cached) {
+    return cached;
+  }
+
+  const nextId = `dev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  wx.setStorageSync(DEVICE_ID_KEY, nextId);
+  return nextId;
 };
 
 export const saveActorIdentity = (actor?: ActorPayload): void => {
