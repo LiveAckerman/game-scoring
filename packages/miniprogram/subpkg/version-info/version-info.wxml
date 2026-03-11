@@ -11,23 +11,33 @@
       <text class="current-version">v{{currentVersion}}</text>
       <text class="latest-version">最新版本：v{{latestVersion}}</text>
       <text class="current-desc">当前版本来自小程序运行时信息；版本历史与最新版本由服务端下发维护。</text>
+      <text wx:if="{{loadError}}" class="load-error">版本信息同步失败，已展示本地缓存。</text>
     </view>
 
     <view class="history-card">
       <text class="section-title">版本历史</text>
-      <view wx:for="{{history}}" wx:key="version" class="history-item">
-        <view class="history-head">
-          <view>
-            <text class="history-version">v{{item.version}}</text>
-            <text class="history-title">{{item.title}}</text>
+      <view wx:if="{{isLoading}}" class="history-loading">正在加载版本历史…</view>
+      <view wx:elif="{{history.length === 0}}" class="history-empty">暂无版本历史记录。</view>
+      <block wx:else>
+        <view wx:for="{{history}}" wx:key="version" class="history-item">
+          <view class="history-head">
+            <view class="history-title-wrap">
+              <text class="history-version">v{{item.version}}</text>
+              <text class="history-title">{{item.title}}</text>
+            </view>
+            <text class="history-date">{{item.releaseDate}}</text>
           </view>
-          <text class="history-date">{{item.releaseDate}}</text>
+          <view wx:for="{{item.changes}}" wx:key="*this" class="history-line">
+            <text class="history-dot"></text>
+            <text class="history-text">{{item}}</text>
+          </view>
         </view>
-        <view wx:for="{{item.changes}}" wx:key="*this" class="history-line">
-          <text class="history-dot"></text>
-          <text class="history-text">{{item}}</text>
-        </view>
-      </view>
+      </block>
+    </view>
+
+    <view wx:if="{{loadError}}" class="retry-card">
+      <text class="retry-text">网络异常，未能获取最新版本记录。</text>
+      <button class="retry-btn" bindtap="retryLoad">重试加载</button>
     </view>
   </scroll-view>
 </view>

@@ -8,6 +8,8 @@ Page({
     envVersionLabel: '',
     latestVersion: '',
     history: [],
+    isLoading: false,
+    loadError: false,
   },
 
   onLoad() {
@@ -29,7 +31,12 @@ Page({
     });
   },
 
-  async onReady() {
+  onReady() {
+    this.loadRemoteVersionInfo();
+  },
+
+  async loadRemoteVersionInfo() {
+    this.setData({ isLoading: true, loadError: false });
     try {
       const versionInfo = await fetchVersionInfo();
       this.setData({
@@ -37,8 +44,15 @@ Page({
         history: versionInfo.history,
       });
     } catch (_error) {
+      this.setData({ loadError: true });
       // Keep fallback content if the request fails.
+    } finally {
+      this.setData({ isLoading: false });
     }
+  },
+
+  retryLoad() {
+    this.loadRemoteVersionInfo();
   },
 
   goBack() {
