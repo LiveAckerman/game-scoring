@@ -1041,7 +1041,7 @@ Page({
       }));
 
     if (candidates.length === 0) {
-      wx.showToast({ title: '暂无可踢出的玩家', icon: 'none' });
+      wx.showToast({ title: '仅可踢出无得失分记录的玩家，不能踢出桌主，暂无可踢出的玩家。', icon: 'none' });
       return;
     }
 
