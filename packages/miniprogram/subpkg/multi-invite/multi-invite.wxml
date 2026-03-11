@@ -65,11 +65,7 @@
         </view>
           <view class="action-item" bindtap="onActionTap" data-action="mute">
             <view class="action-icon"><view class="icon icon-mute"></view></view>
-            <text>{{ttsMuted ? '开声' : '静音'}}</text>
-          </view>
-          <view class="action-item" bindtap="onActionTap" data-action="more">
-            <view class="action-icon"><view class="icon icon-more"></view></view>
-            <text>更多</text>
+            <text>{{ttsMuted ? '静音' : '开启'}}</text>
           </view>
         </view>
       </view>
@@ -259,6 +255,48 @@
           data-action-type="kick"
         >踢人</view>
       </view>
+    </view>
+  </common-dialog>
+
+  <common-dialog
+    visible="{{scoreNotifyDialogVisible}}"
+    title="语音播报设置"
+    showClose="{{false}}"
+    maskClosable="{{true}}"
+    bind:close="closeScoreNotifyDialog"
+  >
+    <view class="score-notify-dialog">
+      <text class="score-notify-desc">开启后，仅在你收到积分时播放语音提醒</text>
+      <text class="score-notify-status {{ttsMuted ? 'off' : 'on'}}">
+        {{ttsMuted ? '当前状态：已关闭' : '当前状态：已开启'}}
+      </text>
+
+      <view class="score-notify-list">
+        <view
+          wx:for="{{scoreNotifyVoiceOptions}}"
+          wx:key="value"
+          class="score-notify-item"
+          bindtap="selectScoreNotifyVoice"
+          data-voice="{{item.value}}"
+        >
+          <text class="score-notify-name">{{item.name}}</text>
+          <view
+            class="score-notify-preview-btn"
+            catchtap="previewScoreNotifyVoice"
+            data-voice="{{item.value}}"
+          >
+            <text>试听</text>
+          </view>
+          <text wx:if="{{item.value === ttsVoice}}" class="score-notify-check">✓</text>
+        </view>
+      </view>
+    </view>
+
+    <view slot="footer" class="score-notify-footer">
+      <button class="score-notify-footer-btn ghost" bindtap="closeScoreNotifyDialog">取消</button>
+      <button class="score-notify-footer-btn" bindtap="confirmScoreNotifyDialog">
+        {{ttsMuted ? '开启播报' : '关闭播报'}}
+      </button>
     </view>
   </common-dialog>
 

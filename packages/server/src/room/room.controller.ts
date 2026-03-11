@@ -125,6 +125,27 @@ export class RoomController {
     return new StreamableFile(audio.buffer);
   }
 
+  @Get(':roomId/score-notify-preview/audio')
+  @ApiOperation({ summary: '获取积分播报试听音频' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiResponse({ status: 200, description: '返回 MP3 音频流' })
+  async getScoreNotifyPreviewAudio(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+    @Res({ passthrough: true }) res: ExpressResponse,
+    @Query('voice') voice?: string,
+  ) {
+    const audio = await this.roomService.getScoreNotifyPreviewAudio(req, roomId, voice);
+    res.setHeader('Content-Type', audio.contentType);
+    res.setHeader('Content-Length', String(audio.buffer.length));
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="${audio.fileName}"`,
+    );
+    return new StreamableFile(audio.buffer);
+  }
+
   @Post(':roomId/transfer-owner')
   @ApiOperation({ summary: '转移桌主' })
   @ApiParam({ name: 'roomId', description: '房间ID' })

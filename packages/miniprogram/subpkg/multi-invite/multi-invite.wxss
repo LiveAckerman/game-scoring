@@ -89,7 +89,7 @@
 }
 
 .multi-action-grid {
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(5, 1fr);
 }
 
 .pool-action-grid {
@@ -640,6 +640,114 @@
   background: var(--c-danger-bg);
   color: var(--c-danger-fg);
   border-color: var(--c-border-strong);
+}
+
+.score-notify-dialog {
+  padding: 4rpx 0 0;
+}
+
+.score-notify-desc {
+  display: block;
+  color: var(--c-text-secondary);
+  font-size: var(--fs-sm, 24rpx);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.score-notify-status {
+  display: block;
+  margin-top: 16rpx;
+  margin-bottom: 20rpx;
+  text-align: center;
+  font-size: var(--fs-sm, 24rpx);
+  font-weight: 700;
+}
+
+.score-notify-status.on {
+  color: var(--c-success-fg);
+}
+
+.score-notify-status.off {
+  color: var(--c-text-muted);
+}
+
+.score-notify-list {
+  border-top: 2rpx solid var(--c-border-soft);
+}
+
+.score-notify-item {
+  min-height: 96rpx;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  border-bottom: 2rpx solid var(--c-border-soft);
+  padding: 0 8rpx;
+  box-sizing: border-box;
+}
+
+.score-notify-name {
+  flex: 1;
+  min-width: 0;
+  color: var(--c-text-primary);
+  font-size: var(--fs-base, 28rpx);
+  line-height: 1.4;
+}
+
+.score-notify-preview-btn {
+  flex-shrink: 0;
+  min-width: 84rpx;
+  text-align: center;
+}
+
+.score-notify-preview-btn text {
+  color: var(--c-success-fg);
+  font-size: var(--fs-base, 28rpx);
+  font-weight: 700;
+}
+
+.score-notify-check {
+  width: 44rpx;
+  flex-shrink: 0;
+  text-align: right;
+  color: var(--c-success-fg);
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.score-notify-footer {
+  display: flex;
+  gap: 0;
+  margin: 0 -24rpx -24rpx;
+  border-top: 2rpx solid var(--c-border-soft);
+}
+
+.score-notify-footer-btn {
+  flex: 1;
+  height: 92rpx;
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background: var(--c-surface-card);
+  color: var(--c-brand-red);
+  font-size: var(--fs-lg, 32rpx);
+  font-weight: 700;
+  line-height: 92rpx;
+  border-left: 2rpx solid var(--c-border-soft);
+}
+
+.score-notify-footer-btn:first-child {
+  border-left: none;
+  color: var(--c-text-primary);
+}
+
+.score-notify-footer-btn.ghost {
+  background: var(--c-surface-card);
+  color: var(--c-text-primary);
+}
+
+.score-notify-footer-btn::after {
+  border: none;
 }
 
 .icon {

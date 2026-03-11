@@ -64,6 +64,7 @@ interface ScoreRecordAudioPayload {
 @Injectable()
 export class RoomService {
   private static readonly DEFAULT_SCORE_TTS_VOICE = 'zh-CN-XiaoxiaoNeural';
+  private static readonly SCORE_NOTIFY_PREVIEW_TEXT = '语音播报已开启，收到积分时会提醒你';
   private static readonly SCORE_TTS_VOICE_SET = new Set([
     'zh-HK-HiuMaanNeural',
     'zh-HK-WanLungNeural',
@@ -121,7 +122,7 @@ export class RoomService {
       if (ongoingCount >= RoomService.MAX_ONGOING_PER_TYPE) {
         const typeLabel =
           roomType === ROOM_TYPE.SINGLE ? '单人记分' :
-          roomType === ROOM_TYPE.POOL ? '分数池' : '多人对战';
+            roomType === ROOM_TYPE.POOL ? '分数池' : '多人对战';
         throw new ConflictException(
           `你已有 ${ongoingCount} 个进行中的${typeLabel}房间，请先结束部分房间再创建新的`,
         );
@@ -568,10 +569,36 @@ export class RoomService {
       scoreRecord,
       memberNameMap,
     );
-    const selectedVoice = this.normalizeScoreTtsVoice(voice);
-
-    const tts = new EdgeTTS(
+    return this.synthesizeScoreNotifyAudio(
       announcementText,
+      voice,
+      `score-record-${recordId}.mp3`,
+    );
+  }
+
+  async getScoreNotifyPreviewAudio(
+    req: Request,
+    roomId: number,
+    voice?: string,
+  ): Promise<ScoreRecordAudioPayload> {
+    const actor = await this.resolveActor(req);
+    await this.getActiveMemberOrFail(roomId, actor);
+
+    return this.synthesizeScoreNotifyAudio(
+      RoomService.SCORE_NOTIFY_PREVIEW_TEXT,
+      voice,
+      'score-notify-preview.mp3',
+    );
+  }
+
+  private async synthesizeScoreNotifyAudio(
+    text: string,
+    voice: string | undefined,
+    fileName: string,
+  ): Promise<ScoreRecordAudioPayload> {
+    const selectedVoice = this.normalizeScoreTtsVoice(voice);
+    const tts = new EdgeTTS(
+      text,
       selectedVoice,
       { rate: '+8%' },
     );
@@ -581,7 +608,7 @@ export class RoomService {
     return {
       buffer,
       contentType: result.audio.type || 'audio/mpeg',
-      fileName: `score-record-${recordId}.mp3`,
+      fileName,
     };
   }
 
