@@ -11,18 +11,21 @@
 
     <view class="faq-card">
       <text class="section-title">常见问题</text>
-      <view wx:for="{{faqs}}" wx:key="id" class="faq-panel">
-        <view class="faq-head" bindtap="toggleFaq" data-id="{{item.id}}">
-          <view class="faq-head-main">
-            <text class="faq-index">{{index + 1}}.</text>
-            <text class="faq-title">{{item.title}}</text>
+      <view wx:if="{{faqs.length === 0}}" class="faq-empty">暂无常见问题，请直接联系客服。</view>
+      <block wx:else>
+        <view wx:for="{{faqs}}" wx:key="id" class="faq-panel">
+          <view class="faq-head" bindtap="toggleFaq" data-id="{{item.id}}">
+            <view class="faq-head-main">
+              <text class="faq-index">{{index + 1}}.</text>
+              <text class="faq-title">{{item.title}}</text>
+            </view>
+            <view class="faq-arrow {{item.expanded ? 'expanded' : ''}}"></view>
           </view>
-          <view class="faq-arrow {{item.expanded ? 'expanded' : ''}}"></view>
+          <view wx:if="{{item.expanded}}" class="faq-body">
+            <text class="faq-desc">{{item.desc}}</text>
+          </view>
         </view>
-        <view wx:if="{{item.expanded}}" class="faq-body">
-          <text class="faq-desc">{{item.desc}}</text>
-        </view>
-      </view>
+      </block>
     </view>
 
     <view class="tips-card">
