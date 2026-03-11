@@ -44,6 +44,10 @@ Component({
       type: Boolean,
       value: false,
     },
+    qrImageSrc: {
+      type: String,
+      value: '/assets/stitch/invite/invite-qr.jpg',
+    },
     tipText: {
       type: String,
       value: '输入房间号加入，或复制房间号分享给好友',

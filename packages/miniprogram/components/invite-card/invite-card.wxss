@@ -12,6 +12,7 @@
   flex-direction: column;
   align-items: center;
   box-shadow: 0 12rpx 24rpx rgba(183, 55, 39, 0.08);
+  margin-bottom:10rpx;
 }
 
 .invite-card::after {
