@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
+import { EdgeTTS } from 'edge-tts-universal';
 import { Request } from 'express';
 import { DataSource, In, Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
@@ -54,8 +55,22 @@ interface ActorContext {
   guestToken?: string;
 }
 
+interface ScoreRecordAudioPayload {
+  buffer: Buffer;
+  contentType: string;
+  fileName: string;
+}
+
 @Injectable()
 export class RoomService {
+  private static readonly DEFAULT_SCORE_TTS_VOICE = 'zh-CN-XiaoxiaoNeural';
+  private static readonly SCORE_TTS_VOICE_SET = new Set([
+    'zh-HK-HiuMaanNeural',
+    'zh-HK-WanLungNeural',
+    'zh-CN-XiaoxiaoNeural',
+    'zh-CN-YunhaoNeural',
+  ]);
+
   constructor(
     @InjectRepository(Room)
     private readonly roomRepository: Repository<Room>,
@@ -512,6 +527,62 @@ export class RoomService {
     const payload = await this.buildRoomPayload(roomId, actor);
     this.realtimeService.notifyRoomUpdated(payload.room.roomCode, 'score_added');
     return payload;
+  }
+
+  async getScoreRecordAudio(
+    req: Request,
+    roomId: number,
+    recordId: number,
+    voice?: string,
+  ): Promise<ScoreRecordAudioPayload> {
+    const actor = await this.resolveActor(req);
+    const currentMember = await this.getActiveMemberOrFail(roomId, actor);
+
+    const scoreRecord = await this.roomScoreRecordRepository.findOne({
+      where: { id: recordId, roomId },
+    });
+
+    if (!scoreRecord) {
+      throw new NotFoundException('积分记录不存在');
+    }
+
+    if (!this.isScoreRecordPlayable(scoreRecord)) {
+      throw new BadRequestException('该积分记录不支持语音播报');
+    }
+
+    if (scoreRecord.toMemberId !== currentMember.id) {
+      throw new ForbiddenException('只有收分玩家可以获取该语音播报');
+    }
+
+    const members = await this.roomMemberRepository.find({
+      where: { roomId },
+      select: ['id', 'nickname'],
+    });
+
+    const memberNameMap = new Map<number, string>();
+    members.forEach((member) => {
+      memberNameMap.set(member.id, member.nickname);
+    });
+
+    const announcementText = this.buildScoreRecordAnnouncementText(
+      scoreRecord,
+      memberNameMap,
+    );
+    const selectedVoice = this.normalizeScoreTtsVoice(voice);
+
+    const tts = new EdgeTTS(
+      announcementText,
+      selectedVoice,
+      { rate: '+8%' },
+    );
+    const result = await tts.synthesize();
+    const buffer = Buffer.from(await result.audio.arrayBuffer());
+
+    return {
+      buffer,
+      contentType: result.audio.type || 'audio/mpeg',
+      fileName: `score-record-${recordId}.mp3`,
+    };
   }
 
   async transferOwner(req: Request, roomId: number, dto: TransferOwnerDto) {
@@ -1550,6 +1621,48 @@ export class RoomService {
     if (!member) {
       throw new ForbiddenException('你还未加入该房间');
     }
+  }
+
+  private async getActiveMemberOrFail(roomId: number, actor: ActorContext) {
+    const member = await this.roomMemberRepository.findOne({
+      where: {
+        roomId,
+        actorType: actor.actorType,
+        actorRefId: actor.actorRefId,
+        isActive: true,
+      },
+    });
+
+    if (!member) {
+      throw new ForbiddenException('你还未加入该房间');
+    }
+
+    return member;
+  }
+
+  private isScoreRecordPlayable(record: RoomScoreRecord): boolean {
+    return record.recordType === 'NORMAL' || record.recordType === 'KICK_REFUND';
+  }
+
+  private buildScoreRecordAnnouncementText(
+    record: RoomScoreRecord,
+    memberNameMap: Map<number, string>,
+  ): string {
+    const fromName = memberNameMap.get(record.fromMemberId) || '有玩家';
+
+    if (record.recordType === 'KICK_REFUND') {
+      return `收到${fromName}返还的${record.points}分`;
+    }
+
+    return `收到${fromName}转的${record.points}分`;
+  }
+
+  private normalizeScoreTtsVoice(voice?: string): string {
+    const normalizedVoice = String(voice || '').trim();
+    if (RoomService.SCORE_TTS_VOICE_SET.has(normalizedVoice)) {
+      return normalizedVoice;
+    }
+    return RoomService.DEFAULT_SCORE_TTS_VOICE;
   }
 
   private normalizeRoomCode(roomCodeRaw: string): string {

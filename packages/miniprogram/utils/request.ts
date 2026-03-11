@@ -1,7 +1,7 @@
 import { getAccessToken, getDeviceId, getGuestToken } from './identity';
 
-export const API_BASE_URL = 'https://jf.leviackerman.site/api/v1';
-// export const API_BASE_URL = 'http://192.168.110.79:9090/api/v1';
+// export const API_BASE_URL = 'https://jf.leviackerman.site/api/v1';
+export const API_BASE_URL = 'http://192.168.110.79:9090/api/v1';
 
 interface RequestOptions {
   url: string;
@@ -16,13 +16,15 @@ export interface RequestError {
   data?: unknown;
 }
 
-export const request = <T = unknown>(options: RequestOptions): Promise<T> => {
+export const buildRequestHeader = (
+  extraHeader?: WechatMiniprogram.IAnyObject,
+): WechatMiniprogram.IAnyObject => {
   const token = getAccessToken();
   const guestToken = getGuestToken();
 
   const header: WechatMiniprogram.IAnyObject = {
     'x-device-id': getDeviceId(),
-    ...options.header,
+    ...extraHeader,
   };
 
   if (token) {
@@ -32,6 +34,12 @@ export const request = <T = unknown>(options: RequestOptions): Promise<T> => {
   if (guestToken) {
     header['x-guest-token'] = guestToken;
   }
+
+  return header;
+};
+
+export const request = <T = unknown>(options: RequestOptions): Promise<T> => {
+  const header = buildRequestHeader(options.header);
 
   return new Promise((resolve, reject) => {
     wx.request({

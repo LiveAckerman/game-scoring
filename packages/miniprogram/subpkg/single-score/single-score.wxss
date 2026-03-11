@@ -377,6 +377,9 @@
   color: var(--c-text-on-brand);
   font-size: 28rpx;
   font-weight: 700;
+      display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .modal-btn.ghost {

@@ -5,7 +5,7 @@ import {
   saveActorIdentity,
 } from '../../utils/identity';
 import { buildRoomRealtimeUrl } from '../../utils/realtime';
-import { request, RequestError } from '../../utils/request';
+import { API_BASE_URL, buildRequestHeader, request, RequestError } from '../../utils/request';
 import { fontSizeBehavior } from '../../behaviors/font-size';
 import { shouldUseCompactLayout } from '../../utils/layout';
 import {
@@ -46,6 +46,11 @@ interface RealtimeSendMessage {
   roomCode?: string;
 }
 
+interface ScoreNotifyVoiceOption {
+  name: string;
+  value: string;
+}
+
 let realtimeSocketTask: WechatMiniprogram.SocketTask | null = null;
 let realtimeReconnectTimer: number | null = null;
 let realtimeHeartbeatTimer: number | null = null;
@@ -54,6 +59,22 @@ let realtimeReconnectAttempt = 0;
 let realtimeRefreshing = false;
 let realtimeRefreshPending = false;
 let roomEntryLoading = false;
+let scoreNotifyAudioContext: WechatMiniprogram.InnerAudioContext | null = null;
+let scoreNotifyQueue: RoomScoreRecordView[] = [];
+let scoreNotifyPlaying = false;
+let scoreNotifyInitialized = false;
+let scoreNotifyLastSeenRecordId = 0;
+let scoreNotifyCurrentTempFilePath = '';
+
+const SCORE_NOTIFY_MUTE_KEY = 'multiInviteScoreNotifyMuted';
+const SCORE_NOTIFY_VOICE_KEY = 'multiInviteScoreNotifyVoice';
+const DEFAULT_SCORE_NOTIFY_VOICE = 'zh-CN-XiaoxiaoNeural';
+const SCORE_NOTIFY_VOICE_OPTIONS: ScoreNotifyVoiceOption[] = [
+  { name: '女声 粤语', value: 'zh-HK-HiuMaanNeural' },
+  { name: '男声 粤语', value: 'zh-HK-WanLungNeural' },
+  { name: '女声', value: 'zh-CN-XiaoxiaoNeural' },
+  { name: '男声', value: 'zh-CN-YunhaoNeural' },
+];
 
 Page({
   behaviors: [fontSizeBehavior],
@@ -92,11 +113,15 @@ Page({
     roomType: 'MULTI' as string,
     isCompactLayout: false,
     poolStatsTableWidth: 690,
+    ttsMuted: false,
+    ttsVoice: DEFAULT_SCORE_NOTIFY_VOICE,
+    ttsVoiceLabel: '女声',
   },
 
   onLoad(options: Record<string, string | undefined>) {
     this.enableShareMenus();
     this.disconnectRealtime(true);
+    this.initScoreNotifyAudio();
     this.syncLayoutMode();
     const roomCode = (options.roomCode || '').replace(/\D/g, '').slice(0, ROOM_CODE_LENGTH);
     if (roomCode.length === ROOM_CODE_LENGTH) {
@@ -107,6 +132,7 @@ Page({
 
   onShow() {
     (this as any)._applyFontSize();
+    this.initScoreNotifyAudio();
     this.syncLayoutMode();
     if (!roomEntryLoading) {
       this.refreshRoomState(true);
@@ -119,10 +145,12 @@ Page({
   },
 
   onHide() {
+    this.resetScoreNotifyState();
     this.disconnectRealtime(true);
   },
 
   onUnload() {
+    this.destroyScoreNotifyAudio();
     this.disconnectRealtime(true);
   },
 
@@ -135,6 +163,221 @@ Page({
     if (isCompactLayout !== this.data.isCompactLayout) {
       this.setData({ isCompactLayout });
     }
+  },
+
+  getScoreNotifyVoiceOption(value?: string): ScoreNotifyVoiceOption {
+    return SCORE_NOTIFY_VOICE_OPTIONS.find((item) => item.value === value)
+      || SCORE_NOTIFY_VOICE_OPTIONS[2];
+  },
+
+  initScoreNotifyAudio() {
+    const ttsMuted = Boolean(wx.getStorageSync(SCORE_NOTIFY_MUTE_KEY));
+    const storedVoice = String(wx.getStorageSync(SCORE_NOTIFY_VOICE_KEY) || '').trim();
+    const voiceOption = this.getScoreNotifyVoiceOption(storedVoice);
+
+    if (
+      ttsMuted !== this.data.ttsMuted ||
+      voiceOption.value !== this.data.ttsVoice ||
+      voiceOption.name !== this.data.ttsVoiceLabel
+    ) {
+      this.setData({
+        ttsMuted,
+        ttsVoice: voiceOption.value,
+        ttsVoiceLabel: voiceOption.name,
+      });
+    }
+
+    if (!scoreNotifyAudioContext) {
+      scoreNotifyAudioContext = wx.createInnerAudioContext();
+      scoreNotifyAudioContext.autoplay = false;
+      scoreNotifyAudioContext.onEnded(() => {
+        this.finishScoreNotifyPlayback();
+        void this.playNextScoreNotifyAudio();
+      });
+      scoreNotifyAudioContext.onError(() => {
+        this.finishScoreNotifyPlayback();
+        void this.playNextScoreNotifyAudio();
+      });
+    }
+
+    scoreNotifyQueue = [];
+    scoreNotifyPlaying = false;
+    scoreNotifyInitialized = false;
+    scoreNotifyLastSeenRecordId = 0;
+    scoreNotifyCurrentTempFilePath = '';
+  },
+
+  destroyScoreNotifyAudio() {
+    this.stopScoreNotifyPlayback(true);
+    if (scoreNotifyAudioContext) {
+      scoreNotifyAudioContext.destroy();
+      scoreNotifyAudioContext = null;
+    }
+  },
+
+  resetScoreNotifyState() {
+    this.stopScoreNotifyPlayback(true);
+    scoreNotifyInitialized = false;
+    scoreNotifyLastSeenRecordId = 0;
+  },
+
+  toggleScoreNotifyMute() {
+    const nextMuted = !this.data.ttsMuted;
+    wx.setStorageSync(SCORE_NOTIFY_MUTE_KEY, nextMuted);
+    this.setData({ ttsMuted: nextMuted });
+
+    if (nextMuted) {
+      this.stopScoreNotifyPlayback(true);
+      wx.showToast({ title: '已静音语音提醒', icon: 'none' });
+      return;
+    }
+
+    wx.showToast({ title: '已开启语音提醒', icon: 'none' });
+  },
+
+  openScoreNotifyVoicePicker() {
+    const itemList = SCORE_NOTIFY_VOICE_OPTIONS.map((item) => {
+      return item.value === this.data.ttsVoice ? `${item.name}（当前）` : item.name;
+    });
+
+    wx.showActionSheet({
+      itemList,
+      success: (res) => {
+        const option = SCORE_NOTIFY_VOICE_OPTIONS[res.tapIndex];
+        if (!option || option.value === this.data.ttsVoice) {
+          return;
+        }
+
+        wx.setStorageSync(SCORE_NOTIFY_VOICE_KEY, option.value);
+        this.setData({
+          ttsVoice: option.value,
+          ttsVoiceLabel: option.name,
+        });
+        wx.showToast({ title: `已切换为${option.name}`, icon: 'none' });
+      },
+    });
+  },
+
+  handleScoreRecordNotifications(
+    currentMemberId: number,
+    scoreRecords: RoomScoreRecordView[],
+  ) {
+    const latestRecordId = scoreRecords.length > 0
+      ? scoreRecords[scoreRecords.length - 1].id
+      : 0;
+
+    if (!scoreNotifyInitialized) {
+      scoreNotifyInitialized = true;
+      scoreNotifyLastSeenRecordId = latestRecordId;
+      return;
+    }
+
+    const newRecords = scoreRecords.filter(
+      (record) => record.id > scoreNotifyLastSeenRecordId,
+    );
+    scoreNotifyLastSeenRecordId = latestRecordId;
+
+    if (this.data.ttsMuted || newRecords.length === 0) {
+      return;
+    }
+
+    const targetRecords = newRecords.filter((record) => {
+      return (
+        record.toMemberId === currentMemberId &&
+        (record.recordType === 'NORMAL' || record.recordType === 'KICK_REFUND')
+      );
+    });
+
+    if (targetRecords.length === 0) {
+      return;
+    }
+
+    scoreNotifyQueue.push(...targetRecords);
+    void this.playNextScoreNotifyAudio();
+  },
+
+  async playNextScoreNotifyAudio() {
+    if (scoreNotifyPlaying || this.data.ttsMuted) {
+      return;
+    }
+
+    const nextRecord = scoreNotifyQueue.shift();
+    if (!nextRecord || !this.data.roomId || !scoreNotifyAudioContext) {
+      return;
+    }
+
+    scoreNotifyPlaying = true;
+
+    try {
+      const tempFilePath = await this.downloadScoreNotifyAudio(nextRecord.id);
+      scoreNotifyCurrentTempFilePath = tempFilePath;
+      scoreNotifyAudioContext.src = tempFilePath;
+      scoreNotifyAudioContext.play();
+    } catch (_error) {
+      this.finishScoreNotifyPlayback();
+      void this.playNextScoreNotifyAudio();
+    }
+  },
+
+  finishScoreNotifyPlayback() {
+    scoreNotifyPlaying = false;
+
+    if (scoreNotifyCurrentTempFilePath) {
+      const tempFilePath = scoreNotifyCurrentTempFilePath;
+      scoreNotifyCurrentTempFilePath = '';
+      try {
+        wx.getFileSystemManager().unlink({
+          filePath: tempFilePath,
+          fail: () => undefined,
+        });
+      } catch (_error) {
+        // ignore cleanup errors
+      }
+    }
+  },
+
+  stopScoreNotifyPlayback(clearQueue = false) {
+    if (clearQueue) {
+      scoreNotifyQueue = [];
+    }
+
+    if (scoreNotifyAudioContext) {
+      try {
+        scoreNotifyAudioContext.stop();
+      } catch (_error) {
+        // ignore stop errors
+      }
+    }
+
+    this.finishScoreNotifyPlayback();
+  },
+
+  downloadScoreNotifyAudio(recordId: number): Promise<string> {
+    const roomId = this.data.roomId;
+    if (!roomId) {
+      return Promise.reject(new Error('room_id_missing'));
+    }
+    const voice = encodeURIComponent(this.data.ttsVoice || DEFAULT_SCORE_NOTIFY_VOICE);
+
+    return new Promise((resolve, reject) => {
+      wx.downloadFile({
+        url: `${API_BASE_URL}/rooms/${roomId}/score-records/${recordId}/audio?voice=${voice}`,
+        header: buildRequestHeader(),
+        success: (res) => {
+          if (
+            res.statusCode >= 200 &&
+            res.statusCode < 300 &&
+            res.tempFilePath
+          ) {
+            resolve(res.tempFilePath);
+            return;
+          }
+
+          reject(new Error(`download_failed_${res.statusCode}`));
+        },
+        fail: reject,
+      });
+    });
   },
 
   goBack() {
@@ -250,6 +493,16 @@ Page({
 
     if (action === 'manage') {
       this.openSpectatorDialog();
+      return;
+    }
+
+    if (action === 'mute') {
+      this.toggleScoreNotifyMute();
+      return;
+    }
+
+    if (action === 'more') {
+      this.openScoreNotifyVoicePicker();
       return;
     }
 
@@ -583,6 +836,8 @@ Page({
       : false;
     const showInlineInviteCard =
       !isPoolMode && sortedMembers.length === 1 && !inviteCardHiddenBySelf;
+
+    this.handleScoreRecordNotifications(currentMemberId, scoreRecords);
 
     this.setData({
       roomId: payload.room.id,

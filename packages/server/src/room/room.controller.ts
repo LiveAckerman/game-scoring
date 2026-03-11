@@ -7,9 +7,11 @@ import {
   Post,
   Query,
   Req,
+  Res,
+  StreamableFile,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Request } from 'express';
+import { Request, Response as ExpressResponse } from 'express';
 import { RoomService } from './room.service';
 import {
   AddMemberDto,
@@ -98,6 +100,29 @@ export class RoomController {
     @Body() dto: AddScoreDto,
   ) {
     return this.roomService.addScore(req, roomId, dto);
+  }
+
+  @Get(':roomId/score-records/:recordId/audio')
+  @ApiOperation({ summary: '获取积分播报音频（仅收分玩家）' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiParam({ name: 'recordId', description: '积分流水ID' })
+  @ApiResponse({ status: 200, description: '返回 MP3 音频流' })
+  async getScoreRecordAudio(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+    @Param('recordId', ParseIntPipe) recordId: number,
+    @Res({ passthrough: true }) res: ExpressResponse,
+    @Query('voice') voice?: string,
+  ) {
+    const audio = await this.roomService.getScoreRecordAudio(req, roomId, recordId, voice);
+    res.setHeader('Content-Type', audio.contentType);
+    res.setHeader('Content-Length', String(audio.buffer.length));
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="${audio.fileName}"`,
+    );
+    return new StreamableFile(audio.buffer);
   }
 
   @Post(':roomId/transfer-owner')

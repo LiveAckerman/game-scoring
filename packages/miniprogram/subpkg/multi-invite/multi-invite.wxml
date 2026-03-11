@@ -65,7 +65,7 @@
         </view>
           <view class="action-item" bindtap="onActionTap" data-action="mute">
             <view class="action-icon"><view class="icon icon-mute"></view></view>
-            <text>静音</text>
+            <text>{{ttsMuted ? '开声' : '静音'}}</text>
           </view>
           <view class="action-item" bindtap="onActionTap" data-action="more">
             <view class="action-icon"><view class="icon icon-more"></view></view>
