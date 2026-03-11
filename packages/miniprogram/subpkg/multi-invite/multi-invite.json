@@ -1,3 +1,9 @@
 {
-  "navigationStyle": "custom"
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "common-top-bar": "/components/common-top-bar/common-top-bar",
+    "common-dialog": "/components/common-dialog/common-dialog",
+    "invite-card": "/components/invite-card/invite-card",
+    "score-record-list": "/components/score-record-list/score-record-list"
+  }
 }

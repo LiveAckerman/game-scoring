@@ -7,7 +7,7 @@
       <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
         <view class="avatar-shell">
           <view class="avatar-ring">
-            <image class="avatar" src="{{avatarTempPath || userInfo.avatar || '../../assets/stitch/avatars/avatar-main.png'}}" mode="aspectFill" />
+            <image class="avatar" src="{{avatarTempPath || userInfo.avatar || '../../assets/stitch/avatars/avatar-main.jpg'}}" mode="aspectFill" />
           </view>
           <view class="camera-btn"><view class="icon icon-camera"></view></view>
         </view>

@@ -1,4 +1,4 @@
-import { getGuestProfile } from './identity';
+import { getAccessToken, getGuestProfile } from './identity';
 
 export interface RoomTag {
   id: string;
@@ -22,9 +22,31 @@ export const TAG_COLOR_PALETTE = [
   '#8D6E63',
 ];
 
+const getCachedUserInfo = (): { id?: number } | undefined => {
+  try {
+    const cached = getApp<IAppOption>().globalData.userInfo;
+    if (cached?.id) {
+      return cached;
+    }
+  } catch (_error) {
+    // fall back to storage
+  }
+
+  const stored = wx.getStorageSync('userInfo') as { id?: number } | undefined;
+  if (stored?.id) {
+    try {
+      getApp<IAppOption>().globalData.userInfo = stored as AppUserInfo;
+    } catch (_error) {
+      // ignore cache hydration failure
+    }
+  }
+
+  return stored;
+};
+
 const buildScopeKey = (): string => {
-  const token = wx.getStorageSync('token');
-  const userInfo = wx.getStorageSync('userInfo') as { id?: number } | undefined;
+  const token = getAccessToken();
+  const userInfo = getCachedUserInfo();
 
   if (token && userInfo?.id) {
     return `user:${userInfo.id}`;

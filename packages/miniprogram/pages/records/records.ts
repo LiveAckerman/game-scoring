@@ -38,6 +38,12 @@ interface TagOptionView extends RoomTag {
   selected: boolean;
 }
 
+interface RecordViewState {
+  records: RecordCardView[];
+  totalRecords: number;
+  summary: RoomHistorySummary;
+}
+
 const EMPTY_SUMMARY: RoomHistorySummary = {
   totalGames: 0,
   winRounds: 0,
@@ -47,6 +53,7 @@ const EMPTY_SUMMARY: RoomHistorySummary = {
   totalLosePoints: 0,
   totalScore: 0,
 };
+const RECORDS_CACHE_MS = 30 * 1000;
 const SHARE_PROMO_IMAGE = '/assets/images/share-promo.jpg';
 
 Page({
@@ -76,11 +83,11 @@ Page({
   onShow() {
     (this as any)._applyFontSize();
     this.syncAvailableTags();
-    this.loadRecords();
+    this.loadRecords({ useCache: true });
   },
 
   onPullDownRefresh() {
-    this.loadRecords(true);
+    this.loadRecords({ force: true, silent: true });
   },
 
   switchTab(e: WechatMiniprogram.BaseEvent) {
@@ -93,11 +100,16 @@ Page({
       activeTab: id,
     });
 
-    this.loadRecords();
+    this.loadRecords({ useCache: true });
   },
 
-  async loadRecords(silent = false) {
+  async loadRecords(options: { force?: boolean; silent?: boolean; useCache?: boolean } = {}) {
+    const page = this as any;
+    const activeTab = this.data.activeTab;
     if (!getAccessToken() && !getGuestToken()) {
+      page._recordsHasLoaded = false;
+      page._recordsLoadedAt = 0;
+      page._recordsLoadedStatus = '';
       this.setData({
         summary: EMPTY_SUMMARY,
         totalRecords: 0,
@@ -108,35 +120,79 @@ Page({
       return;
     }
 
-    if (!silent) {
+    const canUseCache = options.useCache
+      && page._recordsHasLoaded
+      && page._recordsLoadedStatus === this.data.activeTab
+      && Date.now() - Number(page._recordsLoadedAt || 0) < RECORDS_CACHE_MS;
+    if (!options.force && canUseCache) {
+      this.applyRecordViews(this.data.rawItems);
+      wx.stopPullDownRefresh();
+      return;
+    }
+
+    if (page._recordsPromise && page._recordsLoadingStatus === activeTab) {
+      return page._recordsPromise;
+    }
+
+    page._recordsRequestSeq = Number(page._recordsRequestSeq || 0) + 1;
+    const requestSeq = page._recordsRequestSeq;
+    page._recordsLoadingStatus = activeTab;
+
+    if (!options.silent) {
       this.setData({ loading: true });
     }
 
-    try {
-      const payload = await getRoomHistory({
-        paginate: false,
-        status: this.getApiStatus(),
-      });
-      this.setData({ rawItems: payload.items });
-      this.applyRecordViews(payload.items);
-    } catch (error) {
-      const requestError = error as RequestError;
-      if (requestError.statusCode !== 401) {
-        wx.showToast({
-          title: requestError.message || '加载记录失败',
-          icon: 'none',
+    page._recordsPromise = (async () => {
+      try {
+        const payload = await getRoomHistory({
+          paginate: false,
+          status: activeTab === 'ongoing'
+            ? 'IN_PROGRESS'
+            : (activeTab === 'finished' ? 'ENDED' : 'ALL'),
         });
+        if (page._recordsRequestSeq !== requestSeq || this.data.activeTab !== activeTab) {
+          return;
+        }
+        this.setData({
+          rawItems: payload.items,
+          ...this.buildRecordViewState(payload.items),
+        });
+        page._recordsHasLoaded = true;
+        page._recordsLoadedAt = Date.now();
+        page._recordsLoadedStatus = activeTab;
+      } catch (error) {
+        if (page._recordsRequestSeq !== requestSeq || this.data.activeTab !== activeTab) {
+          return;
+        }
+        const requestError = error as RequestError;
+        if (requestError.statusCode !== 401) {
+          wx.showToast({
+            title: requestError.message || '加载记录失败',
+            icon: 'none',
+          });
+        }
+        page._recordsHasLoaded = false;
+        page._recordsLoadedAt = 0;
+        page._recordsLoadedStatus = '';
+        this.setData({
+          summary: EMPTY_SUMMARY,
+          totalRecords: 0,
+          rawItems: [],
+          records: [],
+        });
+      } finally {
+        if (page._recordsRequestSeq === requestSeq) {
+          page._recordsPromise = null;
+          page._recordsLoadingStatus = '';
+        }
+        if (page._recordsRequestSeq === requestSeq && this.data.loading) {
+          this.setData({ loading: false });
+        }
+        wx.stopPullDownRefresh();
       }
-      this.setData({
-        summary: EMPTY_SUMMARY,
-        totalRecords: 0,
-        rawItems: [],
-        records: [],
-      });
-    } finally {
-      this.setData({ loading: false });
-      wx.stopPullDownRefresh();
-    }
+    })();
+
+    return page._recordsPromise;
   },
 
   openRoomFromRecord(e: WechatMiniprogram.BaseEvent) {
@@ -192,15 +248,19 @@ Page({
   },
 
   applyRecordViews(items: RoomHistoryItem[]) {
+    this.setData(this.buildRecordViewState(items));
+  },
+
+  buildRecordViewState(items: RoomHistoryItem[]): RecordViewState {
     const tagMap = buildRoomTagMap(items.map((item) => item.roomCode));
     const filteredItems = this.filterItemsByTags(items, tagMap);
     const records = filteredItems.map((item) => this.mapToRecordCard(item, tagMap[item.roomCode] || []));
 
-    this.setData({
+    return {
       records,
       totalRecords: filteredItems.length,
       summary: this.buildSummary(filteredItems),
-    });
+    };
   },
 
   filterItemsByTags(

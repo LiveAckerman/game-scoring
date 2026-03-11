@@ -7,12 +7,35 @@
 }
 
 page {
+  --c-brand-red: #c73a2d;
+  --c-brand-red-strong: #a92b20;
+  --c-brand-red-soft: #fce7e1;
+  --c-brand-gold: #e0a128;
+  --c-brand-gold-strong: #9d6200;
+  --c-brand-gold-soft: #fff1cd;
+  --c-surface-app: #fff6ee;
+  --c-surface-card: #fffdf9;
+  --c-surface-card-alt: #fff7ef;
+  --c-surface-warm: #fff2e7;
+  --c-surface-red: #fff0ea;
+  --c-surface-gold: #fff7dd;
+  --c-text-primary: #3b2923;
+  --c-text-secondary: #73574d;
+  --c-text-muted: #997a6d;
+  --c-text-on-brand: #fff8f2;
+  --c-border-soft: #efd7c7;
+  --c-border-strong: #e6b8a4;
+  --c-success-bg: #e6f4ea;
+  --c-success-fg: #236c3f;
+  --c-danger-bg: #fbe8e3;
+  --c-danger-fg: #a14a3a;
+
   font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica,
     Segoe UI, Arial, Roboto, 'PingFang SC', 'miui', 'Hiragino Sans GB', 'Microsoft Yahei',
     sans-serif;
-  background-color: #f8f8f8;
+  background-color: var(--c-surface-app);
   font-size: var(--fs-base, 28rpx);
-  color: #333;
+  color: var(--c-text-primary);
 }
 
 /* Common utility classes */
@@ -24,7 +47,7 @@ page {
 .font-bold { font-weight: bold; }
 
 /* Theme colors */
-.color-primary { color: #D32F2F; }
-.color-secondary { color: #FFB703; }
-.bg-primary { background-color: #D32F2F; }
-.bg-secondary { background-color: #FFB703; }
+.color-primary { color: var(--c-brand-red); }
+.color-secondary { color: var(--c-brand-gold); }
+.bg-primary { background-color: var(--c-brand-red); }
+.bg-secondary { background-color: var(--c-brand-gold); }

@@ -1,6 +1,6 @@
 .tag-page {
   min-height: 100vh;
-  background: #fff7ef;
+  background: var(--c-surface-app);
   display: flex;
   flex-direction: column;
 }
@@ -12,11 +12,11 @@
 }
 
 .hero-card {
-  background: linear-gradient(135deg, #e63946, #f4a261);
+  background: linear-gradient(135deg, var(--c-brand-red), var(--c-brand-gold));
   border-radius: 30rpx;
   padding: 30rpx;
-  color: #fff;
-  box-shadow: 0 16rpx 30rpx rgba(230, 57, 70, 0.14);
+  color: var(--c-text-on-brand);
+  box-shadow: 0 16rpx 30rpx rgba(183, 55, 39, 0.14);
   margin-bottom: 18rpx;
 }
 
@@ -35,10 +35,10 @@
 }
 
 .tag-card {
-  background: #fff;
+  background: var(--c-surface-card);
   border-radius: 28rpx;
   padding: 28rpx;
-  border: 2rpx solid rgba(230, 57, 70, 0.08);
+  border: 2rpx solid var(--c-border-soft);
 }
 
 .section-head {
@@ -53,7 +53,7 @@
   display: block;
   font-size: 30rpx;
   font-weight: 700;
-  color: #3f3f3f;
+  color: var(--c-text-primary);
 }
 
 .section-sub {
@@ -61,7 +61,7 @@
   margin-top: 8rpx;
   font-size: 22rpx;
   line-height: 1.6;
-  color: #9c9c9c;
+  color: var(--c-text-muted);
 }
 
 .create-btn {
@@ -70,8 +70,8 @@
   line-height: 60rpx;
   padding: 0 20rpx;
   border-radius: 30rpx;
-  background: #fff2e1;
-  color: #b56d34;
+  background: var(--c-surface-gold);
+  color: var(--c-brand-gold-strong);
   font-size: 24rpx;
   font-weight: 700;
   text-align: center;
@@ -81,8 +81,8 @@
 .empty-box {
   padding: 46rpx 24rpx;
   border-radius: 24rpx;
-  background: #fffaf5;
-  border: 2rpx dashed #f1d7bb;
+  background: var(--c-surface-card-alt);
+  border: 2rpx dashed var(--c-border-soft);
   text-align: center;
 }
 
@@ -90,7 +90,7 @@
   display: block;
   font-size: 28rpx;
   font-weight: 700;
-  color: #5f5f5f;
+  color: var(--c-text-primary);
   margin-bottom: 10rpx;
 }
 
@@ -98,7 +98,7 @@
   display: block;
   font-size: 22rpx;
   line-height: 1.7;
-  color: #9d9d9d;
+  color: var(--c-text-muted);
 }
 
 .tag-list {
@@ -114,14 +114,14 @@
   gap: 18rpx;
   padding: 18rpx 20rpx;
   border-radius: 22rpx;
-  background: #fffaf6;
+  background: var(--c-surface-card-alt);
 }
 
 .tag-chip {
   min-height: 64rpx;
   padding: 0 24rpx;
   border-radius: 32rpx;
-  border: 2rpx solid #e63946;
+  border: 2rpx solid var(--c-brand-red);
   display: inline-flex;
   align-items: center;
   box-sizing: border-box;
@@ -140,15 +140,15 @@
   line-height: 52rpx;
   padding: 0 18rpx;
   border-radius: 26rpx;
-  background: #f3f3f3;
-  color: #666;
+  background: var(--c-surface-card-alt);
+  color: var(--c-text-secondary);
   font-size: 22rpx;
   font-weight: 700;
 }
 
 .mini-btn.danger {
-  background: rgba(230, 57, 70, 0.1);
-  color: #c8424d;
+  background: var(--c-danger-bg);
+  color: var(--c-danger-fg);
 }
 
 .sheet-mask {
@@ -162,7 +162,7 @@
 
 .sheet-panel {
   width: 100%;
-  background: #fffdf9;
+  background: var(--c-surface-card);
   border-radius: 32rpx 32rpx 0 0;
   padding: 28rpx 24rpx calc(28rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
@@ -178,12 +178,12 @@
 .sheet-title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #333;
+  color: var(--c-text-primary);
 }
 
 .sheet-close {
   font-size: 24rpx;
-  color: #999;
+  color: var(--c-text-muted);
 }
 
 .field-block {
@@ -194,18 +194,18 @@
   display: block;
   margin-bottom: 12rpx;
   font-size: 24rpx;
-  color: #8f8f8f;
+  color: var(--c-text-muted);
 }
 
 .name-input {
   height: 88rpx;
   border-radius: 20rpx;
-  background: #fff;
-  border: 2rpx solid #f0e2cf;
+  background: var(--c-surface-card);
+  border: 2rpx solid var(--c-border-soft);
   padding: 0 24rpx;
   box-sizing: border-box;
   font-size: 28rpx;
-  color: #333;
+  color: var(--c-text-primary);
 }
 
 .color-grid {
@@ -237,14 +237,14 @@
   height: 84rpx;
   line-height: 84rpx;
   border-radius: 22rpx;
-  background: #e63946;
-  color: #fff;
+  background: var(--c-brand-red);
+  color: var(--c-text-on-brand);
   font-size: 28rpx;
   font-weight: 700;
   text-align: center;
 }
 
 .sheet-btn.ghost {
-  background: #f6f2eb;
-  color: #666;
+  background: var(--c-surface-warm);
+  color: var(--c-text-secondary);
 }

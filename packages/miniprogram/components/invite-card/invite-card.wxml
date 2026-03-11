@@ -6,7 +6,7 @@
   <view class="qr-wrap">
     <view class="hongbao">福</view>
     <view class="qr-shell">
-      <image class="qr" src="../../assets/stitch/invite/invite-qr.png" mode="aspectFit" />
+      <image class="qr" src="../../assets/stitch/invite/invite-qr.jpg" mode="aspectFit" />
     </view>
   </view>
 

@@ -1,5 +1,5 @@
 <page-meta page-style="{{pageFontStyle}}" />
-<view class="invite-page">
+<view class="invite-page {{isCompactLayout ? 'compact-layout' : ''}}">
   <view class="bg-confetti"></view>
 
   <common-top-bar title="{{topBarTitle}}" bind:back="goBack" />
@@ -151,69 +151,50 @@
 
     <!-- 分数池模式：圈次统计表 -->
     <view wx:if="{{isPoolMode && poolRounds.length > 0}}" class="pool-stats-card">
-      <view class="pool-stats-head">
-        <view class="pool-stats-cell head-cell">圈数</view>
-        <view wx:for="{{poolStatsMembers}}" wx:for-item="pm" wx:key="id" class="pool-stats-cell head-cell">
-          <view wx:if="{{pm.actorType === 'VIRTUAL' && pm.nickname === '台板'}}" class="mini-table-icon">
-            <text>台</text>
+      <scroll-view class="pool-stats-scroll" scroll-x enable-flex="true">
+        <view class="pool-stats-table" style="min-width: {{poolStatsTableWidth}}rpx;">
+          <view class="pool-stats-head">
+            <view class="pool-stats-cell head-cell">圈数</view>
+            <view wx:for="{{poolStatsMembers}}" wx:for-item="pm" wx:key="id" class="pool-stats-cell head-cell">
+              <view wx:if="{{pm.actorType === 'VIRTUAL' && pm.nickname === '台板'}}" class="mini-table-icon">
+                <text>台</text>
+              </view>
+              <image wx:elif="{{pm.avatar}}" class="mini-avatar" src="{{pm.avatar}}" mode="aspectFill" />
+              <view wx:else class="mini-avatar mini-avatar-text"><text>{{pm.avatarInitials}}</text></view>
+            </view>
           </view>
-          <image wx:elif="{{pm.avatar}}" class="mini-avatar" src="{{pm.avatar}}" mode="aspectFill" />
-          <view wx:else class="mini-avatar mini-avatar-text"><text>{{pm.avatarInitials}}</text></view>
+          <view class="pool-stats-row winrate-row">
+            <view class="pool-stats-cell label-cell">胜率</view>
+            <view wx:for="{{poolStatsMembers}}" wx:for-item="pm" wx:key="id" class="pool-stats-cell">
+              <text>{{pm.winRate || '0%'}}</text>
+            </view>
+          </view>
+          <view
+            wx:for="{{poolRounds}}"
+            wx:for-item="rd"
+            wx:key="id"
+            class="pool-stats-row clickable"
+            bindtap="goToRoundDetail"
+            data-round-id="{{rd.id}}"
+          >
+            <view class="pool-stats-cell label-cell">
+              <text class="round-time">{{rd.timeText}}</text>
+              <text>第{{rd.roundNumber}}圈</text>
+            </view>
+            <view wx:for="{{poolStatsMembers}}" wx:for-item="pm" wx:key="id" class="pool-stats-cell">
+              <text>{{rd.memberScoreMap[pm.id] || '-'}}</text>
+            </view>
+          </view>
         </view>
-      </view>
-      <view class="pool-stats-row winrate-row">
-        <view class="pool-stats-cell label-cell">胜率</view>
-        <view wx:for="{{poolStatsMembers}}" wx:for-item="pm" wx:key="id" class="pool-stats-cell">
-          <text>{{pm.winRate || '0%'}}</text>
-        </view>
-      </view>
-      <view wx:for="{{poolRounds}}" wx:for-item="rd" wx:key="id" class="pool-stats-row clickable" bindtap="goToRoundDetail" data-round-id="{{rd.id}}">
-        <view class="pool-stats-cell label-cell">
-          <text class="round-time">{{rd.timeText}}</text>
-          <text>第{{rd.roundNumber}}圈</text>
-        </view>
-        <view wx:for="{{poolStatsMembers}}" wx:for-item="pm" wx:key="id" class="pool-stats-cell">
-          <text>{{rd.memberScoreMap[pm.id] || '-'}}</text>
-        </view>
-      </view>
+      </scroll-view>
     </view>
 
     <!-- 多人模式：记分明细 -->
-    <view wx:if="{{!isPoolMode}}" class="records-card">
-      <view class="records-head">
-        <text>记分明细</text>
-      </view>
-      <view wx:if="{{scoreRecords.length === 0}}" class="empty-records">暂无记分记录</view>
-      <view wx:for="{{scoreRecords}}" wx:key="id" class="record-item">
-        <view class="record-main">
-          <block wx:if="{{item.recordType === 'KICK_REFUND'}}">
-            <text class="name">{{item.fromMemberName}}</text>
-            <text class="action">被踢出，</text>
-            <text class="name">{{item.fromMemberName}}</text>
-            <text class="action">返还</text>
-            <text class="name">{{item.toMemberName}}</text>
-            <text class="points">{{item.points}}</text>
-            <text class="action">分</text>
-          </block>
-          <block wx:elif="{{item.recordType === 'KICK_RECLAIM'}}">
-            <text class="name">{{item.toMemberName}}</text>
-            <text class="action">被踢出，</text>
-            <text class="name">{{item.fromMemberName}}</text>
-            <text class="action">回收</text>
-            <text class="name">{{item.toMemberName}}</text>
-            <text class="points">{{item.points}}</text>
-            <text class="action">分</text>
-          </block>
-          <block wx:else>
-            <text class="name">{{item.fromMemberName}}</text>
-            <text class="action">给了</text>
-            <text class="name">{{item.toMemberName}}</text>
-            <text class="points">{{item.points}}</text>
-            <text class="action">分</text>
-          </block>
-        </view>
-        <text class="time">{{item.displayTime}}</text>
-      </view>
+    <view wx:if="{{!isPoolMode}}" class="records-section">
+      <score-record-list
+        records="{{scoreRecords}}"
+        normalActionText="给了"
+      />
     </view>
   </scroll-view>
 

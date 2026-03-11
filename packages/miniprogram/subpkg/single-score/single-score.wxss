@@ -1,6 +1,6 @@
 .single-score-page {
   min-height: 100vh;
-  background: #fffbf0;
+  background: var(--c-surface-app);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -13,8 +13,8 @@
   z-index: 0;
   opacity: 0.12;
   pointer-events: none;
-  background-image: radial-gradient(#f4a261 1px, transparent 1px),
-    radial-gradient(#e63946 1px, transparent 1px);
+  background-image: radial-gradient(var(--c-brand-gold) 1px, transparent 1px),
+    radial-gradient(var(--c-brand-red) 1px, transparent 1px);
   background-size: 20px 20px;
   background-position: 0 0, 10px 10px;
 }
@@ -38,7 +38,7 @@
   position: absolute;
   inset: 0;
   transform: translateY(6rpx);
-  background: rgba(230, 57, 70, 0.16);
+  background: rgba(199, 58, 45, 0.16);
   border-radius: 24rpx;
   filter: blur(2rpx);
   pointer-events: none;
@@ -47,7 +47,7 @@
 .action-strip {
   position: relative;
   z-index: 2;
-  background: #fff;
+  background: var(--c-surface-card);
   border-radius: 24rpx;
   padding: 24rpx 18rpx;
 }
@@ -57,12 +57,15 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20rpx;
+  gap: 12rpx;
 }
 
 .action-strip-title {
   font-size: 28rpx;
   font-weight: 700;
-  color: #4b4b4b;
+  color: var(--c-text-primary);
+  flex: 1;
+  min-width: 0;
 }
 
 .room-status-chip {
@@ -75,13 +78,13 @@
 }
 
 .room-status-chip.active {
-  background: rgba(47, 139, 69, 0.12);
-  color: #2f8b45;
+  background: var(--c-success-bg);
+  color: var(--c-success-fg);
 }
 
 .room-status-chip.ended {
-  background: rgba(190, 91, 91, 0.12);
-  color: #be5b5b;
+  background: var(--c-danger-bg);
+  color: var(--c-danger-fg);
 }
 
 .action-strip-grid {
@@ -99,8 +102,13 @@
   align-items: center;
   gap: 12rpx;
   font-size: 24rpx;
-  color: #9e9e9e;
+  color: var(--c-text-muted);
   font-weight: 700;
+}
+
+.action-item text {
+  text-align: center;
+  line-height: 1.35;
 }
 
 .action-item.disabled {
@@ -108,19 +116,19 @@
 }
 
 .action-item.disabled text {
-  color: #c2c2c2;
+  color: var(--c-text-muted);
 }
 
 .action-item.disabled .action-icon {
-  border-color: #ececec;
-  background: #f7f7f7;
+  border-color: var(--c-border-soft);
+  background: var(--c-surface-card-alt);
 }
 
 .action-icon {
   width: 72rpx;
   height: 72rpx;
   border-radius: 36rpx;
-  border: 2rpx solid #f6d8bb;
+  border: 2rpx solid var(--c-border-soft);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -134,25 +142,25 @@
 
 .player-head {
   padding: 0 4rpx 12rpx;
-  color: #868686;
+  color: var(--c-text-muted);
   font-size: 24rpx;
   font-weight: 700;
 }
 
 .player-card {
-  background: #fff;
+  background: var(--c-surface-card);
   border-radius: 22rpx;
   padding: 24rpx;
   display: flex;
   align-items: center;
   gap: 22rpx;
-  border: 2rpx solid rgba(230, 57, 70, 0.12);
+  border: 2rpx solid var(--c-border-soft);
   margin-bottom: 16rpx;
 }
 
 .player-card.self {
-  border-color: rgba(244, 162, 97, 0.5);
-  box-shadow: 0 6rpx 18rpx rgba(244, 162, 97, 0.12);
+  border-color: var(--c-brand-gold);
+  box-shadow: 0 6rpx 18rpx rgba(224, 161, 40, 0.18);
 }
 
 .player-card.spectator {
@@ -167,16 +175,16 @@
   width: 96rpx;
   height: 96rpx;
   border-radius: 48rpx;
-  border: 4rpx solid #f4a261;
+  border: 4rpx solid var(--c-brand-gold);
   overflow: hidden;
 }
 
 .avatar-text {
-  background: linear-gradient(135deg, #f4a261, #e63946);
+  background: linear-gradient(135deg, var(--c-brand-gold), var(--c-brand-red));
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--c-text-on-brand);
   font-size: 30rpx;
   font-weight: 700;
 }
@@ -185,13 +193,13 @@
   position: absolute;
   right: -10rpx;
   bottom: -8rpx;
-  background: linear-gradient(90deg, #f4a261, #e63946);
-  color: #fff;
+  background: linear-gradient(90deg, var(--c-brand-gold), var(--c-brand-red));
+  color: var(--c-text-on-brand);
   font-size: 16rpx;
   font-weight: 700;
   padding: 2rpx 14rpx;
   border-radius: 16rpx;
-  border: 2rpx solid #fff;
+  border: 2rpx solid var(--c-surface-card);
   white-space: nowrap;
   z-index: 2;
 }
@@ -200,13 +208,13 @@
   position: absolute;
   left: -6rpx;
   top: -6rpx;
-  background: #e63946;
-  color: #fff;
+  background: var(--c-brand-red);
+  color: var(--c-text-on-brand);
   font-size: 16rpx;
   font-weight: 700;
   padding: 2rpx 10rpx;
   border-radius: 12rpx;
-  border: 2rpx solid #fff;
+  border: 2rpx solid var(--c-surface-card);
   z-index: 2;
 }
 
@@ -227,8 +235,8 @@
 .player-name {
   font-size: 32rpx;
   font-weight: 700;
-  color: #333;
-  max-width: 200rpx;
+  color: var(--c-text-primary);
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -236,8 +244,8 @@
 
 .self-tag {
   font-size: 18rpx;
-  color: #fff;
-  background: #e63946;
+  color: var(--c-text-on-brand);
+  background: var(--c-brand-red);
   border-radius: 14rpx;
   padding: 2rpx 10rpx;
 }
@@ -255,16 +263,16 @@
 }
 
 .score-wrap-inline .score.pos {
-  color: #e63946;
+  color: var(--c-brand-red);
 }
 
 .score-wrap-inline .score.neg {
-  color: #606060;
+  color: var(--c-text-secondary);
 }
 
 .score-wrap-inline .score-label {
   font-size: 22rpx;
-  color: #aaa;
+  color: var(--c-text-muted);
   font-weight: 700;
 }
 
@@ -272,6 +280,7 @@
   display: flex;
   flex-direction: column;
   gap: 10rpx;
+  flex-shrink: 0;
 }
 
 .tiny-btn {
@@ -290,97 +299,27 @@
 }
 
 .lose-btn {
-  background: #fff1df;
-  color: #b56d34;
-  border: 2rpx solid rgba(244, 162, 97, 0.5);
+  background: var(--c-surface-gold);
+  color: var(--c-brand-gold-strong);
+  border: 2rpx solid var(--c-border-strong);
 }
 
 .win-btn {
-  background: #e63946;
-  color: #fff;
+  background: var(--c-brand-red);
+  color: var(--c-text-on-brand);
 }
 
 .kick-btn {
-  background: rgba(230, 57, 70, 0.1);
-  color: #c8424d;
-  border: 2rpx solid rgba(230, 57, 70, 0.12);
+  background: var(--c-danger-bg);
+  color: var(--c-danger-fg);
+  border: 2rpx solid var(--c-border-strong);
 }
 
 .empty-hint {
   padding: 24rpx;
   text-align: center;
-  color: #a7a7a7;
+  color: var(--c-text-muted);
   font-size: 24rpx;
-}
-
-/* ---- 记分记录 ---- */
-
-.records-card {
-  background: #fff;
-  border-radius: 24rpx;
-  border: 2rpx solid rgba(230, 57, 70, 0.1);
-  padding: 24rpx;
-}
-
-.records-head {
-  font-size: 30rpx;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 14rpx;
-}
-
-.empty-records {
-  color: #a7a7a7;
-  font-size: 24rpx;
-  padding: 12rpx 0;
-}
-
-.record-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14rpx 0;
-  border-bottom: 2rpx solid #f6f2eb;
-}
-
-.record-item:last-child {
-  border-bottom: none;
-}
-
-.record-main {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  flex-wrap: wrap;
-}
-
-.record-main .name {
-  font-size: 26rpx;
-  font-weight: 700;
-  color: #333;
-}
-
-.record-main .record-text {
-  font-size: 24rpx;
-  color: #333;
-  line-height: 1.5;
-}
-
-.record-main .action {
-  font-size: 24rpx;
-  color: #8e8e8e;
-}
-
-.record-main .points {
-  font-size: 26rpx;
-  color: #e63946;
-  font-weight: 700;
-}
-
-.record-item .time {
-  font-size: 22rpx;
-  color: #b3b3b3;
-  flex-shrink: 0;
 }
 
 /* ---- 弹窗通用 ---- */
@@ -399,7 +338,7 @@
 
 .modal-box {
   width: 100%;
-  background: #fff;
+  background: var(--c-surface-card);
   border-radius: 26rpx;
   padding: 28rpx;
   box-sizing: border-box;
@@ -409,15 +348,15 @@
   display: block;
   font-size: 34rpx;
   font-weight: 700;
-  color: #333;
+  color: var(--c-text-primary);
   margin-bottom: 20rpx;
 }
 
 .modal-input {
   height: 88rpx;
   border-radius: 18rpx;
-  border: 2rpx solid rgba(230, 57, 70, 0.28);
-  background: #fff8f0;
+  border: 2rpx solid var(--c-border-strong);
+  background: var(--c-surface-warm);
   padding: 0 24rpx;
   font-size: 28rpx;
   margin-bottom: 24rpx;
@@ -434,30 +373,30 @@
   line-height: 84rpx;
   text-align: center;
   border-radius: 18rpx;
-  background: #e63946;
-  color: #fff;
+  background: var(--c-brand-red);
+  color: var(--c-text-on-brand);
   font-size: 28rpx;
   font-weight: 700;
 }
 
 .modal-btn.ghost {
-  background: #f6f2eb;
-  color: #666;
+  background: var(--c-surface-warm);
+  color: var(--c-text-secondary);
 }
 
 .modal-btn.lose-confirm {
-  background: #b56d34;
+  background: var(--c-brand-gold-strong);
 }
 
 .modal-btn.win-confirm {
-  background: #e63946;
+  background: var(--c-brand-red);
 }
 
 /* ---- 记分弹窗 ---- */
 
 .score-dialog {
   width: 100%;
-  background: #fff;
+  background: var(--c-surface-card);
   border-radius: 26rpx;
   padding: 28rpx;
   box-sizing: border-box;
@@ -469,14 +408,14 @@
   display: block;
   font-size: 34rpx;
   font-weight: 700;
-  color: #333;
+  color: var(--c-text-primary);
   margin-bottom: 8rpx;
 }
 
 .score-dialog-tip {
   display: block;
   font-size: 22rpx;
-  color: #999;
+  color: var(--c-text-secondary);
   line-height: 1.5;
   margin-bottom: 20rpx;
 }
@@ -491,14 +430,14 @@
   gap: 16rpx;
   padding: 16rpx;
   border-radius: 18rpx;
-  border: 2rpx solid #f2f2f2;
+  border: 2rpx solid var(--c-border-soft);
   margin-bottom: 12rpx;
   transition: border-color 0.15s;
 }
 
 .target-item.selected {
-  border-color: #e63946;
-  background: rgba(230, 57, 70, 0.04);
+  border-color: var(--c-brand-red);
+  background: var(--c-brand-red-soft);
 }
 
 .target-avatar {
@@ -517,11 +456,11 @@
 .target-avatar-text {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #f4a261, #e63946);
+  background: linear-gradient(135deg, var(--c-brand-gold), var(--c-brand-red));
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--c-text-on-brand);
   font-size: 24rpx;
   font-weight: 700;
 }
@@ -536,23 +475,23 @@
 .target-name {
   font-size: var(--fs-base, 28rpx);
   font-weight: 700;
-  color: #333;
+  color: var(--c-text-primary);
   line-height: 1.2;
 }
 
 .target-score {
   font-size: var(--fs-sm, 24rpx);
-  color: #999;
+  color: var(--c-text-muted);
   line-height: 1.2;
 }
-.target-score.positive { color: #e63946; }
-.target-score.negative { color: #4caf50; }
+.target-score.positive { color: var(--c-brand-red); }
+.target-score.negative { color: var(--c-success-fg); }
 
 .target-check {
   width: 40rpx;
   height: 40rpx;
   border-radius: 20rpx;
-  background: #e63946;
+  background: var(--c-brand-red);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -572,26 +511,26 @@
 .batch-score-label {
   font-size: 26rpx;
   font-weight: 700;
-  color: #666;
+  color: var(--c-text-secondary);
 }
 
 .score-input-label {
   display: block;
   font-size: 26rpx;
   font-weight: 700;
-  color: #666;
+  color: var(--c-text-secondary);
   margin-bottom: 12rpx;
 }
 
 .score-input {
   height: 98rpx;
   border-radius: 18rpx;
-  border: 2rpx solid rgba(230, 57, 70, 0.28);
-  background: #fff8f0;
+  border: 2rpx solid var(--c-border-strong);
+  background: var(--c-surface-warm);
   text-align: center;
   font-size: 52rpx;
   font-weight: 700;
-  color: #e63946;
+  color: var(--c-brand-red);
 }
 
 .target-score-editor {
@@ -606,8 +545,8 @@
   gap: 16rpx;
   padding: 16rpx 18rpx;
   border-radius: 18rpx;
-  background: #fff8f0;
-  border: 2rpx solid rgba(230, 57, 70, 0.12);
+  background: var(--c-surface-warm);
+  border: 2rpx solid var(--c-border-soft);
 }
 
 .target-score-name {
@@ -615,7 +554,7 @@
   min-width: 0;
   font-size: 26rpx;
   font-weight: 700;
-  color: #333;
+  color: var(--c-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -625,12 +564,61 @@
   width: 180rpx;
   height: 72rpx;
   border-radius: 14rpx;
-  background: #fff;
-  border: 2rpx solid rgba(230, 57, 70, 0.2);
+  background: var(--c-surface-card);
+  border: 2rpx solid var(--c-border-strong);
   text-align: center;
   font-size: 30rpx;
   font-weight: 700;
-  color: #e63946;
+  color: var(--c-brand-red);
+}
+
+.compact-layout .content {
+  padding-left: 20rpx;
+  padding-right: 20rpx;
+}
+
+.compact-layout .action-strip {
+  padding-left: 14rpx;
+  padding-right: 14rpx;
+}
+
+.compact-layout .action-strip-head {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.compact-layout .player-card {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 18rpx;
+}
+
+.compact-layout .player-info {
+  flex: 1 1 200rpx;
+}
+
+.compact-layout .score-wrap-inline {
+  flex-wrap: wrap;
+}
+
+.compact-layout .player-actions {
+  width: 100%;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.compact-layout .tiny-btn {
+  flex: 1 1 140rpx;
+  min-width: 140rpx;
+}
+
+.compact-layout .target-score-row {
+  flex-wrap: wrap;
+}
+
+.compact-layout .target-score-input {
+  width: 100%;
 }
 
 /* ---- 图标 ---- */

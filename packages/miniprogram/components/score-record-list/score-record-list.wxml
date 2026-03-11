@@ -1,0 +1,34 @@
+<view class="records-card">
+  <view class="records-head"><text>{{title}}</text></view>
+  <view wx:if="{{records.length === 0}}" class="empty-records">{{emptyText}}</view>
+  <view wx:for="{{records}}" wx:key="id" class="record-item">
+    <view class="record-main">
+      <block wx:if="{{item.recordType === 'KICK_REFUND'}}">
+        <text class="name">{{item.fromMemberName}}</text>
+        <text class="action">被踢出，</text>
+        <text class="name">{{item.fromMemberName}}</text>
+        <text class="action">返还</text>
+        <text class="name">{{item.toMemberName}}</text>
+        <text class="points">{{item.points}}</text>
+        <text class="action">分</text>
+      </block>
+      <block wx:elif="{{item.recordType === 'KICK_RECLAIM'}}">
+        <text class="name">{{item.toMemberName}}</text>
+        <text class="action">被踢出，</text>
+        <text class="name">{{item.fromMemberName}}</text>
+        <text class="action">回收</text>
+        <text class="name">{{item.toMemberName}}</text>
+        <text class="points">{{item.points}}</text>
+        <text class="action">分</text>
+      </block>
+      <block wx:else>
+        <text class="name">{{item.fromMemberName}}</text>
+        <text class="action">{{normalActionText}}</text>
+        <text class="name">{{item.toMemberName}}</text>
+        <text class="points">{{item.points}}</text>
+        <text class="action">分</text>
+      </block>
+    </view>
+    <text class="time">{{item.displayTime}}</text>
+  </view>
+</view>

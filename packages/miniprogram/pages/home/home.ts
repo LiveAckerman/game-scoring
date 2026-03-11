@@ -45,6 +45,7 @@ interface InputDialogOptions {
 }
 
 let inputDialogResolver: ((value: string | null) => void) | null = null;
+const ROOM_HISTORY_CACHE_MS = 30 * 1000;
 const SHARE_PROMO_IMAGE = '/assets/images/share-promo.jpg';
 
 Page({
@@ -80,38 +81,68 @@ Page({
 
   onShow() {
     (this as any)._applyFontSize();
-    this.loadRecentRooms();
+    this.loadRecentRooms({ useCache: true });
   },
 
   onHide() {
     this.resolveInputDialog(null);
   },
 
-  async loadRecentRooms() {
+  async loadRecentRooms(options: { force?: boolean; useCache?: boolean } = {}) {
+    const page = this as any;
     if (!getAccessToken() && !getGuestToken()) {
-      this.setData({ recentRooms: [] });
+      page._recentRoomsLoadedAt = 0;
+      page._recentRoomsHasLoaded = false;
+      page._recentRoomsPromise = null;
+      if (this.data.recentRooms.length > 0) {
+        this.setData({ recentRooms: [] });
+      }
       return;
     }
 
-    this.setData({ historyLoading: true });
-
-    try {
-      const payload = await getRoomHistory({ page: 1, pageSize: 5, status: 'ALL' });
-      const tagMap = buildRoomTagMap(payload.items.map((item) => item.roomCode));
-      const recentRooms = payload.items.map((item) => this.mapRoomToCard(item, tagMap[item.roomCode] || []));
-      this.setData({ recentRooms });
-    } catch (error) {
-      const requestError = error as RequestError;
-      if (requestError.statusCode !== 401) {
-        wx.showToast({
-          title: requestError.message || '加载最近记录失败',
-          icon: 'none',
-        });
-      }
-      this.setData({ recentRooms: [] });
-    } finally {
-      this.setData({ historyLoading: false });
+    const canUseCache = options.useCache
+      && page._recentRoomsHasLoaded
+      && Date.now() - Number(page._recentRoomsLoadedAt || 0) < ROOM_HISTORY_CACHE_MS;
+    if (!options.force && canUseCache) {
+      return;
     }
+
+    if (page._recentRoomsPromise) {
+      return page._recentRoomsPromise;
+    }
+
+    if (!this.data.historyLoading) {
+      this.setData({ historyLoading: true });
+    }
+
+    page._recentRoomsPromise = (async () => {
+      try {
+        const payload = await getRoomHistory({ page: 1, pageSize: 5, status: 'ALL' });
+        const tagMap = buildRoomTagMap(payload.items.map((item) => item.roomCode));
+        const recentRooms = payload.items.map((item) => this.mapRoomToCard(item, tagMap[item.roomCode] || []));
+        this.setData({ recentRooms });
+        page._recentRoomsHasLoaded = true;
+        page._recentRoomsLoadedAt = Date.now();
+      } catch (error) {
+        const requestError = error as RequestError;
+        if (requestError.statusCode !== 401) {
+          wx.showToast({
+            title: requestError.message || '加载最近记录失败',
+            icon: 'none',
+          });
+        }
+        page._recentRoomsHasLoaded = false;
+        page._recentRoomsLoadedAt = 0;
+        this.setData({ recentRooms: [] });
+      } finally {
+        page._recentRoomsPromise = null;
+        if (this.data.historyLoading) {
+          this.setData({ historyLoading: false });
+        }
+      }
+    })();
+
+    return page._recentRoomsPromise;
   },
 
   async startMultiMode() {
@@ -546,7 +577,7 @@ Page({
     try {
       const payload = await getRoomHistory({
         page: 1,
-        pageSize: 20,
+        pageSize: 3,
         status: 'IN_PROGRESS',
         roomType,
       });
@@ -555,7 +586,7 @@ Page({
         this.setData({
           ongoingDialogVisible: true,
           ongoingRooms: payload.items.map((item) => this.mapOngoingRoomCard(item)),
-          ongoingReachedLimit: payload.items.length >= 3,
+          ongoingReachedLimit: payload.pagination.total >= 3,
           pendingGuestNickname: guestNickname || '',
           pendingRoomType: roomType,
         });

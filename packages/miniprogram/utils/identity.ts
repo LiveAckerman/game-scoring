@@ -16,15 +16,52 @@ const GUEST_TOKEN_KEY = 'guestToken';
 const GUEST_PROFILE_KEY = 'guestProfile';
 const DEVICE_ID_KEY = 'deviceId';
 
+const getGlobalData = (): IAppOption['globalData'] | null => {
+  try {
+    return getApp<IAppOption>().globalData;
+  } catch (_error) {
+    return null;
+  }
+};
+
 export const getAccessToken = (): string => {
-  return wx.getStorageSync('token') || '';
+  const globalData = getGlobalData();
+  const cached = String(globalData?.token || '').trim();
+  if (cached) {
+    return cached;
+  }
+
+  const stored = String(wx.getStorageSync('token') || '').trim();
+  if (stored && globalData) {
+    globalData.token = stored;
+  }
+  return stored;
 };
 
 export const getGuestToken = (): string => {
-  return wx.getStorageSync(GUEST_TOKEN_KEY) || '';
+  const globalData = getGlobalData();
+  const cached = String(globalData?.guestToken || '').trim();
+  if (cached) {
+    return cached;
+  }
+
+  const stored = String(wx.getStorageSync(GUEST_TOKEN_KEY) || '').trim();
+  if (stored && globalData) {
+    globalData.guestToken = stored;
+  }
+  return stored;
 };
 
 export const getGuestProfile = (): GuestProfile | null => {
+  const globalData = getGlobalData();
+  if (globalData?.guestProfile?.id && globalData.guestProfile.nickname) {
+    return {
+      id: globalData.guestProfile.id,
+      nickname: globalData.guestProfile.nickname,
+      avatarInitials: globalData.guestProfile.avatarInitials || '游客',
+    };
+  }
+
   const profile = wx.getStorageSync(GUEST_PROFILE_KEY);
   if (!profile || typeof profile !== 'object') {
     return null;
@@ -35,21 +72,39 @@ export const getGuestProfile = (): GuestProfile | null => {
     return null;
   }
 
-  return {
+  const guestProfile = {
     id,
     nickname,
     avatarInitials: avatarInitials || '游客',
   };
+
+  if (globalData) {
+    globalData.guestProfile = guestProfile;
+  }
+
+  return guestProfile;
 };
 
 export const getDeviceId = (): string => {
-  const cached = String(wx.getStorageSync(DEVICE_ID_KEY) || '').trim();
+  const globalData = getGlobalData();
+  const cached = String(globalData?.deviceId || '').trim();
   if (cached) {
     return cached;
   }
 
+  const stored = String(wx.getStorageSync(DEVICE_ID_KEY) || '').trim();
+  if (stored) {
+    if (globalData) {
+      globalData.deviceId = stored;
+    }
+    return stored;
+  }
+
   const nextId = `dev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
   wx.setStorageSync(DEVICE_ID_KEY, nextId);
+  if (globalData) {
+    globalData.deviceId = nextId;
+  }
   return nextId;
 };
 
@@ -62,16 +117,31 @@ export const saveActorIdentity = (actor?: ActorPayload): void => {
     wx.setStorageSync(GUEST_TOKEN_KEY, actor.guestToken);
   }
 
-  wx.setStorageSync(GUEST_PROFILE_KEY, {
+  const guestProfile: GuestProfile = {
     id: actor.id,
     nickname: actor.nickname,
     avatarInitials: actor.avatarInitials,
-  } as GuestProfile);
+  };
+
+  wx.setStorageSync(GUEST_PROFILE_KEY, guestProfile);
+
+  const globalData = getGlobalData();
+  if (globalData) {
+    if (actor.guestToken) {
+      globalData.guestToken = actor.guestToken;
+    }
+    globalData.guestProfile = guestProfile;
+  }
 };
 
 export const clearGuestIdentity = (): void => {
   wx.removeStorageSync(GUEST_TOKEN_KEY);
   wx.removeStorageSync(GUEST_PROFILE_KEY);
+  const globalData = getGlobalData();
+  if (globalData) {
+    globalData.guestToken = '';
+    globalData.guestProfile = null;
+  }
 };
 
 export const promptGuestNickname = (

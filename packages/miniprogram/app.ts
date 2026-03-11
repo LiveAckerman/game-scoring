@@ -1,19 +1,25 @@
+const DEFAULT_FONT_SIZE_LEVEL: 'small' | 'medium' | 'large' = 'medium';
+
 // app.ts
 App<IAppOption>({
   globalData: {
     userInfo: null,
     guestProfile: null,
     token: '',
-    fontSizeLevel: 'medium' as 'small' | 'medium' | 'large',
+    guestToken: '',
+    deviceId: '',
+    fontSizeLevel: DEFAULT_FONT_SIZE_LEVEL,
+    statusBarHeight: 20,
   },
   onLaunch() {
-    const logs: number[] = wx.getStorageSync('logs') || [];
-    logs.unshift(Date.now());
-    wx.setStorageSync('logs', logs);
-
-    const token = wx.getStorageSync('token');
+    const token = String(wx.getStorageSync('token') || '').trim();
     if (token) {
       this.globalData.token = token;
+    }
+
+    const guestToken = String(wx.getStorageSync('guestToken') || '').trim();
+    if (guestToken) {
+      this.globalData.guestToken = guestToken;
     }
 
     const userInfo = wx.getStorageSync('userInfo');
@@ -26,7 +32,12 @@ App<IAppOption>({
       this.globalData.guestProfile = guestProfile as AppGuestProfile;
     }
 
-    const fontSizeLevel = wx.getStorageSync('fontSizeLevel') || 'medium';
+    const deviceId = String(wx.getStorageSync('deviceId') || '').trim();
+    if (deviceId) {
+      this.globalData.deviceId = deviceId;
+    }
+
+    const fontSizeLevel = wx.getStorageSync('fontSizeLevel') || DEFAULT_FONT_SIZE_LEVEL;
     this.globalData.fontSizeLevel = fontSizeLevel;
 
     this.registerUpdateManager();

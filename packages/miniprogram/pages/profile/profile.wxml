@@ -24,7 +24,7 @@
       <view class="card-top">
         <view class="user-left">
           <view class="avatar-box">
-            <image class="avatar" src="{{userInfo.avatar || '../../assets/stitch/avatars/avatar-main.png'}}" mode="aspectFill" />
+            <image class="avatar" src="{{userInfo.avatar || '../../assets/stitch/avatars/avatar-main.jpg'}}" mode="aspectFill" />
           </view>
           <view>
             <view class="name-row">

@@ -22,7 +22,10 @@ interface IAppOption {
     userInfo?: AppUserInfo | null;
     guestProfile?: AppGuestProfile | null;
     token?: string;
+    guestToken?: string;
+    deviceId?: string;
     fontSizeLevel?: 'small' | 'medium' | 'large';
+    statusBarHeight?: number;
   };
   userInfoReadyCallback?: WechatMiniprogram.UserInfoReadyCallback;
   registerUpdateManager?: () => void;

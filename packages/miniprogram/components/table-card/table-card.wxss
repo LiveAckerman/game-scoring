@@ -1,8 +1,9 @@
 .table-card {
-  background: #fff;
+  background: linear-gradient(180deg, var(--c-surface-card), var(--c-surface-card-alt));
   border-radius: 24rpx;
   padding: 24rpx;
-  border: 2rpx solid #f0f0f0;
+  border: 2rpx solid var(--c-border-soft);
+  box-shadow: 0 10rpx 22rpx rgba(183,55,39,.08);
   margin-bottom: 16rpx;
 }
 .table-card.faded { opacity: .92; }
@@ -27,7 +28,7 @@
 .room-code {
   font-size: var(--fs-base, 28rpx);
   font-weight: 700;
-  color: #5b5b5b;
+  color: var(--c-text-primary);
 }
 .type-tag {
   font-size: 18rpx;
@@ -37,20 +38,20 @@
   line-height: 1.5;
 }
 .type-multi {
-  background: #eef1ff;
-  color: #4361ee;
+  background: var(--c-brand-red-soft);
+  color: var(--c-brand-red-strong);
 }
 .type-single {
-  background: #fff4e6;
-  color: #e67e22;
+  background: var(--c-brand-gold-soft);
+  color: var(--c-brand-gold-strong);
 }
 .type-pool {
-  background: #f3e8ff;
-  color: #7c3aed;
+  background: var(--c-surface-warm);
+  color: var(--c-text-secondary);
 }
 .score-count {
   font-size: var(--fs-xs, 20rpx);
-  color: #aaa;
+  color: var(--c-text-muted);
 }
 .status-badge {
   font-size: var(--fs-xs, 20rpx);
@@ -58,12 +59,12 @@
   border-radius: 10rpx;
 }
 .status-badge.active {
-  background: #e9f8ed;
-  color: #2f8b45;
+  background: var(--c-success-bg);
+  color: var(--c-success-fg);
 }
 .status-badge.ended {
-  background: #f8ecec;
-  color: #b05a5a;
+  background: var(--c-danger-bg);
+  color: var(--c-danger-fg);
 }
 
 /* ---- members ---- */
@@ -86,11 +87,11 @@
   width: 88rpx;
   height: 88rpx;
   border-radius: 44rpx;
-  border: 3rpx solid #d93025;
+  border: 3rpx solid var(--c-brand-red);
 }
 .avatar-text {
-  background: linear-gradient(135deg, #f4a261, #e63946);
-  color: #fff;
+  background: linear-gradient(135deg, var(--c-brand-gold), var(--c-brand-red));
+  color: var(--c-text-on-brand);
   border-color: transparent;
   display: flex;
   align-items: center;
@@ -103,14 +104,14 @@
   top: -8rpx;
   right: -10rpx;
   font-size: 16rpx;
-  color: #fff;
-  background: #d93025;
+  color: var(--c-text-on-brand);
+  background: var(--c-brand-red);
   border-radius: 16rpx;
   padding: 2rpx 8rpx;
 }
 .member-name {
   font-size: var(--fs-xs, 20rpx);
-  color: #8a8a8a;
+  color: var(--c-text-secondary);
   max-width: 120rpx;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -122,13 +123,13 @@
   line-height: 1;
   display: block;
 }
-.member-score.pos { color: #d93025; }
-.member-score.neg { color: #333; }
-.member-score.zero { color: #909090; }
+.member-score.pos { color: var(--c-brand-red); }
+.member-score.neg { color: var(--c-text-primary); }
+.member-score.zero { color: var(--c-text-muted); }
 
 /* ---- footer ---- */
 .card-foot {
-  border-top: 2rpx solid #f3f3f3;
+  border-top: 2rpx solid var(--c-border-soft);
   padding-top: 14rpx;
   display: flex;
   justify-content: space-between;
@@ -136,16 +137,16 @@
 }
 .foot-time {
   font-size: var(--fs-xs, 20rpx);
-  color: #a0a0a0;
+  color: var(--c-text-muted);
 }
 .foot-my-score {
   font-size: var(--fs-sm, 24rpx);
-  color: #d93025;
+  color: var(--c-brand-red);
   font-weight: 700;
 }
 
 .tag-row {
-  border-top: 2rpx dashed #f3f3f3;
+  border-top: 2rpx dashed var(--c-border-soft);
   margin-top: 14rpx;
   padding-top: 16rpx;
   display: flex;
@@ -165,18 +166,18 @@
   min-height: 44rpx;
   padding: 0 16rpx;
   border-radius: 22rpx;
-  border: 2rpx solid #e63946;
+  border: 2rpx solid var(--c-brand-red);
   display: inline-flex;
   align-items: center;
   box-sizing: border-box;
   font-size: var(--fs-xs, 20rpx);
   font-weight: 700;
-  background: #fff;
+  background: var(--c-surface-card);
 }
 
 .tag-empty {
   font-size: var(--fs-xs, 20rpx);
-  color: #b4b4b4;
+  color: var(--c-text-muted);
   line-height: 44rpx;
 }
 
@@ -185,8 +186,8 @@
   line-height: 48rpx;
   padding: 0 18rpx;
   border-radius: 24rpx;
-  background: #fff2e1;
-  color: #b56d34;
+  background: var(--c-brand-gold-soft);
+  color: var(--c-brand-gold-strong);
   font-size: var(--fs-xs, 20rpx);
   font-weight: 700;
   flex-shrink: 0;

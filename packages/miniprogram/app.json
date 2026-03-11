@@ -53,11 +53,5 @@
     ]
   },
   "style": "v2",
-  "usingComponents": {
-    "common-top-bar": "/components/common-top-bar/common-top-bar",
-    "common-dialog": "/components/common-dialog/common-dialog",
-    "invite-card": "/components/invite-card/invite-card",
-    "table-card": "/components/table-card/table-card"
-  },
   "sitemapLocation": "sitemap.json"
 }

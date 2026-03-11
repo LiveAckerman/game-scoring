@@ -26,6 +26,23 @@ const LEVELS: Record<string, FontVarSet> = {
   large:  { xs: 24, sm: 28, base: 34, md: 36, lg: 40, xl: 46 },
 };
 
+const resolveFontSizeLevel = (): string => {
+  try {
+    const app = getApp<IAppOption>();
+    const cached = app.globalData.fontSizeLevel;
+    if (cached) {
+      return cached;
+    }
+
+    const stored = String(wx.getStorageSync('fontSizeLevel') || 'medium');
+    app.globalData.fontSizeLevel = stored === 'small' || stored === 'large' ? stored : 'medium';
+    return app.globalData.fontSizeLevel;
+  } catch (_error) {
+    const stored = String(wx.getStorageSync('fontSizeLevel') || 'medium');
+    return stored === 'small' || stored === 'large' ? stored : 'medium';
+  }
+};
+
 function buildStyle(level: string): string {
   const v = LEVELS[level] || LEVELS.medium;
   return [
@@ -45,8 +62,11 @@ export const fontSizeBehavior = Behavior({
   },
   methods: {
     _applyFontSize() {
-      const level = wx.getStorageSync('fontSizeLevel') || 'medium';
-      this.setData({ pageFontStyle: buildStyle(level) });
+      const nextStyle = buildStyle(resolveFontSizeLevel());
+      if (this.data.pageFontStyle === nextStyle) {
+        return;
+      }
+      this.setData({ pageFontStyle: nextStyle });
     },
   },
 });

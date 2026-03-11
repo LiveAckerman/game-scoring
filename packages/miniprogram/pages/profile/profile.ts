@@ -35,12 +35,12 @@ Page({
 
   onShow() {
     (this as any)._applyFontSize();
-    this.initVersionSummary();
     this.fetchUserInfo();
   },
 
   initFontLevel() {
-    const level = wx.getStorageSync('fontSizeLevel') || 'medium';
+    const app = getApp<IAppOption>();
+    const level = app.globalData.fontSizeLevel || 'medium';
     this.setData({ fontLabel: FONT_LABELS[level] || '中（默认）' });
   },
 
@@ -288,6 +288,7 @@ Page({
         app.globalData.token = '';
         app.globalData.userInfo = null;
         app.globalData.guestProfile = null;
+        app.globalData.guestToken = '';
 
         wx.showToast({ title: '已退出', icon: 'success' });
         this.fetchUserInfo();

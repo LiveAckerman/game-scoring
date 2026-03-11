@@ -1,3 +1,4 @@
+import { getAccessToken } from './identity';
 import { API_BASE_URL } from './request';
 
 interface UploadOptions {
@@ -10,7 +11,7 @@ interface UploadOptions {
 export const uploadFile = (
   options: UploadOptions,
 ): Promise<WechatMiniprogram.UploadFileSuccessCallbackResult> => {
-  const token = wx.getStorageSync('token');
+  const token = getAccessToken();
   const header: WechatMiniprogram.IAnyObject = {};
   if (token) {
     header.Authorization = `Bearer ${token}`;

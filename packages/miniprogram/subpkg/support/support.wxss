@@ -1,8 +1,8 @@
 .support-page {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top right, rgba(255, 189, 89, 0.18), transparent 26%),
-    linear-gradient(180deg, #fffaf1 0%, #fff3f0 100%);
+    radial-gradient(circle at top right, rgba(224, 161, 40, 0.18), transparent 26%),
+    linear-gradient(180deg, var(--c-surface-app) 0%, var(--c-surface-warm) 100%);
   display: flex;
   flex-direction: column;
 }
@@ -16,10 +16,10 @@
 .hero-card,
 .faq-card,
 .tips-card {
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 253, 249, 0.96);
   border-radius: 28rpx;
-  box-shadow: 0 14rpx 36rpx rgba(217, 48, 37, 0.08);
-  border: 2rpx solid rgba(217, 48, 37, 0.08);
+  box-shadow: 0 14rpx 36rpx rgba(183, 55, 39, 0.08);
+  border: 2rpx solid var(--c-border-soft);
 }
 
 .hero-card {
@@ -37,7 +37,7 @@
   width: 180rpx;
   height: 180rpx;
   border-radius: 50%;
-  background: rgba(255, 186, 73, 0.18);
+  background: rgba(224, 161, 40, 0.18);
 }
 
 .hero-badge {
@@ -48,8 +48,8 @@
   height: 46rpx;
   padding: 0 18rpx;
   border-radius: 23rpx;
-  background: #fff1d8;
-  color: #b56d34;
+  background: var(--c-surface-gold);
+  color: var(--c-brand-gold-strong);
   font-size: var(--fs-xs, 20rpx);
   font-weight: 700;
   margin-bottom: 16rpx;
@@ -61,7 +61,7 @@
   font-size: var(--fs-xl, 38rpx);
   line-height: 1.35;
   font-weight: 700;
-  color: #2f2f2f;
+  color: var(--c-text-primary);
   margin-bottom: 12rpx;
   word-break: break-word;
 }
@@ -71,7 +71,7 @@
   width: 80%;
   font-size: var(--fs-sm, 24rpx);
   line-height: 1.6;
-  color: #7b7b7b;
+  color: var(--c-text-secondary);
   word-break: break-word;
 }
 
@@ -85,7 +85,7 @@
   display: block;
   font-size: var(--fs-md, 30rpx);
   font-weight: 700;
-  color: #333;
+  color: var(--c-text-primary);
   margin-bottom: 18rpx;
 }
 
@@ -93,8 +93,8 @@
   border-radius: 22rpx;
   overflow: hidden;
   margin-bottom: 14rpx;
-  border: 2rpx solid #f3e6de;
-  background: #fff;
+  border: 2rpx solid var(--c-border-soft);
+  background: var(--c-surface-card);
 }
 
 .faq-panel:last-child {
@@ -102,7 +102,7 @@
 }
 
 .faq-index {
-  color: #d93025;
+  color: var(--c-brand-red);
   font-size: var(--fs-base, 28rpx);
   font-weight: 700;
   flex-shrink: 0;
@@ -114,7 +114,7 @@
   justify-content: space-between;
   gap: 16rpx;
   padding: 24rpx 22rpx;
-  background: linear-gradient(180deg, #ffffff 0%, #fff8f5 100%);
+  background: linear-gradient(180deg, var(--c-surface-card) 0%, var(--c-surface-red) 100%);
 }
 
 .faq-head-main {
@@ -127,7 +127,7 @@
 
 .faq-title {
   font-size: var(--fs-base, 28rpx);
-  color: #333;
+  color: var(--c-text-primary);
   font-weight: 700;
   line-height: 1.5;
   word-break: break-word;
@@ -136,8 +136,8 @@
 .faq-arrow {
   width: 18rpx;
   height: 18rpx;
-  border-right: 4rpx solid #b8aba3;
-  border-bottom: 4rpx solid #b8aba3;
+  border-right: 4rpx solid var(--c-text-muted);
+  border-bottom: 4rpx solid var(--c-text-muted);
   transform: rotate(45deg);
   transition: transform 0.2s ease;
   flex-shrink: 0;
@@ -150,26 +150,26 @@
 }
 
 .faq-body {
-  background: #f4eee8;
+  background: var(--c-surface-warm);
   padding: 26rpx 30rpx;
 }
 
 .faq-desc,
 .tip-line {
   font-size: var(--fs-sm, 24rpx);
-  color: #7a7a7a;
+  color: var(--c-text-secondary);
   line-height: 1.6;
 }
 
 .faq-desc {
-  color: #66615d;
+  color: var(--c-text-secondary);
   word-break: break-word;
 }
 
 .faq-empty {
   padding: 20rpx 0;
   font-size: var(--fs-sm, 24rpx);
-  color: #9b8f87;
+  color: var(--c-text-muted);
   text-align: center;
 }
 
@@ -179,18 +179,18 @@
   right: 0;
   bottom: 0;
   padding: 20rpx 24rpx calc(env(safe-area-inset-bottom) + 24rpx);
-  background: rgba(255, 250, 244, 0.96);
+  background: rgba(255, 246, 238, 0.96);
   backdrop-filter: blur(12rpx);
   box-sizing: border-box;
-  border-top: 2rpx solid rgba(217, 48, 37, 0.06);
+  border-top: 2rpx solid var(--c-border-soft);
 }
 
 .contact-btn {
   width: 100%;
   height: 92rpx;
   border-radius: 24rpx;
-  background: linear-gradient(135deg, #d93025, #ff7a00);
-  color: #fff;
+  background: linear-gradient(135deg, var(--c-brand-red), var(--c-brand-gold));
+  color: var(--c-text-on-brand);
   font-size: var(--fs-base, 28rpx);
   font-weight: 700;
   display: flex;
@@ -209,6 +209,6 @@
   display: block;
   text-align: center;
   font-size: var(--fs-xs, 20rpx);
-  color: #9a9a9a;
+  color: var(--c-text-muted);
   line-height: 1.5;
 }

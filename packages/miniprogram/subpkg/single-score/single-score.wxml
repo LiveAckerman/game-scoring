@@ -1,5 +1,5 @@
 <page-meta page-style="{{pageFontStyle}}" />
-<view class="single-score-page">
+<view class="single-score-page {{isCompactLayout ? 'compact-layout' : ''}}">
   <view class="bg-confetti"></view>
 
   <common-top-bar title="{{topBarTitle}}" bind:back="goBack" />
@@ -98,40 +98,10 @@
       </view>
     </view>
 
-    <view class="records-card">
-      <view class="records-head"><text>记分明细</text></view>
-      <view wx:if="{{scoreRecords.length === 0}}" class="empty-records">暂无记分记录</view>
-      <view wx:for="{{scoreRecords}}" wx:key="id" class="record-item">
-        <view class="record-main">
-          <block wx:if="{{item.recordType === 'KICK_REFUND'}}">
-            <text class="name">{{item.fromMemberName}}</text>
-            <text class="action">被踢出，</text>
-            <text class="name">{{item.fromMemberName}}</text>
-            <text class="action">返还</text>
-            <text class="name">{{item.toMemberName}}</text>
-            <text class="points">{{item.points}}</text>
-            <text class="action">分</text>
-          </block>
-          <block wx:elif="{{item.recordType === 'KICK_RECLAIM'}}">
-            <text class="name">{{item.toMemberName}}</text>
-            <text class="action">被踢出，</text>
-            <text class="name">{{item.fromMemberName}}</text>
-            <text class="action">回收</text>
-            <text class="name">{{item.toMemberName}}</text>
-            <text class="points">{{item.points}}</text>
-            <text class="action">分</text>
-          </block>
-          <block wx:else>
-            <text class="name">{{item.fromMemberName}}</text>
-            <text class="action">输给</text>
-            <text class="name">{{item.toMemberName}}</text>
-            <text class="points">{{item.points}}</text>
-            <text class="action">分</text>
-          </block>
-        </view>
-        <text class="time">{{item.displayTime}}</text>
-      </view>
-    </view>
+    <score-record-list
+      records="{{scoreRecords}}"
+      normalActionText="输给"
+    />
   </scroll-view>
 
   <!-- 添加玩家弹窗 -->

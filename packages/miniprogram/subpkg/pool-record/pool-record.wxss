@@ -1,6 +1,6 @@
 .pool-record-page {
   min-height: 100vh;
-  background: #fafafa;
+  background: var(--c-surface-app);
   display: flex;
   flex-direction: column;
 }
@@ -20,18 +20,18 @@
 }
 .round-title {
   font-size: var(--fs-base, 28rpx);
-  color: #333;
+  color: var(--c-text-primary);
   font-weight: 600;
 }
 .round-balance {
   font-size: 48rpx;
   font-weight: 700;
-  color: #e63946;
+  color: var(--c-brand-red);
   margin-left: 8rpx;
 }
 .round-unit {
   font-size: var(--fs-sm, 24rpx);
-  color: #e63946;
+  color: var(--c-brand-red);
   margin-left: 4rpx;
 }
 .round-info-actions {
@@ -48,23 +48,23 @@
   border-radius: 16rpx;
   font-size: var(--fs-sm, 24rpx);
   font-weight: 700;
-  background: #fff;
+  background: var(--c-surface-card);
   white-space: nowrap;
 }
 .round-action-btn.table-take {
-  border: 2rpx solid #4caf50;
-  color: #4caf50;
+  border: 2rpx solid var(--c-success-fg);
+  color: var(--c-success-fg);
 }
 .round-action-btn.end-round {
-  border: 2rpx solid #e63946;
-  color: #e63946;
+  border: 2rpx solid var(--c-brand-red);
+  color: var(--c-brand-red);
 }
 
 /* ───────── 圈结束提示 ───────── */
 .round-ended-tip {
   text-align: center;
   padding: 24rpx;
-  color: #888;
+  color: var(--c-text-muted);
   font-size: var(--fs-base, 28rpx);
 }
 .back-btn {
@@ -73,8 +73,8 @@
   height: 72rpx;
   line-height: 72rpx;
   padding: 0 48rpx;
-  background: #4caf50;
-  color: #fff;
+  background: var(--c-success-fg);
+  color: var(--c-text-on-brand);
   border-radius: 36rpx;
   font-size: var(--fs-base, 28rpx);
   font-weight: 700;
@@ -86,11 +86,11 @@
   padding: 0 24rpx;
 }
 .record-card {
-  background: #fff;
+  background: var(--c-surface-card);
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
   margin-bottom: 16rpx;
-  border: 1rpx solid #f0f0f0;
+  border: 1rpx solid var(--c-border-soft);
 }
 .record-header {
   display: flex;
@@ -101,11 +101,11 @@
 .record-seq {
   font-size: var(--fs-base, 28rpx);
   font-weight: 700;
-  color: #333;
+  color: var(--c-text-primary);
 }
 .record-time {
   font-size: var(--fs-xs, 20rpx);
-  color: #aaa;
+  color: var(--c-text-muted);
 }
 .record-body {
   display: flex;
@@ -122,12 +122,12 @@
   width: 72rpx;
   height: 72rpx;
   border-radius: 36rpx;
-  border: 2rpx solid #eee;
+  border: 2rpx solid var(--c-border-soft);
   flex-shrink: 0;
 }
 .record-avatar-text {
-  background: linear-gradient(135deg, #f4a261, #e63946);
-  color: #fff;
+  background: linear-gradient(135deg, var(--c-brand-gold), var(--c-brand-red));
+  color: var(--c-text-on-brand);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -136,18 +136,18 @@
 }
 .table-icon-sm {
   border-radius: 12rpx !important;
-  background: #4caf50 !important;
-  border-color: #4caf50 !important;
+  background: var(--c-success-fg) !important;
+  border-color: var(--c-success-fg) !important;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--c-text-on-brand);
   font-size: var(--fs-base, 28rpx);
   font-weight: 700;
 }
 .record-nickname {
   font-size: var(--fs-sm, 24rpx);
-  color: #666;
+  color: var(--c-text-secondary);
   max-width: 120rpx;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -156,14 +156,14 @@
 .record-type {
   font-size: var(--fs-base, 28rpx);
   font-weight: 700;
-  color: #333;
+  color: var(--c-text-primary);
   margin: 0 16rpx;
 }
 .record-type.take {
-  color: #e63946;
+  color: var(--c-brand-red);
 }
 .record-type.give {
-  color: #333;
+  color: var(--c-text-primary);
 }
 .record-points-wrap {
   display: flex;
@@ -173,22 +173,22 @@
 .record-points {
   font-size: 42rpx;
   font-weight: 700;
-  color: #333;
+  color: var(--c-text-primary);
 }
 .record-points-unit {
   font-size: var(--fs-sm, 24rpx);
-  color: #666;
+  color: var(--c-text-secondary);
 }
 .empty-records {
   text-align: center;
   padding: 60rpx 0;
-  color: #bbb;
+  color: var(--c-text-muted);
   font-size: var(--fs-base, 28rpx);
 }
 .records-end {
   text-align: center;
   padding: 24rpx 0;
-  color: #ccc;
+  color: var(--c-text-muted);
   font-size: var(--fs-xs, 20rpx);
 }
 
@@ -198,8 +198,8 @@
   gap: 16rpx;
   padding: 16rpx 24rpx;
   padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
-  background: #fff;
-  border-top: 1rpx solid #eee;
+  background: var(--c-surface-card);
+  border-top: 1rpx solid var(--c-border-soft);
 }
 .bottom-btn {
   flex: 1;
@@ -214,13 +214,13 @@
   font-weight: 700;
 }
 .take-btn {
-  border: 2rpx solid #e63946;
-  color: #e63946;
-  background: #fff;
+  border: 2rpx solid var(--c-brand-red);
+  color: var(--c-brand-red);
+  background: var(--c-surface-card);
 }
 .give-btn {
-  background: #4caf50;
-  color: #fff;
+  background: var(--c-success-fg);
+  color: var(--c-text-on-brand);
 }
 
 /* ───────── 弹窗 ───────── */
@@ -237,7 +237,7 @@
 }
 .dialog-modal {
   width: 100%;
-  background: #fff;
+  background: var(--c-surface-card);
   border-radius: 26rpx;
   padding: 28rpx;
   box-sizing: border-box;
@@ -246,24 +246,24 @@
   display: block;
   font-size: var(--fs-lg, 34rpx);
   font-weight: 700;
-  color: #333;
+  color: var(--c-text-primary);
 }
 .dialog-desc {
   display: block;
   margin-top: 8rpx;
   margin-bottom: 18rpx;
-  color: #9a9a9a;
+  color: var(--c-text-secondary);
   font-size: var(--fs-sm, 24rpx);
 }
 .dialog-input {
   height: 98rpx;
   border-radius: 18rpx;
-  border: 2rpx solid rgba(76, 175, 80, 0.3);
-  background: #f9fff9;
+  border: 2rpx solid var(--c-border-strong);
+  background: var(--c-surface-warm);
   text-align: center;
   font-size: 52rpx;
   font-weight: 700;
-  color: #4caf50;
+  color: var(--c-success-fg);
   margin-bottom: 18rpx;
 }
 .dialog-actions {
@@ -275,14 +275,14 @@
   height: 84rpx;
   border-radius: 18rpx;
   margin: 0;
-  background: #4caf50;
-  color: #fff;
+  background: var(--c-success-fg);
+  color: var(--c-text-on-brand);
   font-size: var(--fs-base, 28rpx);
   font-weight: 700;
 }
 .dialog-btn.ghost {
-  background: #f6f2eb;
-  color: #666;
+  background: var(--c-surface-warm);
+  color: var(--c-text-secondary);
 }
 .dialog-btn::after {
   border: none;

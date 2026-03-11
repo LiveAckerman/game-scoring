@@ -1,3 +1,4 @@
+import { getAccessToken } from './identity';
 import { request } from './request';
 
 interface LoginResult {
@@ -48,5 +49,5 @@ export const login = () => {
 };
 
 export const checkLogin = () => {
-  return !!wx.getStorageSync('token');
+  return !!getAccessToken();
 };

@@ -1,6 +1,6 @@
 .leaderboard-page {
   min-height: 100vh;
-  background: #fff5f5;
+  background: var(--c-surface-app);
   display: flex;
   flex-direction: column;
 }
@@ -13,12 +13,12 @@
 
 .tab-bar {
   display: flex;
-  background: #fff;
+  background: var(--c-surface-card);
   border-radius: 24rpx;
   padding: 8rpx;
   margin: 0 24rpx 24rpx;
-  border: 2rpx solid rgba(217, 48, 37, 0.1);
-  box-shadow: 0 8rpx 24rpx rgba(217, 48, 37, 0.06);
+  border: 2rpx solid var(--c-border-soft);
+  box-shadow: 0 8rpx 24rpx rgba(183, 55, 39, 0.06);
 }
 
 .tab-item {
@@ -28,14 +28,14 @@
   text-align: center;
   font-size: var(--fs-base, 28rpx);
   font-weight: 700;
-  color: #666;
+  color: var(--c-text-secondary);
   border-radius: 18rpx;
   transition: all 0.2s ease;
 }
 
 .tab-item.active {
-  background: #d93025;
-  color: #fff;
+  background: var(--c-brand-red);
+  color: var(--c-text-on-brand);
 }
 
 .loading-wrap {
@@ -50,8 +50,8 @@
 .loading-spinner {
   width: 56rpx;
   height: 56rpx;
-  border: 4rpx solid rgba(217, 48, 37, 0.2);
-  border-top-color: #d93025;
+  border: 4rpx solid rgba(199, 58, 45, 0.2);
+  border-top-color: var(--c-brand-red);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -62,7 +62,7 @@
 
 .loading-text {
   font-size: var(--fs-base, 28rpx);
-  color: #999;
+  color: var(--c-text-muted);
 }
 
 .empty-state {
@@ -89,12 +89,12 @@
 .empty-title {
   font-size: var(--fs-lg, 34rpx);
   font-weight: 700;
-  color: #333;
+  color: var(--c-text-primary);
 }
 
 .empty-desc {
   font-size: var(--fs-base, 28rpx);
-  color: #999;
+  color: var(--c-text-muted);
 }
 
 .rank-list {
@@ -104,14 +104,14 @@
 }
 
 .rank-card {
-  background: #fff;
+  background: var(--c-surface-card);
   border-radius: 22rpx;
   padding: 24rpx;
   display: flex;
   align-items: center;
   gap: 24rpx;
-  border: 2rpx solid rgba(217, 48, 37, 0.1);
-  box-shadow: 0 6rpx 20rpx rgba(217, 48, 37, 0.05);
+  border: 2rpx solid var(--c-border-soft);
+  box-shadow: 0 6rpx 20rpx rgba(183, 55, 39, 0.05);
 }
 
 .rank-badge {
@@ -140,21 +140,21 @@
 }
 
 .rank-badge-other {
-  background: #f5f5f5;
-  border: 2rpx solid rgba(217, 48, 37, 0.15);
+  background: var(--c-surface-card-alt);
+  border: 2rpx solid var(--c-border-soft);
 }
 
 .rank-medal {
   font-size: var(--fs-xl, 38rpx);
   font-weight: 800;
-  color: #fff;
+  color: var(--c-text-on-brand);
   text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
 }
 
 .rank-num {
   font-size: var(--fs-base, 28rpx);
   font-weight: 700;
-  color: #666;
+  color: var(--c-text-secondary);
 }
 
 .avatar-wrap {
@@ -165,16 +165,16 @@
   width: 96rpx;
   height: 96rpx;
   border-radius: 48rpx;
-  border: 4rpx solid #f4a261;
+  border: 4rpx solid var(--c-brand-gold);
   overflow: hidden;
 }
 
 .avatar-text {
-  background: linear-gradient(135deg, #f4a261, #d93025);
+  background: linear-gradient(135deg, var(--c-brand-gold), var(--c-brand-red));
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--c-text-on-brand);
   font-size: var(--fs-xl, 38rpx);
   font-weight: 700;
 }
@@ -190,7 +190,7 @@
 .player-name {
   font-size: var(--fs-md, 30rpx);
   font-weight: 700;
-  color: #333;
+  color: var(--c-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -205,24 +205,24 @@
 
 .stat {
   font-size: var(--fs-sm, 24rpx);
-  color: #666;
+  color: var(--c-text-secondary);
 }
 
 .stat-dot {
   font-size: var(--fs-sm, 24rpx);
-  color: #ccc;
+  color: var(--c-text-muted);
 }
 
 .stat-wins {
-  color: #d93025;
+  color: var(--c-brand-red);
   font-weight: 700;
 }
 
 .guest-tag {
   display: inline-block;
   font-size: 20rpx;
-  color: #999;
-  background: #f5f5f5;
+  color: var(--c-text-muted);
+  background: var(--c-surface-card-alt);
   border-radius: 6rpx;
   padding: 2rpx 10rpx;
   margin-left: 8rpx;

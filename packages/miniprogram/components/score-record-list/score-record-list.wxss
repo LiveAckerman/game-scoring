@@ -1,0 +1,61 @@
+.records-card {
+  background: var(--c-surface-card);
+  border-radius: 24rpx;
+  border: 2rpx solid var(--c-border-soft);
+  padding: 24rpx;
+}
+
+.records-head {
+  font-size: var(--fs-base, 28rpx);
+  font-weight: 700;
+  color: var(--c-text-primary);
+  margin-bottom: 14rpx;
+}
+
+.empty-records {
+  color: var(--c-text-muted);
+  font-size: var(--fs-sm, 24rpx);
+  padding: 12rpx 0;
+}
+
+.record-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14rpx 0;
+  border-bottom: 2rpx solid var(--c-border-soft);
+}
+
+.record-item:last-child {
+  border-bottom: none;
+}
+
+.record-main {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-wrap: wrap;
+}
+
+.record-main .name {
+  font-size: var(--fs-sm, 24rpx);
+  font-weight: 700;
+  color: var(--c-text-primary);
+}
+
+.record-main .action {
+  font-size: var(--fs-sm, 24rpx);
+  color: var(--c-text-secondary);
+}
+
+.record-main .points {
+  font-size: var(--fs-sm, 24rpx);
+  color: var(--c-brand-red);
+  font-weight: 700;
+}
+
+.time {
+  font-size: var(--fs-xs, 20rpx);
+  color: var(--c-text-muted);
+  flex-shrink: 0;
+}

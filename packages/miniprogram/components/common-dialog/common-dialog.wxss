@@ -15,9 +15,9 @@
   max-width: 680rpx;
   max-height: calc(100vh - 48rpx);
   border-radius: 26rpx;
-  background: #fff;
-  border: 2rpx solid rgba(230, 57, 70, 0.1);
-  box-shadow: 0 16rpx 36rpx rgba(0, 0, 0, 0.12);
+  background: linear-gradient(180deg, var(--c-surface-card), var(--c-surface-card-alt));
+  border: 2rpx solid rgba(199, 58, 45, 0.14);
+  box-shadow: 0 16rpx 36rpx rgba(183, 55, 39, 0.14);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -29,14 +29,15 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 24rpx;
-  border-bottom: 2rpx solid #f4f4f4;
+  background: linear-gradient(180deg, rgba(255, 240, 234, 0.96), rgba(255, 253, 249, 0.88));
+  border-bottom: 2rpx solid var(--c-border-soft);
   box-sizing: border-box;
 }
 
 .dialog-title {
   font-size: var(--fs-md, 30rpx);
   font-weight: 700;
-  color: #333;
+  color: var(--c-text-primary);
 }
 
 .close-btn {
@@ -45,9 +46,9 @@
   border-radius: 32rpx;
   margin: 0;
   padding: 0;
-  background: #fff7ef;
-  border: 2rpx solid #f5d8bf;
-  box-shadow: 0 4rpx 12rpx rgba(230, 57, 70, 0.12);
+  background: var(--c-brand-gold-soft);
+  border: 2rpx solid rgba(224, 161, 40, 0.26);
+  box-shadow: 0 4rpx 12rpx rgba(183, 55, 39, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -91,8 +92,8 @@
   line-height: 84rpx;
   border-radius: 18rpx;
   margin: 0;
-  background: #e63946;
-  color: #fff;
+  background: linear-gradient(135deg, var(--c-brand-red), var(--c-brand-gold));
+  color: var(--c-text-on-brand);
   font-size: var(--fs-base, 28rpx);
   font-weight: 700;
   display: flex;
@@ -104,8 +105,8 @@
 }
 
 .footer-btn.ghost {
-  background: #f6f2eb;
-  color: #666;
+  background: var(--c-surface-warm);
+  color: var(--c-text-secondary);
 }
 
 .footer-btn::after {

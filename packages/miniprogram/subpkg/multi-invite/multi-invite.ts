@@ -7,6 +7,7 @@ import {
 import { buildRoomRealtimeUrl } from '../../utils/realtime';
 import { request, RequestError } from '../../utils/request';
 import { fontSizeBehavior } from '../../behaviors/font-size';
+import { shouldUseCompactLayout } from '../../utils/layout';
 import {
   addRoomScore,
   endRoom,
@@ -89,11 +90,14 @@ Page({
     memberActionTargetName: '',
     memberActionType: 'transfer' as 'transfer' | 'kick',
     roomType: 'MULTI' as string,
+    isCompactLayout: false,
+    poolStatsTableWidth: 690,
   },
 
   onLoad(options: Record<string, string | undefined>) {
     this.enableShareMenus();
     this.disconnectRealtime(true);
+    this.syncLayoutMode();
     const roomCode = (options.roomCode || '').replace(/\D/g, '').slice(0, ROOM_CODE_LENGTH);
     if (roomCode.length === ROOM_CODE_LENGTH) {
       this.setRoomCode(roomCode);
@@ -103,10 +107,15 @@ Page({
 
   onShow() {
     (this as any)._applyFontSize();
+    this.syncLayoutMode();
     if (!roomEntryLoading) {
       this.refreshRoomState(true);
     }
     this.connectRealtime();
+  },
+
+  onResize() {
+    this.syncLayoutMode();
   },
 
   onHide() {
@@ -119,6 +128,13 @@ Page({
 
   onPullDownRefresh() {
     this.refreshRoomState(true);
+  },
+
+  syncLayoutMode() {
+    const isCompactLayout = shouldUseCompactLayout();
+    if (isCompactLayout !== this.data.isCompactLayout) {
+      this.setData({ isCompactLayout });
+    }
   },
 
   goBack() {
@@ -591,6 +607,12 @@ Page({
 
     if (isPoolMode) {
       this.loadPoolRounds();
+    } else {
+      this.setData({
+        poolRounds: [],
+        poolStatsMembers: [],
+        poolStatsTableWidth: 690,
+      });
     }
   },
 
@@ -941,7 +963,11 @@ Page({
         };
       });
 
-      this.setData({ poolRounds, poolStatsMembers });
+      this.setData({
+        poolRounds,
+        poolStatsMembers,
+        poolStatsTableWidth: Math.max(690, 170 + poolStatsMembers.length * 112),
+      });
     } catch (error) {
       // silent
     }

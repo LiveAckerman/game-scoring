@@ -2,7 +2,8 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8rpx 18rpx rgba(183, 55, 39, 0.08);
+  border-bottom: 2rpx solid rgba(199, 58, 45, 0.08);
 }
 
 .inner {
@@ -25,9 +26,14 @@
 .back-btn {
   width: 72rpx;
   height: 72rpx;
+  border-radius: 36rpx;
+  /* background: linear-gradient(135deg, var(--c-surface-card), var(--c-brand-gold-soft)); */
+  /* border: 2rpx solid rgba(224, 161, 40, 0.2); */
+  box-shadow: 0 6rpx 14rpx rgba(183, 55, 39, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
+  color: inherit;
 }
 
 .back-arrow {
@@ -35,6 +41,9 @@
   line-height: 1;
   font-weight: 500;
   margin-top: -4rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .title {
@@ -44,6 +53,7 @@
   font-size: var(--fs-xl, 38rpx);
   font-weight: 700;
   letter-spacing: 2rpx;
+  text-shadow: 0 2rpx 6rpx rgba(255, 248, 242, 0.42);
   max-width: 60%;
   text-align: center;
   overflow: hidden;

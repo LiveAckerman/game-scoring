@@ -1,6 +1,9 @@
 {
   "navigationStyle": "custom",
   "usingComponents": {
+    "common-top-bar": "/components/common-top-bar/common-top-bar",
+    "common-dialog": "/components/common-dialog/common-dialog",
+    "table-card": "/components/table-card/table-card",
     "ongoing-room-card": "/components/ongoing-room-card/ongoing-room-card"
   }
 }
