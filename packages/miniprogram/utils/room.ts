@@ -16,6 +16,7 @@ export interface RoomMember {
   score: number;
   inviteCardHidden: boolean;
   isSpectator: boolean;
+  hasScoreActivity?: boolean;
   joinedAt: string;
 }
 
@@ -65,6 +66,32 @@ export interface RoomPayload {
   room: RoomData;
   currentMemberId: number | null;
   actor: RoomActor;
+}
+
+export interface RoomInvitePreviewMember {
+  id: number;
+  actorType: RoomActorType;
+  nickname: string;
+  avatar: string;
+  avatarInitials: string;
+  isOwner: boolean;
+  isSpectator: boolean;
+  joinedAt: string;
+}
+
+export interface RoomInvitePreviewPayload {
+  room: {
+    id: number;
+    roomCode: string;
+    roomName: string;
+    roomType: RoomType;
+    status: RoomStatus;
+    ownerMemberId: number | null;
+    createdAt: string;
+    endedAt: string | null;
+    memberCount: number;
+    members: RoomInvitePreviewMember[];
+  };
 }
 
 export interface LeaveRoomResponse {
@@ -187,6 +214,24 @@ export const getRoomByCode = (roomCode: string): Promise<RoomPayload> => {
   return request<RoomPayload>({
     url: `/rooms/code/${roomCode}`,
     method: 'GET',
+  });
+};
+
+export const getRoomInvitePreview = (roomCode: string): Promise<RoomInvitePreviewPayload> => {
+  return request<RoomInvitePreviewPayload>({
+    url: `/rooms/code/${roomCode}/preview`,
+    method: 'GET',
+  });
+};
+
+export const updateRoomName = (
+  roomId: number,
+  roomName?: string,
+): Promise<RoomPayload> => {
+  return request<RoomPayload>({
+    url: `/rooms/${roomId}/name`,
+    method: 'POST',
+    data: { roomName },
   });
 };
 
@@ -396,10 +441,25 @@ export const toggleTableFee = (roomId: number, enabled: boolean): Promise<RoomPa
   });
 };
 
+export const refundTableFee = (roomId: number): Promise<RoomPayload> => {
+  return request<RoomPayload>({
+    url: `/rooms/${roomId}/table-fee/refund`,
+    method: 'POST',
+  });
+};
+
 export const setSpectators = (roomId: number, memberIds: number[]): Promise<RoomPayload> => {
   return request<RoomPayload>({
     url: `/rooms/${roomId}/spectators`,
     method: 'POST',
     data: { memberIds },
+  });
+};
+
+export const setSelfSpectator = (roomId: number, spectator: boolean): Promise<RoomPayload> => {
+  return request<RoomPayload>({
+    url: `/rooms/${roomId}/self-spectator`,
+    method: 'POST',
+    data: { spectator },
   });
 };

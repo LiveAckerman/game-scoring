@@ -9,6 +9,7 @@
       "root": "subpkg",
       "pages": [
         "login/login",
+        "invite-entry/invite-entry",
         "multi-invite/multi-invite",
         "profile-edit/profile-edit",
         "leaderboard/leaderboard",

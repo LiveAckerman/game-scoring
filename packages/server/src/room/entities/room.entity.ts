@@ -43,7 +43,7 @@ export class Room {
   @Column({ type: 'varchar', length: 16, default: ROOM_TYPE.MULTI })
   roomType: RoomType;
 
-  @ApiProperty({ description: '是否开启台板（仅POOL模式）' })
+  @ApiProperty({ description: '是否开启台板（多人记分/分数池）' })
   @Column({ default: false })
   tableFeeEnabled: boolean;
 

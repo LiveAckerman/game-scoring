@@ -1,5 +1,5 @@
 <page-meta page-style="{{pageFontStyle}}" />
-<view class="invite-page {{isCompactLayout ? 'compact-layout' : ''}}">
+<view class="invite-page">
   <view class="bg-confetti"></view>
 
   <common-top-bar title="{{topBarTitle}}" bind:back="goBack" />
@@ -16,7 +16,7 @@
           </view>
         </view>
         <view class="action-strip-grid pool-action-grid">
-          <view class="action-item {{!isOwner ? 'disabled' : ''}}" bindtap="onActionTap" data-action="manage">
+          <view wx:if="{{isOwner && roomStatus === 'IN_PROGRESS'}}" class="action-item" bindtap="onActionTap" data-action="manage">
             <view class="action-icon"><view class="icon icon-settings"></view></view>
             <text>牌桌管理</text>
           </view>
@@ -51,21 +51,29 @@
             <view class="action-icon"><view class="icon icon-invite"></view></view>
             <text>邀请</text>
           </view>
-          <view class="action-item" bindtap="onActionTap" data-action="settings">
-            <view class="action-icon"><view class="icon icon-settings"></view></view>
-            <text>设置</text>
-          </view>
-          <view class="action-item" bindtap="onActionTap" data-action="board">
+          <view
+            class="action-item {{!isOwner || roomStatus !== 'IN_PROGRESS' ? 'disabled' : ''}}"
+            bindtap="handleToggleTableFee"
+          >
             <view class="action-icon"><view class="icon icon-board"></view></view>
-            <text>台板</text>
+            <text>{{tableFeeEnabled ? '台板已开' : '台板未开'}}</text>
           </view>
-        <view class="action-item {{isOwner && roomStatus !== 'IN_PROGRESS' ? 'disabled' : ''}}" bindtap="onActionTap" data-action="{{isOwner ? 'end' : 'leave'}}">
+        <view
+          class="action-item {{isOwner && roomStatus !== 'IN_PROGRESS' ? 'disabled' : ''}}"
+          bindtap="onActionTap"
+          data-action="{{isOwner ? 'end' : (currentMemberIsSpectator && roomStatus === 'IN_PROGRESS' ? 'cancel-spectator' : 'leave')}}"
+        >
           <view class="action-icon"><view class="icon icon-power"></view></view>
-          <text>{{isOwner ? '结束' : '退出'}}</text>
+          <text>{{isOwner ? '结束' : (currentMemberIsSpectator && roomStatus === 'IN_PROGRESS' ? '取消旁观' : '退出')}}</text>
         </view>
           <view class="action-item" bindtap="onActionTap" data-action="mute">
             <view class="action-icon"><view class="icon icon-mute"></view></view>
-            <text>{{ttsMuted ? '静音' : '开启'}}</text>
+            <text>{{ttsMuted ? '开启' : '播报'}}</text>
+          </view>
+
+          <view wx:if="{{isOwner && roomStatus === 'IN_PROGRESS'}}" class="action-item" bindtap="onActionTap" data-action="settings">
+            <view class="action-icon"><view class="icon icon-settings"></view></view>
+            <text>牌桌管理</text>
           </view>
         </view>
       </view>
@@ -89,7 +97,7 @@
     />
 
     <view class="player-section {{showInlineInviteCard ? '' : 'tight-top'}}">
-      <view class="player-head"><text>玩家数量: {{members.length}}</text></view>
+      <view class="player-head"><text>玩家数量: {{displayMemberCount}}</text></view>
 
       <view
         wx:for="{{members}}"
@@ -111,7 +119,7 @@
             <text class="player-name">{{item.nickname}}</text>
             <text wx:if="{{item.id === currentMemberId}}" class="self-tag">我</text>
           </view>
-          <text class="player-desc">{{item.isOwner ? '房间管理员' : (item.isSpectator ? '旁观者' : '普通玩家')}}</text>
+          <text class="player-desc">{{item.actorType === 'VIRTUAL' && item.nickname === '台板' ? '台板账户' : (item.isOwner ? '房间管理员' : (item.isSpectator ? '旁观者' : '普通玩家'))}}</text>
         </view>
 
         <view class="score-wrap">
@@ -131,12 +139,20 @@
             disabled="{{roomStatus !== 'IN_PROGRESS'}}"
           >给分</view>
           <view
-            wx:if="{{isOwner && !item.isOwner && roomStatus === 'IN_PROGRESS'}}"
-            class="tiny-btn member-op-btn"
-            bindtap="openMemberActionDialog"
+            wx:if="{{isOwner && item.actorType === 'VIRTUAL' && item.nickname === '台板' && roomStatus === 'IN_PROGRESS' && item.score > 0}}"
+            class="tiny-btn refund-btn"
+            bindtap="handleRefundTableFee"
             data-member-id="{{item.id}}"
             data-member-name="{{item.nickname}}"
-          >操作</view>
+            data-member-score="{{item.score}}"
+          >退分</view>
+        </view>
+
+        <view
+          class="member-actions"
+          wx:if="{{item.id === currentMemberId && item.isSpectator && roomStatus === 'IN_PROGRESS' && !isOwner}}"
+        >
+          <view class="tiny-btn spectator-exit-btn" bindtap="handleCancelSpectator">取消旁观</view>
         </view>
       </view>
 
@@ -195,6 +211,18 @@
     </view>
   </scroll-view>
 
+  <view wx:if="{{settingsSheetVisible}}" class="settings-sheet-mask" bindtap="closeSettingsSheet">
+    <view class="settings-sheet" catchtap="noop">
+      <view class="settings-sheet-list">
+        <view class="settings-sheet-item" bindtap="handleSettingsOptionTap" data-action="room-name">设置牌桌名称</view>
+        <view class="settings-sheet-item" bindtap="handleSettingsOptionTap" data-action="transfer-owner">转移桌主身份</view>
+        <view class="settings-sheet-item" bindtap="handleSettingsOptionTap" data-action="spectators">旁观者设置</view>
+        <view class="settings-sheet-item danger" bindtap="handleSettingsOptionTap" data-action="kick-member">踢出玩家</view>
+      </view>
+      <view class="settings-sheet-cancel" bindtap="closeSettingsSheet">取消</view>
+    </view>
+  </view>
+
   <!-- 分数池模式：底部按钮 -->
   <view wx:if="{{isPoolMode && roomStatus === 'IN_PROGRESS'}}" class="pool-bottom-bar">
     <view wx:if="{{activePoolRound}}" class="pool-bottom-btn active" bindtap="goToPoolRecord">
@@ -232,29 +260,90 @@
   </common-dialog>
 
   <common-dialog
-    visible="{{memberActionDialogVisible}}"
-    title="操作"
-    showClose="{{true}}"
-    showFooter="{{true}}"
+    visible="{{roomNameDialogVisible}}"
+    title="设置牌桌名称"
+    showClose="{{false}}"
     maskClosable="{{true}}"
-    bind:close="closeMemberActionDialog"
-    bind:cancel="closeMemberActionDialog"
-    bind:confirm="confirmMemberAction"
+    bind:close="closeRoomNameDialog"
   >
-    <view class="member-action-dialog">
-      <text class="member-action-desc">选择对 {{memberActionTargetName}} 的操作</text>
-      <view class="member-action-options">
+    <view class="manage-dialog-body">
+      <text class="manage-dialog-desc">设置后，本页顶部标题和分享文案都会同步为新的牌桌名称。</text>
+      <input
+        class="manage-name-input"
+        value="{{roomNameDraft}}"
+        maxlength="64"
+        focus="{{roomNameDialogVisible}}"
+        placeholder="请输入牌桌名称，不填则恢复默认桌号"
+        bindinput="onRoomNameInput"
+      />
+    </view>
+    <view slot="footer" class="manage-footer">
+      <button class="manage-footer-btn ghost" bindtap="closeRoomNameDialog">取消</button>
+      <button class="manage-footer-btn" bindtap="confirmRoomNameDialog">确定</button>
+    </view>
+  </common-dialog>
+
+  <common-dialog
+    visible="{{transferDialogVisible}}"
+    title="转移桌主身份"
+    showClose="{{false}}"
+    maskClosable="{{true}}"
+    bind:close="closeTransferDialog"
+  >
+    <view class="manage-dialog-body">
+      <text class="manage-dialog-desc">请选择新的桌主，桌主可继续管理牌桌、调整旁观者并结束本桌。</text>
+      <view class="manage-candidate-grid">
         <view
-          class="member-action-option {{memberActionType === 'transfer' ? 'selected transfer' : ''}}"
-          bindtap="selectMemberAction"
-          data-action-type="transfer"
-        >设桌主</view>
-        <view
-          class="member-action-option {{memberActionType === 'kick' ? 'selected kick' : ''}}"
-          bindtap="selectMemberAction"
-          data-action-type="kick"
-        >踢人</view>
+          wx:for="{{transferCandidates}}"
+          wx:key="id"
+          class="manage-candidate-item {{item.selected ? 'selected' : ''}}"
+          bindtap="selectTransferCandidate"
+          data-member-id="{{item.id}}"
+        >
+          <view class="manage-avatar-wrap">
+            <image wx:if="{{item.avatar}}" class="manage-avatar" src="{{item.avatar}}" mode="aspectFill" />
+            <view wx:else class="manage-avatar manage-avatar-text"><text>{{item.avatarInitials || '游客'}}</text></view>
+            <view wx:if="{{item.selected}}" class="manage-candidate-check">✓</view>
+          </view>
+          <text class="manage-candidate-name">{{item.nickname}}</text>
+        </view>
       </view>
+    </view>
+    <view slot="footer" class="manage-footer">
+      <button class="manage-footer-btn ghost" bindtap="closeTransferDialog">取消</button>
+      <button class="manage-footer-btn" bindtap="confirmTransferDialog">确定</button>
+    </view>
+  </common-dialog>
+
+  <common-dialog
+    visible="{{kickDialogVisible}}"
+    title="踢出玩家"
+    showClose="{{false}}"
+    maskClosable="{{true}}"
+    bind:close="closeKickDialog"
+  >
+    <view class="manage-dialog-body">
+      <text class="manage-dialog-desc">仅可踢出无得失分记录的玩家，不能踢出桌主或台板成员。</text>
+      <view class="manage-candidate-grid">
+        <view
+          wx:for="{{kickCandidates}}"
+          wx:key="id"
+          class="manage-candidate-item {{item.selected ? 'selected' : ''}}"
+          bindtap="selectKickCandidate"
+          data-member-id="{{item.id}}"
+        >
+          <view class="manage-avatar-wrap">
+            <image wx:if="{{item.avatar}}" class="manage-avatar" src="{{item.avatar}}" mode="aspectFill" />
+            <view wx:else class="manage-avatar manage-avatar-text"><text>{{item.avatarInitials || '游客'}}</text></view>
+            <view wx:if="{{item.selected}}" class="manage-candidate-check">✓</view>
+          </view>
+          <text class="manage-candidate-name">{{item.nickname}}</text>
+        </view>
+      </view>
+    </view>
+    <view slot="footer" class="manage-footer">
+      <button class="manage-footer-btn ghost" bindtap="closeKickDialog">取消</button>
+      <button class="manage-footer-btn danger" bindtap="confirmKickDialog">确定</button>
     </view>
   </common-dialog>
 
@@ -329,7 +418,7 @@
         <view
           wx:for="{{spectatorCandidates}}"
           wx:key="id"
-          class="spectator-item"
+          class="spectator-item {{item.selected ? 'selected' : ''}} {{item.disabled ? 'disabled' : ''}}"
           bindtap="toggleSpectatorCandidate"
           data-member-id="{{item.id}}"
         >
@@ -339,14 +428,14 @@
             </view>
             <image wx:elif="{{item.avatar}}" class="spectator-avatar" src="{{item.avatar}}" mode="aspectFill" />
             <view wx:else class="spectator-avatar spectator-avatar-text"><text>{{item.avatarInitials}}</text></view>
-            <text wx:if="{{item.isSpectatorSelected}}" class="spectator-badge">旁观</text>
+            <text wx:if="{{item.selected || item.disabled}}" class="spectator-badge">{{item.disabled ? (item.isOwner ? '桌主' : '固定') : '旁观'}}</text>
           </view>
           <text class="spectator-name">{{item.nickname}}</text>
         </view>
       </view>
-      <view class="modal-actions">
-        <button class="modal-btn ghost" bindtap="closeSpectatorDialog">取消</button>
-        <button class="modal-btn" bindtap="confirmSpectators">确定</button>
+      <view class="manage-footer spectator-footer">
+        <button class="manage-footer-btn ghost" bindtap="closeSpectatorDialog">取消</button>
+        <button class="manage-footer-btn" bindtap="confirmSpectators">确定</button>
       </view>
     </view>
   </view>

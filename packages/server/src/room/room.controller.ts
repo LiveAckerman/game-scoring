@@ -21,12 +21,14 @@ import {
   KickMemberDto,
   LeaveRoomResponseDto,
   ListRoomHistoryQueryDto,
+  UpdateRoomNameDto,
   TransferOwnerDto,
   PoolGiveDto,
   PoolTakeDto,
   PoolTableTakeDto,
   ToggleTableFeeDto,
   SetSpectatorsDto,
+  ToggleSelfSpectatorDto,
 } from './dto';
 
 @ApiTags('房间')
@@ -64,6 +66,27 @@ export class RoomController {
   @ApiResponse({ status: 200, description: '查询成功' })
   getByCode(@Req() req: Request, @Param('roomCode') roomCode: string) {
     return this.roomService.getRoomByCode(req, roomCode);
+  }
+
+  @Get('code/:roomCode/preview')
+  @ApiOperation({ summary: '按房间号获取邀请预览信息' })
+  @ApiParam({ name: 'roomCode', description: '6位房间号' })
+  @ApiResponse({ status: 200, description: '查询成功' })
+  getInvitePreview(@Param('roomCode') roomCode: string) {
+    return this.roomService.getRoomInvitePreview(roomCode);
+  }
+
+  @Post(':roomId/name')
+  @ApiOperation({ summary: '设置牌桌名称（仅桌主）' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiBody({ type: UpdateRoomNameDto })
+  @ApiResponse({ status: 200, description: '设置成功' })
+  updateRoomName(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+    @Body() dto: UpdateRoomNameDto,
+  ) {
+    return this.roomService.updateRoomName(req, roomId, dto);
   }
 
   @Get('history')
@@ -160,7 +183,7 @@ export class RoomController {
   }
 
   @Post(':roomId/kick-member')
-  @ApiOperation({ summary: '桌主踢出成员并原路退回积分' })
+  @ApiOperation({ summary: '桌主踢出无得失分记录的成员' })
   @ApiParam({ name: 'roomId', description: '房间ID' })
   @ApiBody({ type: KickMemberDto })
   @ApiResponse({ status: 200, description: '踢出成功' })
@@ -294,7 +317,7 @@ export class RoomController {
   // ───────── 台板 / 旁观者 API ─────────
 
   @Post(':roomId/table-fee')
-  @ApiOperation({ summary: '开关台板（仅桌主）' })
+  @ApiOperation({ summary: '开关台板（多人记分/分数池，仅桌主）' })
   @ApiParam({ name: 'roomId', description: '房间ID' })
   @ApiBody({ type: ToggleTableFeeDto })
   @ApiResponse({ status: 200, description: '操作成功' })
@@ -304,6 +327,17 @@ export class RoomController {
     @Body() dto: ToggleTableFeeDto,
   ) {
     return this.roomService.toggleTableFee(req, roomId, dto);
+  }
+
+  @Post(':roomId/table-fee/refund')
+  @ApiOperation({ summary: '多人记分台板退分（仅桌主）' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiResponse({ status: 200, description: '退分成功' })
+  refundTableFee(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+  ) {
+    return this.roomService.refundTableFee(req, roomId);
   }
 
   @Post(':roomId/spectators')
@@ -317,5 +351,18 @@ export class RoomController {
     @Body() dto: SetSpectatorsDto,
   ) {
     return this.roomService.setSpectators(req, roomId, dto);
+  }
+
+  @Post(':roomId/self-spectator')
+  @ApiOperation({ summary: '当前成员切换自己的旁观状态' })
+  @ApiParam({ name: 'roomId', description: '房间ID' })
+  @ApiBody({ type: ToggleSelfSpectatorDto })
+  @ApiResponse({ status: 200, description: '切换成功' })
+  toggleSelfSpectator(
+    @Req() req: Request,
+    @Param('roomId', ParseIntPipe) roomId: number,
+    @Body() dto: ToggleSelfSpectatorDto,
+  ) {
+    return this.roomService.toggleSelfSpectator(req, roomId, dto);
   }
 }

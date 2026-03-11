@@ -1,0 +1,66 @@
+<page-meta page-style="{{pageFontStyle}}" />
+<view class="invite-entry-page">
+  <common-top-bar title="房间邀请" bind:back="goBack" />
+
+  <view class="invite-entry-body">
+    <view class="hero-card">
+      <view class="hero-avatar">{{inviterInitials}}</view>
+      <view class="hero-copy">
+        <text class="hero-kicker">{{inviterName}} 邀请你加入</text>
+        <text class="hero-title">{{roomName}}</text>
+        <text class="hero-desc">
+          {{alreadyJoined ? '你已经在这个房间里，可直接进入继续记分。' : '确认后才会正式加入房间，不会自动进房。'}}
+        </text>
+      </view>
+    </view>
+
+    <view wx:if="{{roomExists}}" class="preview-card">
+      <view class="preview-head">
+        <view>
+          <text class="room-name">{{roomName}}</text>
+          <text class="room-code">房间号 {{roomCode}}</text>
+        </view>
+        <view class="badge-group">
+          <text class="badge type {{roomTypeClass}}">{{roomTypeText}}</text>
+          <text class="badge status {{roomStatus === 'ENDED' ? 'ended' : 'active'}}">{{roomStatusText}}</text>
+        </view>
+      </view>
+
+      <view class="member-section">
+        <text class="section-title">当前牌桌</text>
+        <view class="member-row">
+          <view wx:for="{{previewMembers}}" wx:key="id" class="member-avatar {{item.isOwner ? 'owner' : ''}}">
+            <image wx:if="{{item.avatar}}" class="member-image" src="{{item.avatar}}" mode="aspectFill" />
+            <text wx:else>{{item.avatarInitials}}</text>
+          </view>
+          <view wx:if="{{extraMemberCount > 0}}" class="member-more">+{{extraMemberCount}}</view>
+        </view>
+        <text class="member-tip">当前已有 {{displayMemberCount}} 位玩家在房间内</text>
+      </view>
+    </view>
+
+    <view wx:else class="preview-card empty">
+      <text class="empty-title">邀请已失效</text>
+      <text class="empty-desc">{{loadErrorText || '房间不存在，或分享链接已经过期。'}}</text>
+    </view>
+
+    <view class="notice-card">
+      <text class="notice-title">加入说明</text>
+      <text class="notice-item">1. 先确认，再真正加入房间参与记分。</text>
+      <text class="notice-item">2. 房间结束后，新成员无法继续加入。</text>
+      <text class="notice-item">3. 如果你已经在房间里，点击后会直接进入房间。</text>
+    </view>
+  </view>
+
+  <view class="action-bar">
+    <button class="action-btn ghost" bindtap="goBack">稍后再说</button>
+    <button
+      class="action-btn primary"
+      bindtap="handleConfirmJoin"
+      disabled="{{primaryActionDisabled}}"
+      loading="{{joining}}"
+    >
+      {{primaryActionText}}
+    </button>
+  </view>
+</view>

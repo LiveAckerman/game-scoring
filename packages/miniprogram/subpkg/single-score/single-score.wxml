@@ -1,5 +1,5 @@
 <page-meta page-style="{{pageFontStyle}}" />
-<view class="single-score-page {{isCompactLayout ? 'compact-layout' : ''}}">
+<view class="single-score-page">
   <view class="bg-confetti"></view>
 
   <common-top-bar title="{{topBarTitle}}" bind:back="goBack" />

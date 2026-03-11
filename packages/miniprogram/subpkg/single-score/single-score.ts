@@ -1,5 +1,4 @@
 import { fontSizeBehavior } from '../../behaviors/font-size';
-import { shouldUseCompactLayout } from '../../utils/layout';
 import { buildRoomRealtimeUrl } from '../../utils/realtime';
 import { saveActorIdentity } from '../../utils/identity';
 import { RequestError } from '../../utils/request';
@@ -58,7 +57,6 @@ Page({
     currentMemberId: 0,
     isOwner: false,
     currentMemberIsSpectator: false,
-    isCompactLayout: false,
 
     showAddModal: false,
     newPlayerName: '',
@@ -75,7 +73,6 @@ Page({
 
   onLoad(options: Record<string, string | undefined>) {
     this.disconnectRealtime(true);
-    this.syncLayoutMode();
     const roomCode = (options.roomCode || '').replace(/\D/g, '').slice(0, ROOM_CODE_LENGTH);
     if (roomCode.length === ROOM_CODE_LENGTH) {
       this.setData({ roomCode, topBarTitle: `单人记分 · ${roomCode}` });
@@ -85,13 +82,8 @@ Page({
 
   onShow() {
     (this as any)._applyFontSize();
-    this.syncLayoutMode();
     this.refreshRoomState(true);
     this.connectRealtime();
-  },
-
-  onResize() {
-    this.syncLayoutMode();
   },
 
   onHide() {
@@ -104,13 +96,6 @@ Page({
 
   onPullDownRefresh() {
     this.refreshRoomState(true);
-  },
-
-  syncLayoutMode() {
-    const isCompactLayout = shouldUseCompactLayout();
-    if (isCompactLayout !== this.data.isCompactLayout) {
-      this.setData({ isCompactLayout });
-    }
   },
 
   handleActionTap(e: WechatMiniprogram.BaseEvent) {

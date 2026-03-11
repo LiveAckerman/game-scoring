@@ -7,7 +7,7 @@ import {
 import { buildRoomRealtimeUrl } from '../../utils/realtime';
 import { API_BASE_URL, buildRequestHeader, request, RequestError } from '../../utils/request';
 import { fontSizeBehavior } from '../../behaviors/font-size';
-import { shouldUseCompactLayout } from '../../utils/layout';
+import { buildInviteEntryUrl, safeDecodeInviteParam } from '../../utils/invite-entry';
 import {
   addRoomScore,
   endRoom,
@@ -19,8 +19,11 @@ import {
   RoomMember,
   RoomPayload,
   RoomScoreRecord,
+  refundTableFee,
   transferRoomOwner,
   toggleTableFee,
+  updateRoomName,
+  setSelfSpectator,
   setSpectators,
   startPoolRound,
   getPoolRound,
@@ -51,6 +54,19 @@ interface ScoreNotifyVoiceOption {
   value: string;
 }
 
+interface MemberManageCandidate {
+  id: number;
+  nickname: string;
+  avatar: string;
+  avatarInitials: string;
+  actorType: string;
+  isOwner: boolean;
+  isSpectator: boolean;
+  hasScoreActivity: boolean;
+  disabled?: boolean;
+  selected?: boolean;
+}
+
 let realtimeSocketTask: WechatMiniprogram.SocketTask | null = null;
 let realtimeReconnectTimer: number | null = null;
 let realtimeHeartbeatTimer: number | null = null;
@@ -68,6 +84,7 @@ let scoreNotifyCurrentTempFilePath = '';
 let scoreNotifyPreviewAudioContext: WechatMiniprogram.InnerAudioContext | null = null;
 let scoreNotifyPreviewing = false;
 let scoreNotifyPreviewTempFilePath = '';
+let roomAccessRedirecting = false;
 
 const SCORE_NOTIFY_MUTE_KEY = 'multiInviteScoreNotifyMuted';
 const SCORE_NOTIFY_VOICE_KEY = 'multiInviteScoreNotifyVoice';
@@ -82,14 +99,16 @@ const SCORE_NOTIFY_VOICE_OPTIONS: ScoreNotifyVoiceOption[] = [
 Page({
   behaviors: [fontSizeBehavior],
   data: {
-    topBarTitle: '桌号：------',
+    topBarTitle: '桌号 ------',
     roomId: 0,
     roomCode: '',
+    roomName: '',
     roomStatus: 'IN_PROGRESS' as 'IN_PROGRESS' | 'ENDED',
     codeDigits: ['', '', '', '', '', ''],
     codeFocus: false,
     members: [] as RoomMember[],
     scoreRecords: [] as RoomScoreRecordView[],
+    displayMemberCount: 0,
     currentMemberId: 0,
     isOwner: false,
     currentMemberIsSpectator: false,
@@ -107,16 +126,20 @@ Page({
     activePoolRound: null as { id: number; roundNumber: number; poolBalance: number; status: string } | null,
     poolRounds: [] as any[],
     poolStatsMembers: [] as any[],
+    settingsSheetVisible: false,
+    roomNameDialogVisible: false,
+    roomNameDraft: '',
+    transferDialogVisible: false,
+    transferCandidates: [] as MemberManageCandidate[],
+    selectedTransferMemberId: 0,
     spectatorDialogVisible: false,
-    spectatorCandidates: [] as any[],
-    memberActionDialogVisible: false,
-    memberActionTargetId: 0,
-    memberActionTargetName: '',
-    memberActionType: 'transfer' as 'transfer' | 'kick',
+    spectatorCandidates: [] as MemberManageCandidate[],
+    kickDialogVisible: false,
+    kickCandidates: [] as MemberManageCandidate[],
+    selectedKickMemberId: 0,
     scoreNotifyDialogVisible: false,
     scoreNotifyVoiceOptions: SCORE_NOTIFY_VOICE_OPTIONS,
     roomType: 'MULTI' as string,
-    isCompactLayout: false,
     poolStatsTableWidth: 690,
     ttsMuted: true,
     ttsVoice: DEFAULT_SCORE_NOTIFY_VOICE,
@@ -127,7 +150,9 @@ Page({
     this.enableShareMenus();
     this.disconnectRealtime(true);
     this.initScoreNotifyAudio();
-    this.syncLayoutMode();
+    if (this.redirectSharedInviteEntry(options)) {
+      return;
+    }
     const roomCode = (options.roomCode || '').replace(/\D/g, '').slice(0, ROOM_CODE_LENGTH);
     if (roomCode.length === ROOM_CODE_LENGTH) {
       this.setRoomCode(roomCode);
@@ -138,15 +163,10 @@ Page({
   onShow() {
     (this as any)._applyFontSize();
     this.initScoreNotifyAudio();
-    this.syncLayoutMode();
     if (!roomEntryLoading) {
       this.refreshRoomState(true);
     }
     this.connectRealtime();
-  },
-
-  onResize() {
-    this.syncLayoutMode();
   },
 
   onHide() {
@@ -163,16 +183,17 @@ Page({
     this.refreshRoomState(true);
   },
 
-  syncLayoutMode() {
-    const isCompactLayout = shouldUseCompactLayout();
-    if (isCompactLayout !== this.data.isCompactLayout) {
-      this.setData({ isCompactLayout });
-    }
-  },
-
   getScoreNotifyVoiceOption(value?: string): ScoreNotifyVoiceOption {
     return SCORE_NOTIFY_VOICE_OPTIONS.find((item) => item.value === value)
       || SCORE_NOTIFY_VOICE_OPTIONS[2];
+  },
+
+  isTableMember(member?: Pick<RoomMember, 'actorType' | 'nickname'> | null): boolean {
+    return Boolean(
+      member &&
+      member.actorType === 'VIRTUAL' &&
+      member.nickname === '台板',
+    );
   },
 
   getStoredScoreNotifyMuted(): boolean {
@@ -553,6 +574,25 @@ Page({
     wx.switchTab({ url: '/pages/home/home' });
   },
 
+  handleRoomAccessLost(error: RequestError) {
+    if (
+      this.data.roomId > 0 &&
+      (error.statusCode === 401 || error.statusCode === 403) &&
+      !roomAccessRedirecting
+    ) {
+      roomAccessRedirecting = true;
+      this.disconnectRealtime(true);
+      wx.showToast({ title: '你已不在当前房间', icon: 'none' });
+      setTimeout(() => {
+        roomAccessRedirecting = false;
+        wx.switchTab({ url: '/pages/home/home' });
+      }, 600);
+      return true;
+    }
+
+    return false;
+  },
+
   async refreshRoomState(silent = false) {
     const roomCode = this.data.roomCode;
     if (roomCode.length !== ROOM_CODE_LENGTH) {
@@ -566,9 +606,13 @@ Page({
 
     try {
       const payload = await getRoomByCode(roomCode);
+      roomAccessRedirecting = false;
       this.applyRoomPayload(payload);
     } catch (error) {
       const requestError = error as RequestError;
+      if (this.handleRoomAccessLost(requestError)) {
+        return;
+      }
       if (!silent) {
         wx.showToast({
           title: requestError.message || '拉取房间失败',
@@ -655,8 +699,13 @@ Page({
       return;
     }
 
-    if (action === 'manage') {
-      this.openSpectatorDialog();
+    if (action === 'cancel-spectator') {
+      this.handleCancelSpectator();
+      return;
+    }
+
+    if (action === 'manage' || action === 'settings') {
+      this.openSettingsSheet();
       return;
     }
 
@@ -666,6 +715,48 @@ Page({
     }
 
     wx.showToast({ title: `${action} 功能开发中`, icon: 'none' });
+  },
+
+  openSettingsSheet() {
+    if (!this.data.isOwner) {
+      wx.showToast({ title: '只有桌主可以管理牌桌', icon: 'none' });
+      return;
+    }
+
+    if (this.data.roomStatus !== 'IN_PROGRESS') {
+      wx.showToast({ title: '房间已结束，无法继续管理', icon: 'none' });
+      return;
+    }
+
+    this.setData({ settingsSheetVisible: true });
+  },
+
+  closeSettingsSheet() {
+    this.setData({ settingsSheetVisible: false });
+  },
+
+  handleSettingsOptionTap(e: WechatMiniprogram.BaseEvent) {
+    const action = String(e.currentTarget.dataset.action || '');
+    this.closeSettingsSheet();
+
+    if (action === 'room-name') {
+      this.openRoomNameDialog();
+      return;
+    }
+
+    if (action === 'transfer-owner') {
+      this.openTransferDialog();
+      return;
+    }
+
+    if (action === 'spectators') {
+      this.openSpectatorDialog();
+      return;
+    }
+
+    if (action === 'kick-member') {
+      this.openKickDialog();
+    }
   },
 
   openInvitePopup() {
@@ -807,78 +898,198 @@ Page({
     }
   },
 
-  openMemberActionDialog(e: WechatMiniprogram.BaseEvent) {
-    if (!this.data.isOwner) {
-      wx.showToast({ title: '只有桌主可以操作成员', icon: 'none' });
-      return;
-    }
-
-    if (this.data.roomStatus !== 'IN_PROGRESS') {
-      wx.showToast({ title: '房间已结束，无法操作成员', icon: 'none' });
-      return;
-    }
-
-    const targetMemberId = Number(e.currentTarget.dataset.memberId || 0);
-    const targetMemberName = String(e.currentTarget.dataset.memberName || '');
-
-    if (!targetMemberId) {
-      return;
-    }
-
+  openRoomNameDialog() {
     this.setData({
-      memberActionDialogVisible: true,
-      memberActionTargetId: targetMemberId,
-      memberActionTargetName: targetMemberName,
-      memberActionType: 'transfer',
+      roomNameDialogVisible: true,
+      roomNameDraft: this.data.roomName || '',
     });
   },
 
-  closeMemberActionDialog() {
+  closeRoomNameDialog() {
     this.setData({
-      memberActionDialogVisible: false,
-      memberActionTargetId: 0,
-      memberActionTargetName: '',
-      memberActionType: 'transfer',
+      roomNameDialogVisible: false,
+      roomNameDraft: this.data.roomName || '',
     });
   },
 
-  selectMemberAction(e: WechatMiniprogram.BaseEvent) {
-    const actionType = String(e.currentTarget.dataset.actionType || '') as 'transfer' | 'kick';
-    if (actionType !== 'transfer' && actionType !== 'kick') {
-      return;
-    }
-    this.setData({ memberActionType: actionType });
+  onRoomNameInput(e: WechatMiniprogram.CustomEvent) {
+    const value = String((e.detail as { value?: string }).value || '')
+      .trimStart()
+      .slice(0, 64);
+    this.setData({ roomNameDraft: value });
   },
 
-  async confirmMemberAction() {
-    if (!this.data.isOwner) {
-      wx.showToast({ title: '只有桌主可以操作成员', icon: 'none' });
+  async confirmRoomNameDialog() {
+    if (!this.data.roomId) {
       return;
     }
 
-    if (this.data.roomStatus !== 'IN_PROGRESS') {
-      wx.showToast({ title: '房间已结束，无法操作成员', icon: 'none' });
-      return;
-    }
-
-    const targetMemberId = this.data.memberActionTargetId;
-    if (!targetMemberId) {
-      return;
-    }
-
-    const isTransfer = this.data.memberActionType === 'transfer';
-
-    wx.showLoading({ title: isTransfer ? '转移中...' : '处理中...' });
+    wx.showLoading({ title: '保存中...' });
     try {
-      const payload = isTransfer
-        ? await transferRoomOwner(this.data.roomId, targetMemberId)
-        : await kickRoomMember(this.data.roomId, targetMemberId);
+      const payload = await updateRoomName(this.data.roomId, this.data.roomNameDraft);
       this.applyRoomPayload(payload);
-      this.closeMemberActionDialog();
-      wx.showToast({ title: isTransfer ? '转移成功' : '已踢出', icon: 'success' });
+      this.closeRoomNameDialog();
+      wx.showToast({ title: '牌桌名称已更新', icon: 'success' });
     } catch (error) {
       wx.showToast({
-        title: (error as RequestError).message || (isTransfer ? '转移失败' : '踢人失败'),
+        title: (error as RequestError).message || '更新失败',
+        icon: 'none',
+      });
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
+  openTransferDialog() {
+    const candidates = this.data.members
+      .filter((member) => {
+        return (
+          member.id !== this.data.currentMemberId &&
+          !member.isSpectator &&
+          !this.isTableMember(member)
+        );
+      })
+      .map((member) => ({
+        id: member.id,
+        nickname: member.nickname,
+        avatar: member.avatar,
+        avatarInitials: member.avatarInitials,
+        actorType: member.actorType,
+        isOwner: member.isOwner,
+        isSpectator: Boolean(member.isSpectator),
+        hasScoreActivity: Boolean(member.hasScoreActivity),
+        selected: false,
+      }));
+
+    if (candidates.length === 0) {
+      wx.showToast({ title: '暂无可转移的玩家', icon: 'none' });
+      return;
+    }
+
+    this.setData({
+      transferDialogVisible: true,
+      transferCandidates: candidates,
+      selectedTransferMemberId: 0,
+    });
+  },
+
+  closeTransferDialog() {
+    this.setData({
+      transferDialogVisible: false,
+      transferCandidates: [],
+      selectedTransferMemberId: 0,
+    });
+  },
+
+  selectTransferCandidate(e: WechatMiniprogram.BaseEvent) {
+    const memberId = Number(e.currentTarget.dataset.memberId || 0);
+    if (!memberId) {
+      return;
+    }
+
+    this.setData({
+      selectedTransferMemberId: memberId,
+      transferCandidates: this.data.transferCandidates.map((candidate) => ({
+        ...candidate,
+        selected: candidate.id === memberId,
+      })),
+    });
+  },
+
+  async confirmTransferDialog() {
+    if (!this.data.selectedTransferMemberId) {
+      wx.showToast({ title: '请选择新桌主', icon: 'none' });
+      return;
+    }
+
+    wx.showLoading({ title: '转移中...' });
+    try {
+      const payload = await transferRoomOwner(this.data.roomId, this.data.selectedTransferMemberId);
+      this.applyRoomPayload(payload);
+      this.closeTransferDialog();
+      wx.showToast({ title: '桌主已转移', icon: 'success' });
+    } catch (error) {
+      wx.showToast({
+        title: (error as RequestError).message || '转移失败',
+        icon: 'none',
+      });
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
+  openKickDialog() {
+    const candidates = this.data.members
+      .filter((member) => {
+        return (
+          member.id !== this.data.currentMemberId &&
+          !member.isOwner &&
+          !this.isTableMember(member) &&
+          !member.hasScoreActivity
+        );
+      })
+      .map((member) => ({
+        id: member.id,
+        nickname: member.nickname,
+        avatar: member.avatar,
+        avatarInitials: member.avatarInitials,
+        actorType: member.actorType,
+        isOwner: member.isOwner,
+        isSpectator: Boolean(member.isSpectator),
+        hasScoreActivity: Boolean(member.hasScoreActivity),
+        selected: false,
+      }));
+
+    if (candidates.length === 0) {
+      wx.showToast({ title: '暂无可踢出的玩家', icon: 'none' });
+      return;
+    }
+
+    this.setData({
+      kickDialogVisible: true,
+      kickCandidates: candidates,
+      selectedKickMemberId: 0,
+    });
+  },
+
+  closeKickDialog() {
+    this.setData({
+      kickDialogVisible: false,
+      kickCandidates: [],
+      selectedKickMemberId: 0,
+    });
+  },
+
+  selectKickCandidate(e: WechatMiniprogram.BaseEvent) {
+    const memberId = Number(e.currentTarget.dataset.memberId || 0);
+    if (!memberId) {
+      return;
+    }
+
+    this.setData({
+      selectedKickMemberId: memberId,
+      kickCandidates: this.data.kickCandidates.map((candidate) => ({
+        ...candidate,
+        selected: candidate.id === memberId,
+      })),
+    });
+  },
+
+  async confirmKickDialog() {
+    if (!this.data.selectedKickMemberId) {
+      wx.showToast({ title: '请选择要踢出的玩家', icon: 'none' });
+      return;
+    }
+
+    wx.showLoading({ title: '处理中...' });
+    try {
+      const payload = await kickRoomMember(this.data.roomId, this.data.selectedKickMemberId);
+      this.applyRoomPayload(payload);
+      this.closeKickDialog();
+      wx.showToast({ title: '玩家已踢出', icon: 'success' });
+    } catch (error) {
+      wx.showToast({
+        title: (error as RequestError).message || '踢出失败',
         icon: 'none',
       });
     } finally {
@@ -928,6 +1139,33 @@ Page({
       return;
     }
 
+    const currentMember = this.getCurrentMember();
+    if (!currentMember) {
+      wx.showToast({ title: '未找到当前成员信息', icon: 'none' });
+      return;
+    }
+
+    if (
+      this.data.roomStatus === 'IN_PROGRESS' &&
+      !currentMember.isSpectator &&
+      currentMember.hasScoreActivity
+    ) {
+      wx.showModal({
+        title: '提示',
+        content: '您在本桌中已有分数记录，不能退出，可以旁观，旁观后仅能观看计分',
+        cancelText: '不了',
+        confirmText: '旁观',
+        success: async (res: WechatMiniprogram.ShowModalSuccessCallbackResult) => {
+          if (!res.confirm) {
+            return;
+          }
+
+          await this.updateSelfSpectatorState(true);
+        },
+      });
+      return;
+    }
+
     wx.showModal({
       title: '退出房间',
       content: '退出后将离开当前房间，是否继续？',
@@ -956,16 +1194,72 @@ Page({
     });
   },
 
+  getCurrentMember(): RoomMember | null {
+    return this.data.members.find((member) => member.id === this.data.currentMemberId) || null;
+  },
+
+  async updateSelfSpectatorState(spectator: boolean) {
+    if (!this.data.roomId) {
+      wx.showToast({ title: '房间信息异常', icon: 'none' });
+      return;
+    }
+
+    wx.showLoading({ title: spectator ? '旁观中...' : '处理中...' });
+    try {
+      const payload = await setSelfSpectator(this.data.roomId, spectator);
+      this.applyRoomPayload(payload);
+      wx.showToast({
+        title: spectator ? '已进入旁观' : '已取消旁观',
+        icon: 'success',
+      });
+    } catch (error) {
+      wx.showToast({
+        title: (error as RequestError).message || (spectator ? '进入旁观失败' : '取消旁观失败'),
+        icon: 'none',
+      });
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
+  handleCancelSpectator() {
+    if (!this.data.currentMemberIsSpectator) {
+      wx.showToast({ title: '当前不是旁观状态', icon: 'none' });
+      return;
+    }
+
+    if (this.data.roomStatus !== 'IN_PROGRESS') {
+      wx.showToast({ title: '房间已结束，无需取消旁观', icon: 'none' });
+      return;
+    }
+
+    wx.showModal({
+      title: '提示',
+      content: '是否取消旁观？',
+      cancelText: '不了',
+      confirmText: '确定',
+      success: async (res: WechatMiniprogram.ShowModalSuccessCallbackResult) => {
+        if (!res.confirm) {
+          return;
+        }
+
+        await this.updateSelfSpectatorState(false);
+      },
+    });
+  },
+
   setRoomCode(roomCode: string) {
     const normalized = roomCode.replace(/\D/g, '').slice(0, ROOM_CODE_LENGTH);
+    const fallbackRoomName = normalized ? `桌号 ${normalized}` : '桌号 ------';
     const codeDigits = Array.from({ length: ROOM_CODE_LENGTH }, (_, index) => {
       return normalized[index] || '';
     });
 
     this.setData({
       roomCode: normalized,
+      roomName: fallbackRoomName,
       codeDigits,
-      topBarTitle: `桌号：${normalized || '------'}`,
+      topBarTitle: fallbackRoomName,
     });
   },
 
@@ -990,25 +1284,28 @@ Page({
     const currentMember = sortedMembers.find(
       (member) => member.id === currentMemberId,
     );
+    const displayMembers = sortedMembers.filter((member) => !this.isTableMember(member));
     const inviteCardHiddenBySelf = currentMember
       ? Boolean(currentMember.inviteCardHidden)
       : false;
     const showInlineInviteCard =
-      !isPoolMode && sortedMembers.length === 1 && !inviteCardHiddenBySelf;
+      !isPoolMode && displayMembers.length === 1 && !inviteCardHiddenBySelf;
 
     this.handleScoreRecordNotifications(currentMemberId, scoreRecords);
 
     this.setData({
       roomId: payload.room.id,
       roomCode: payload.room.roomCode,
+      roomName: payload.room.roomName || `桌号 ${payload.room.roomCode}`,
       roomStatus: payload.room.status,
       roomType: payload.room.roomType,
-      topBarTitle: `桌号：${payload.room.roomCode}`,
+      topBarTitle: payload.room.roomName || `桌号 ${payload.room.roomCode}`,
       codeDigits: Array.from({ length: ROOM_CODE_LENGTH }, (_, index) => {
         return payload.room.roomCode[index] || '';
       }),
       members: sortedMembers,
       scoreRecords,
+      displayMemberCount: displayMembers.length,
       currentMemberId,
       isOwner: payload.room.ownerMemberId === currentMemberId,
       currentMemberIsSpectator: Boolean(currentMember?.isSpectator),
@@ -1317,6 +1614,10 @@ Page({
       wx.showToast({ title: '只有桌主可以操作台板', icon: 'none' });
       return;
     }
+    if (this.data.roomStatus !== 'IN_PROGRESS') {
+      wx.showToast({ title: '房间已结束，无法操作台板', icon: 'none' });
+      return;
+    }
     const newEnabled = !this.data.tableFeeEnabled;
     wx.showLoading({ title: '处理中...' });
     try {
@@ -1327,6 +1628,50 @@ Page({
     } finally {
       wx.hideLoading();
     }
+  },
+
+  handleRefundTableFee(e: WechatMiniprogram.BaseEvent) {
+    if (!this.data.isOwner) {
+      wx.showToast({ title: '只有桌主可以退台板积分', icon: 'none' });
+      return;
+    }
+    if (this.data.roomStatus !== 'IN_PROGRESS') {
+      wx.showToast({ title: '房间已结束，无法退分', icon: 'none' });
+      return;
+    }
+
+    const memberId = Number(e.currentTarget.dataset.memberId || 0);
+    const memberName = String(e.currentTarget.dataset.memberName || '台板');
+    const memberScore = Number(e.currentTarget.dataset.memberScore || 0);
+
+    if (!memberId || memberScore <= 0) {
+      wx.showToast({ title: '台板暂无可退积分', icon: 'none' });
+      return;
+    }
+
+    wx.showModal({
+      title: '台板退分',
+      content: `确认将${memberName}当前的 ${memberScore} 分按原始来源退回给所有人吗？`,
+      success: async (res: WechatMiniprogram.ShowModalSuccessCallbackResult) => {
+        if (!res.confirm) {
+          return;
+        }
+
+        wx.showLoading({ title: '退分中...' });
+        try {
+          const payload = await refundTableFee(this.data.roomId);
+          this.applyRoomPayload(payload);
+          wx.showToast({ title: '台板退分成功', icon: 'success' });
+        } catch (error) {
+          wx.showToast({
+            title: (error as RequestError).message || '台板退分失败',
+            icon: 'none',
+          });
+        } finally {
+          wx.hideLoading();
+        }
+      },
+    });
   },
 
   async loadPoolRounds() {
@@ -1394,14 +1739,23 @@ Page({
       wx.showToast({ title: '只有桌主可以管理旁观者', icon: 'none' });
       return;
     }
-    const candidates = this.data.members.map((m: any) => ({
-      id: m.id,
-      nickname: m.nickname,
-      avatar: m.avatar,
-      avatarInitials: m.avatarInitials,
-      actorType: m.actorType || 'USER',
-      isSpectatorSelected: Boolean(m.isSpectator),
-      isOwner: m.isOwner,
+
+    if (this.data.roomStatus !== 'IN_PROGRESS') {
+      wx.showToast({ title: '房间已结束，无法设置旁观者', icon: 'none' });
+      return;
+    }
+
+    const candidates = this.data.members.map((member) => ({
+      id: member.id,
+      nickname: member.nickname,
+      avatar: member.avatar,
+      avatarInitials: member.avatarInitials,
+      actorType: member.actorType || 'USER',
+      isOwner: member.isOwner,
+      isSpectator: Boolean(member.isSpectator),
+      hasScoreActivity: Boolean(member.hasScoreActivity),
+      disabled: member.isOwner || this.isTableMember(member),
+      selected: Boolean(member.isSpectator),
     }));
 
     this.setData({
@@ -1411,24 +1765,27 @@ Page({
   },
 
   closeSpectatorDialog() {
-    this.setData({ spectatorDialogVisible: false });
+    this.setData({
+      spectatorDialogVisible: false,
+      spectatorCandidates: [],
+    });
   },
 
   toggleSpectatorCandidate(e: any) {
     const memberId = Number(e.currentTarget.dataset.memberId || 0);
-    const candidates = this.data.spectatorCandidates.map((c: any) => {
-      if (c.id === memberId && !c.isOwner) {
-        return { ...c, isSpectatorSelected: !c.isSpectatorSelected };
+    const candidates = this.data.spectatorCandidates.map((candidate) => {
+      if (candidate.id === memberId && !candidate.disabled) {
+        return { ...candidate, selected: !candidate.selected };
       }
-      return c;
+      return candidate;
     });
     this.setData({ spectatorCandidates: candidates });
   },
 
   async confirmSpectators() {
     const spectatorIds = this.data.spectatorCandidates
-      .filter((c: any) => c.isSpectatorSelected)
-      .map((c: any) => c.id);
+      .filter((candidate) => candidate.selected && !candidate.disabled)
+      .map((candidate) => candidate.id);
 
     wx.showLoading({ title: '设置中...' });
     try {
@@ -1464,12 +1821,47 @@ Page({
     return `${month}-${day} ${hour}:${minute}`;
   },
 
+  redirectSharedInviteEntry(options: Record<string, string | undefined>) {
+    const shareSource = String(options.shareSource || '').trim();
+    const roomCode = String(options.roomCode || '').replace(/\D/g, '').slice(0, ROOM_CODE_LENGTH);
+    if (!shareSource || roomCode.length !== ROOM_CODE_LENGTH) {
+      return false;
+    }
+
+    const roomType = String(options.roomType || '').trim();
+    const normalizedRoomType = roomType === 'SINGLE' || roomType === 'POOL' || roomType === 'MULTI'
+      ? roomType
+      : 'MULTI';
+
+    wx.redirectTo({
+      url: buildInviteEntryUrl({
+        roomCode,
+        inviterName: safeDecodeInviteParam(options.inviterName),
+        roomName: safeDecodeInviteParam(options.roomName),
+        roomType: normalizedRoomType as 'MULTI' | 'SINGLE' | 'POOL',
+        shareSource,
+      }),
+    });
+    return true;
+  },
+
   onShareAppMessage() {
     const roomCode = this.data.roomCode;
+    const roomName = this.data.roomName || `桌号 ${roomCode}`;
+    const currentMember = (this.data.members as RoomMember[]).find(
+      (member) => member.id === this.data.currentMemberId,
+    );
+    const inviterName = currentMember?.nickname || '好友';
     if (/^\d{6}$/.test(roomCode)) {
       return {
-        title: `邀请你加入桌号 ${roomCode}`,
-        path: `/pages/home/home?roomCode=${roomCode}&shareSource=app-message`,
+        title: `邀请你加入${roomName}`,
+        path: buildInviteEntryUrl({
+          roomCode,
+          inviterName,
+          roomName,
+          roomType: this.data.roomType as 'MULTI' | 'SINGLE' | 'POOL',
+          shareSource: 'app-message',
+        }),
         imageUrl: SHARE_PROMO_IMAGE,
       };
     }
@@ -1483,10 +1875,15 @@ Page({
 
   onShareTimeline() {
     const roomCode = this.data.roomCode;
+    const roomName = this.data.roomName || `桌号 ${roomCode}`;
+    const currentMember = (this.data.members as RoomMember[]).find(
+      (member) => member.id === this.data.currentMemberId,
+    );
+    const inviterName = currentMember?.nickname || '好友';
     if (/^\d{6}$/.test(roomCode)) {
       return {
-        title: `邀请你加入桌号 ${roomCode}`,
-        query: `roomCode=${roomCode}&shareSource=timeline`,
+        title: `邀请你加入${roomName}`,
+        query: `roomCode=${roomCode}&shareSource=timeline&roomType=${encodeURIComponent(this.data.roomType || 'MULTI')}&roomName=${encodeURIComponent(roomName)}&inviterName=${encodeURIComponent(inviterName)}`,
         imageUrl: SHARE_PROMO_IMAGE,
       };
     }

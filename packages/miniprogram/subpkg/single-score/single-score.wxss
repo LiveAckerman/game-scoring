@@ -575,55 +575,6 @@
   color: var(--c-brand-red);
 }
 
-.compact-layout .content {
-  padding-left: 20rpx;
-  padding-right: 20rpx;
-}
-
-.compact-layout .action-strip {
-  padding-left: 14rpx;
-  padding-right: 14rpx;
-}
-
-.compact-layout .action-strip-head {
-  flex-wrap: wrap;
-  align-items: flex-start;
-}
-
-.compact-layout .player-card {
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 18rpx;
-}
-
-.compact-layout .player-info {
-  flex: 1 1 200rpx;
-}
-
-.compact-layout .score-wrap-inline {
-  flex-wrap: wrap;
-}
-
-.compact-layout .player-actions {
-  width: 100%;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 12rpx;
-}
-
-.compact-layout .tiny-btn {
-  flex: 1 1 140rpx;
-  min-width: 140rpx;
-}
-
-.compact-layout .target-score-row {
-  flex-wrap: wrap;
-}
-
-.compact-layout .target-score-input {
-  width: 100%;
-}
-
 /* ---- 图标 ---- */
 
 .icon {

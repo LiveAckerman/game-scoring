@@ -1,4 +1,5 @@
 export * from './create-room.dto';
+export * from './update-room-name.dto';
 export * from './join-room.dto';
 export * from './leave-room.dto';
 export * from './add-score.dto';
@@ -11,3 +12,4 @@ export * from './pool-take.dto';
 export * from './pool-table-take.dto';
 export * from './toggle-table-fee.dto';
 export * from './set-spectators.dto';
+export * from './toggle-self-spectator.dto';

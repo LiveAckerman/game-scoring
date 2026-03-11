@@ -10,7 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { EdgeTTS } from 'edge-tts-universal';
 import { Request } from 'express';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { GuestUser } from '../guest/entities/guest-user.entity';
 import { GuestService } from '../guest/guest.service';
@@ -38,12 +38,14 @@ import {
   JoinRoomDto,
   KickMemberDto,
   ListRoomHistoryQueryDto,
+  UpdateRoomNameDto,
   TransferOwnerDto,
   PoolGiveDto,
   PoolTakeDto,
   PoolTableTakeDto,
   ToggleTableFeeDto,
   SetSpectatorsDto,
+  ToggleSelfSpectatorDto,
 } from './dto';
 
 interface ActorContext {
@@ -222,6 +224,82 @@ export class RoomService {
     await this.ensureMemberInRoom(room.id, actor);
 
     return this.buildRoomPayload(room.id, actor);
+  }
+
+  async getRoomInvitePreview(roomCodeRaw: string) {
+    const roomCode = this.normalizeRoomCode(roomCodeRaw);
+
+    const room = await this.roomRepository.findOne({ where: { roomCode } });
+    if (!room) {
+      throw new NotFoundException('房间不存在');
+    }
+
+    const { members } = await this.loadRoomMembersWithLatestProfiles(room.id);
+    const displayMembers = members.filter((member) => !this.isTableVirtualMember(member));
+
+    return {
+      room: {
+        id: room.id,
+        roomCode: room.roomCode,
+        roomName: room.roomName,
+        roomType: room.roomType,
+        status: room.status,
+        ownerMemberId: room.ownerMemberId,
+        createdAt: room.createdAt,
+        endedAt: room.endedAt,
+        memberCount: displayMembers.length,
+        members: displayMembers.map((member) => ({
+          id: member.id,
+          actorType: member.actorType,
+          nickname: member.nickname,
+          avatar: member.avatar,
+          avatarInitials: member.avatarInitials,
+          isOwner: member.id === room.ownerMemberId,
+          isSpectator: member.isSpectator,
+          joinedAt: member.joinedAt,
+        })),
+      },
+    };
+  }
+
+  async updateRoomName(req: Request, roomId: number, dto: UpdateRoomNameDto) {
+    const actor = await this.resolveActor(req);
+
+    const room = await this.roomRepository.findOne({ where: { id: roomId } });
+    if (!room) {
+      throw new NotFoundException('房间不存在');
+    }
+
+    if (room.status === ROOM_STATUS.ENDED) {
+      throw new ConflictException('房间已结束，无法修改牌桌名称');
+    }
+
+    const member = await this.roomMemberRepository.findOne({
+      where: {
+        roomId,
+        actorType: actor.actorType,
+        actorRefId: actor.actorRefId,
+        isActive: true,
+      },
+    });
+
+    if (!member) {
+      throw new ForbiddenException('你不在该房间内');
+    }
+
+    if (room.ownerMemberId !== member.id) {
+      throw new ForbiddenException('只有桌主可以修改牌桌名称');
+    }
+
+    const nextRoomName = this.normalizeRoomName(dto.roomName, room.roomCode);
+    if (room.roomName !== nextRoomName) {
+      room.roomName = nextRoomName;
+      await this.roomRepository.save(room);
+    }
+
+    const payload = await this.buildRoomPayload(roomId, actor);
+    this.realtimeService.notifyRoomUpdated(payload.room.roomCode, 'room_name_updated');
+    return payload;
   }
 
   async getHistory(req: Request, query: ListRoomHistoryQueryDto) {
@@ -628,6 +706,10 @@ export class RoomService {
         throw new NotFoundException('房间不存在');
       }
 
+      if (room.status === ROOM_STATUS.ENDED) {
+        throw new ConflictException('房间已结束，无法转移桌主');
+      }
+
       const operatorMember = await queryRunner.manager.findOne(RoomMember, {
         where: {
           roomId,
@@ -655,6 +737,10 @@ export class RoomService {
 
       if (!targetMember) {
         throw new NotFoundException('目标成员不存在');
+      }
+
+      if (this.isTableMember(targetMember)) {
+        throw new BadRequestException('台板不能设为桌主');
       }
 
       if (targetMember.isSpectator) {
@@ -701,10 +787,6 @@ export class RoomService {
         throw new NotFoundException('房间不存在');
       }
 
-      if (room.roomType === ROOM_TYPE.POOL) {
-        throw new BadRequestException('分数池模式暂不支持踢人');
-      }
-
       if (room.status === ROOM_STATUS.ENDED) {
         throw new ConflictException('房间已结束，无法踢人');
       }
@@ -738,69 +820,28 @@ export class RoomService {
         throw new NotFoundException('目标成员不存在');
       }
 
+      if (this.isTableMember(targetMember)) {
+        throw new BadRequestException('请使用台板开关关闭台板');
+      }
+
       if (targetMember.id === operatorMember.id || targetMember.id === room.ownerMemberId) {
         throw new BadRequestException('不能踢出桌主');
       }
 
-      const relatedRecords = await queryRunner.manager.find(RoomScoreRecord, {
-        where: { roomId },
-        order: { id: 'ASC' },
-      });
+      const hasScoreActivity = await this.hasMemberScoreActivity(
+        queryRunner.manager,
+        roomId,
+        room.roomType,
+        targetMember.id,
+      );
 
-      // 仅回滚被踢成员当前仍持有的净得分，避免影响已经继续流转的积分链路。
-      const refundMap = new Map<number, number>();
-      relatedRecords.forEach((record) => {
-        if (record.toMemberId === targetMember.id) {
-          refundMap.set(
-            record.fromMemberId,
-            (refundMap.get(record.fromMemberId) || 0) + record.points,
-          );
-        } else if (record.fromMemberId === targetMember.id) {
-          refundMap.set(
-            record.toMemberId,
-            (refundMap.get(record.toMemberId) || 0) - record.points,
-          );
-        }
-      });
-
-      const reverseEntries = [...refundMap.entries()]
-        .filter(([memberId, points]) => memberId !== targetMember.id && points !== 0);
-
-      const totalRefundPoints = reverseEntries.reduce((sum, [, points]) => sum + points, 0);
-
-      if (totalRefundPoints !== targetMember.score) {
-        throw new BadRequestException(
-          '该玩家积分状态异常，请先手动结清后再踢出',
-        );
-      }
-
-      for (const [memberId, points] of reverseEntries) {
-        const recordType = points > 0 ? 'KICK_REFUND' : 'KICK_RECLAIM';
-        const transferPoints = Math.abs(points);
-
-        if (transferPoints === 0) {
-          continue;
-        }
-
-        if (points > 0) {
-          await queryRunner.manager.increment(RoomMember, { id: memberId }, 'score', transferPoints);
-        } else {
-          await queryRunner.manager.decrement(RoomMember, { id: memberId }, 'score', transferPoints);
-        }
-
-        const refundRecord = queryRunner.manager.create(RoomScoreRecord, {
-          roomId,
-          fromMemberId: points > 0 ? targetMember.id : memberId,
-          toMemberId: points > 0 ? memberId : targetMember.id,
-          points: transferPoints,
-          recordType,
-          createdByMemberId: operatorMember.id,
-        });
-        await queryRunner.manager.save(refundRecord);
+      if (hasScoreActivity) {
+        throw new BadRequestException('仅可踢出无得失分记录的玩家');
       }
 
       targetMember.score = 0;
-      targetMember.isSpectator = true;
+      targetMember.isSpectator = false;
+      targetMember.isActive = false;
       await queryRunner.manager.save(targetMember);
 
       await queryRunner.commitTransaction();
@@ -841,6 +882,15 @@ export class RoomService {
       throw new ForbiddenException('只有桌主可以结束房间');
     }
 
+    if (room.roomType === ROOM_TYPE.MULTI && room.tableFeeEnabled) {
+      const tableMember = await this.roomMemberRepository.findOne({
+        where: { roomId, actorType: ROOM_ACTOR_TYPE.VIRTUAL, nickname: '台板', isActive: true },
+      });
+      if (tableMember && tableMember.score !== 0) {
+        throw new BadRequestException('台板还有未退积分，请先退分');
+      }
+    }
+
     if (room.status !== ROOM_STATUS.ENDED) {
       room.status = ROOM_STATUS.ENDED;
       room.endedAt = new Date();
@@ -875,6 +925,16 @@ export class RoomService {
 
     if (room.ownerMemberId === member.id) {
       throw new ForbiddenException('桌主不能直接退出，请先结束房间或转移桌主');
+    }
+
+    const hasScoreActivity = await this.hasMemberScoreActivity(
+      this.roomMemberRepository.manager,
+      roomId,
+      room.roomType,
+      member.id,
+    );
+    if (room.status === ROOM_STATUS.IN_PROGRESS && hasScoreActivity) {
+      throw new BadRequestException('您在本桌中已有分数记录，不能退出，可以旁观，旁观后仅能观看计分');
     }
 
     member.isActive = false;
@@ -1027,6 +1087,7 @@ export class RoomService {
 
     const room = await this.roomRepository.findOne({ where: { id: roomId } });
     if (!room) throw new NotFoundException('房间不存在');
+    if (room.status === ROOM_STATUS.ENDED) throw new ConflictException('房间已结束，无法设置旁观者');
     if (room.roomType !== ROOM_TYPE.POOL) throw new BadRequestException('非分数池房间');
 
     await this.ensureMemberInRoom(roomId, actor);
@@ -1314,7 +1375,7 @@ export class RoomService {
   // ───────── 台板：开关 ─────────
   async toggleTableFee(req: Request, roomId: number, dto: ToggleTableFeeDto) {
     const actor = await this.resolveActor(req);
-    const { room } = await this.ensurePoolOwner(roomId, actor);
+    const { room } = await this.ensureTableFeeOwner(roomId, actor);
 
     if (dto.enabled && !room.tableFeeEnabled) {
       room.tableFeeEnabled = true;
@@ -1326,6 +1387,7 @@ export class RoomService {
 
       if (existing) {
         existing.isActive = true;
+        existing.isSpectator = false;
         await this.roomMemberRepository.save(existing);
       } else {
         const maxRefResult = await this.roomMemberRepository
@@ -1352,12 +1414,18 @@ export class RoomService {
         await this.roomMemberRepository.save(tableMember);
       }
     } else if (!dto.enabled && room.tableFeeEnabled) {
-      room.tableFeeEnabled = false;
-      await this.roomRepository.save(room);
-
       const tableMember = await this.roomMemberRepository.findOne({
         where: { roomId, actorType: ROOM_ACTOR_TYPE.VIRTUAL, nickname: '台板', isActive: true },
       });
+      if (tableMember) {
+        if (tableMember.score !== 0) {
+          throw new BadRequestException('台板还有未退积分，请先退分');
+        }
+      }
+
+      room.tableFeeEnabled = false;
+      await this.roomRepository.save(room);
+
       if (tableMember) {
         tableMember.isActive = false;
         await this.roomMemberRepository.save(tableMember);
@@ -1369,12 +1437,109 @@ export class RoomService {
     return payload;
   }
 
+  async refundTableFee(req: Request, roomId: number) {
+    const actor = await this.resolveActor(req);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const { room, member: operatorMember } = await this.ensureTableFeeOwnerWithManager(
+        queryRunner.manager,
+        roomId,
+        actor,
+      );
+
+      if (room.roomType !== ROOM_TYPE.MULTI) {
+        throw new BadRequestException('只有多人记分模式支持台板退分');
+      }
+
+      if (!room.tableFeeEnabled) {
+        throw new BadRequestException('台板未开启');
+      }
+
+      const tableMember = await queryRunner.manager.findOne(RoomMember, {
+        where: { roomId, actorType: ROOM_ACTOR_TYPE.VIRTUAL, nickname: '台板', isActive: true },
+      });
+      if (!tableMember) {
+        throw new BadRequestException('台板成员不存在');
+      }
+
+      if (tableMember.score <= 0) {
+        throw new BadRequestException('台板暂无可退积分');
+      }
+
+      const relatedRecords = await queryRunner.manager.find(RoomScoreRecord, {
+        where: { roomId },
+        order: { id: 'ASC' },
+      });
+
+      const refundMap = new Map<number, number>();
+      relatedRecords.forEach((record) => {
+        if (record.toMemberId === tableMember.id) {
+          refundMap.set(
+            record.fromMemberId,
+            (refundMap.get(record.fromMemberId) || 0) + record.points,
+          );
+        } else if (record.fromMemberId === tableMember.id) {
+          refundMap.set(
+            record.toMemberId,
+            (refundMap.get(record.toMemberId) || 0) - record.points,
+          );
+        }
+      });
+
+      const refundEntries = [...refundMap.entries()]
+        .filter(([memberId, points]) => memberId !== tableMember.id && points > 0);
+
+      const totalRefundPoints = refundEntries.reduce((sum, [, points]) => sum + points, 0);
+
+      if (refundEntries.length === 0 || totalRefundPoints <= 0) {
+        throw new BadRequestException('台板暂无可退积分');
+      }
+
+      if (totalRefundPoints !== tableMember.score) {
+        throw new BadRequestException('台板积分状态异常，请先手动核对');
+      }
+
+      for (const [memberId, points] of refundEntries) {
+        await queryRunner.manager.increment(RoomMember, { id: memberId }, 'score', points);
+        await queryRunner.manager.decrement(RoomMember, { id: tableMember.id }, 'score', points);
+
+        const refundRecord = queryRunner.manager.create(RoomScoreRecord, {
+          roomId,
+          fromMemberId: tableMember.id,
+          toMemberId: memberId,
+          points,
+          recordType: 'NORMAL',
+          createdByMemberId: operatorMember.id,
+        });
+        await queryRunner.manager.save(refundRecord);
+      }
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+
+    const payload = await this.buildRoomPayload(roomId, actor);
+    this.realtimeService.notifyRoomUpdated(payload.room.roomCode, 'table_fee_refunded');
+    return payload;
+  }
+
   // ───────── 旁观者：设置 ─────────
   async setSpectators(req: Request, roomId: number, dto: SetSpectatorsDto) {
     const actor = await this.resolveActor(req);
 
     const room = await this.roomRepository.findOne({ where: { id: roomId } });
     if (!room) throw new NotFoundException('房间不存在');
+    if (room.status === ROOM_STATUS.ENDED) {
+      throw new ConflictException('房间已结束，无法设置旁观者');
+    }
 
     const callerMember = await this.roomMemberRepository.findOne({
       where: { roomId, actorType: actor.actorType, actorRefId: actor.actorRefId, isActive: true },
@@ -1390,12 +1555,48 @@ export class RoomService {
 
     for (const member of members) {
       if (member.id === room.ownerMemberId) continue;
+      if (this.isTableMember(member)) {
+        if (member.isSpectator) {
+          member.isSpectator = false;
+          await this.roomMemberRepository.save(member);
+        }
+        continue;
+      }
       const shouldBeSpectator = spectatorSet.has(member.id);
       if (member.isSpectator !== shouldBeSpectator) {
         member.isSpectator = shouldBeSpectator;
         await this.roomMemberRepository.save(member);
       }
     }
+
+    const payload = await this.buildRoomPayload(roomId, actor);
+    this.realtimeService.notifyRoomUpdated(payload.room.roomCode, 'spectators_updated');
+    return payload;
+  }
+
+  async toggleSelfSpectator(req: Request, roomId: number, dto: ToggleSelfSpectatorDto) {
+    const actor = await this.resolveActor(req);
+
+    const room = await this.roomRepository.findOne({ where: { id: roomId } });
+    if (!room) throw new NotFoundException('房间不存在');
+    if (room.status === ROOM_STATUS.ENDED) {
+      throw new ConflictException('房间已结束，无法切换旁观状态');
+    }
+
+    const member = await this.roomMemberRepository.findOne({
+      where: { roomId, actorType: actor.actorType, actorRefId: actor.actorRefId, isActive: true },
+    });
+    if (!member) throw new ForbiddenException('你不在该房间内');
+    if (room.ownerMemberId === member.id) throw new ForbiddenException('桌主不能切换为旁观者');
+    if (this.isTableMember(member)) throw new BadRequestException('台板不能切换旁观状态');
+
+    const nextSpectator = Boolean(dto.spectator);
+    if (member.isSpectator === nextSpectator) {
+      return this.buildRoomPayload(roomId, actor);
+    }
+
+    member.isSpectator = nextSpectator;
+    await this.roomMemberRepository.save(member);
 
     const payload = await this.buildRoomPayload(roomId, actor);
     this.realtimeService.notifyRoomUpdated(payload.room.roomCode, 'spectators_updated');
@@ -1410,6 +1611,44 @@ export class RoomService {
     if (room.status === ROOM_STATUS.ENDED) throw new ConflictException('房间已结束');
 
     const member = await this.roomMemberRepository.findOne({
+      where: { roomId, actorType: actor.actorType, actorRefId: actor.actorRefId, isActive: true },
+    });
+    if (!member) throw new ForbiddenException('你不在该房间内');
+    if (room.ownerMemberId !== member.id) throw new ForbiddenException('只有桌主可以操作');
+
+    return { room, member };
+  }
+
+  private async ensureTableFeeOwner(roomId: number, actor: ActorContext) {
+    const room = await this.roomRepository.findOne({ where: { id: roomId } });
+    if (!room) throw new NotFoundException('房间不存在');
+    if (room.roomType !== ROOM_TYPE.POOL && room.roomType !== ROOM_TYPE.MULTI) {
+      throw new BadRequestException('当前房型不支持台板');
+    }
+    if (room.status === ROOM_STATUS.ENDED) throw new ConflictException('房间已结束');
+
+    const member = await this.roomMemberRepository.findOne({
+      where: { roomId, actorType: actor.actorType, actorRefId: actor.actorRefId, isActive: true },
+    });
+    if (!member) throw new ForbiddenException('你不在该房间内');
+    if (room.ownerMemberId !== member.id) throw new ForbiddenException('只有桌主可以操作');
+
+    return { room, member };
+  }
+
+  private async ensureTableFeeOwnerWithManager(
+    manager: DataSource['manager'],
+    roomId: number,
+    actor: ActorContext,
+  ) {
+    const room = await manager.findOne(Room, { where: { id: roomId } });
+    if (!room) throw new NotFoundException('房间不存在');
+    if (room.roomType !== ROOM_TYPE.POOL && room.roomType !== ROOM_TYPE.MULTI) {
+      throw new BadRequestException('当前房型不支持台板');
+    }
+    if (room.status === ROOM_STATUS.ENDED) throw new ConflictException('房间已结束');
+
+    const member = await manager.findOne(RoomMember, {
       where: { roomId, actorType: actor.actorType, actorRefId: actor.actorRefId, isActive: true },
     });
     if (!member) throw new ForbiddenException('你不在该房间内');
@@ -1521,42 +1760,7 @@ export class RoomService {
       throw new NotFoundException('房间不存在');
     }
 
-    const allMembers = await this.roomMemberRepository.find({
-      where: { roomId },
-      order: { id: 'ASC' },
-    });
-    const members = allMembers.filter((member) => member.isActive);
-
-    const userRefIds = allMembers
-      .filter((m) => m.actorType === ROOM_ACTOR_TYPE.USER)
-      .map((m) => m.actorRefId);
-
-    if (userRefIds.length > 0) {
-      const latestUsers = await this.userRepository.find({
-        where: { id: In(userRefIds) },
-      });
-      const userMap = new Map<number, User>();
-      latestUsers.forEach((u) => userMap.set(u.id, u));
-
-      for (const member of allMembers) {
-        if (member.actorType !== ROOM_ACTOR_TYPE.USER) continue;
-        const user = userMap.get(member.actorRefId);
-        if (!user) continue;
-        const latestNickname = user.nickname || member.nickname;
-        const latestAvatar = user.avatar || '';
-        const latestInitials = this.guestService.buildInitials(latestNickname);
-        if (
-          member.nickname !== latestNickname ||
-          member.avatar !== latestAvatar ||
-          member.avatarInitials !== latestInitials
-        ) {
-          member.nickname = latestNickname;
-          member.avatar = latestAvatar;
-          member.avatarInitials = latestInitials;
-          await this.roomMemberRepository.save(member);
-        }
-      }
-    }
+    const { allMembers, members } = await this.loadRoomMembersWithLatestProfiles(roomId);
 
     const memberNameMap = new Map<number, string>();
     allMembers.forEach((item) => {
@@ -1568,6 +1772,7 @@ export class RoomService {
       order: { id: 'DESC' },
       take: 50,
     });
+    const memberScoreActivityMap = await this.buildMemberScoreActivityMap(roomId, room.roomType);
 
     const currentMember = members.find(
       (item) =>
@@ -1610,6 +1815,7 @@ export class RoomService {
           score: item.score,
           inviteCardHidden: item.inviteCardHidden,
           isSpectator: item.isSpectator,
+          hasScoreActivity: Boolean(memberScoreActivityMap.get(item.id)),
           joinedAt: item.joinedAt,
         })),
         scoreRecords: records.reverse().map((record) => ({
@@ -1633,6 +1839,127 @@ export class RoomService {
         guestToken: actor.guestToken,
       },
     };
+  }
+
+  private async loadRoomMembersWithLatestProfiles(roomId: number) {
+    const allMembers = await this.roomMemberRepository.find({
+      where: { roomId },
+      order: { id: 'ASC' },
+    });
+    const members = allMembers.filter((member) => member.isActive);
+
+    const userRefIds = allMembers
+      .filter((member) => member.actorType === ROOM_ACTOR_TYPE.USER)
+      .map((member) => member.actorRefId);
+
+    if (userRefIds.length > 0) {
+      const latestUsers = await this.userRepository.find({
+        where: { id: In(userRefIds) },
+      });
+      const userMap = new Map<number, User>();
+      latestUsers.forEach((user) => userMap.set(user.id, user));
+
+      for (const member of allMembers) {
+        if (member.actorType !== ROOM_ACTOR_TYPE.USER) {
+          continue;
+        }
+
+        const user = userMap.get(member.actorRefId);
+        if (!user) {
+          continue;
+        }
+
+        const latestNickname = user.nickname || member.nickname;
+        const latestAvatar = user.avatar || '';
+        const latestInitials = this.guestService.buildInitials(latestNickname);
+
+        if (
+          member.nickname !== latestNickname ||
+          member.avatar !== latestAvatar ||
+          member.avatarInitials !== latestInitials
+        ) {
+          member.nickname = latestNickname;
+          member.avatar = latestAvatar;
+          member.avatarInitials = latestInitials;
+          await this.roomMemberRepository.save(member);
+        }
+      }
+    }
+
+    return {
+      allMembers,
+      members,
+    };
+  }
+
+  private isTableVirtualMember(member: Pick<RoomMember, 'actorType' | 'nickname'>) {
+    return member.actorType === ROOM_ACTOR_TYPE.VIRTUAL && member.nickname === '台板';
+  }
+
+  private async buildMemberScoreActivityMap(roomId: number, roomType: RoomType) {
+    const activityMap = new Map<number, boolean>();
+
+    if (roomType === ROOM_TYPE.POOL) {
+      const rows = await this.poolRecordRepository
+        .createQueryBuilder('record')
+        .select('record.memberId', 'memberId')
+        .addSelect('COUNT(1)', 'recordCount')
+        .where('record.roomId = :roomId', { roomId })
+        .groupBy('record.memberId')
+        .getRawMany<{ memberId: string; recordCount: string }>();
+
+      rows.forEach((row) => {
+        activityMap.set(Number(row.memberId), Number(row.recordCount) > 0);
+      });
+      return activityMap;
+    }
+
+    const fromRows = await this.roomScoreRecordRepository
+      .createQueryBuilder('record')
+      .select('record.fromMemberId', 'memberId')
+      .addSelect('COUNT(1)', 'recordCount')
+      .where('record.roomId = :roomId', { roomId })
+      .groupBy('record.fromMemberId')
+      .getRawMany<{ memberId: string; recordCount: string }>();
+
+    const toRows = await this.roomScoreRecordRepository
+      .createQueryBuilder('record')
+      .select('record.toMemberId', 'memberId')
+      .addSelect('COUNT(1)', 'recordCount')
+      .where('record.roomId = :roomId', { roomId })
+      .groupBy('record.toMemberId')
+      .getRawMany<{ memberId: string; recordCount: string }>();
+
+    [...fromRows, ...toRows].forEach((row) => {
+      const memberId = Number(row.memberId);
+      if (memberId > 0) {
+        activityMap.set(memberId, true);
+      }
+    });
+
+    return activityMap;
+  }
+
+  private async hasMemberScoreActivity(
+    manager: EntityManager,
+    roomId: number,
+    roomType: RoomType,
+    memberId: number,
+  ) {
+    if (roomType === ROOM_TYPE.POOL) {
+      const recordCount = await manager.count(PoolRecord, {
+        where: { roomId, memberId },
+      });
+      return recordCount > 0;
+    }
+
+    const recordCount = await manager.count(RoomScoreRecord, {
+      where: [
+        { roomId, fromMemberId: memberId },
+        { roomId, toMemberId: memberId },
+      ],
+    });
+    return recordCount > 0;
   }
 
   private async ensureMemberInRoom(roomId: number, actor: ActorContext) {
@@ -1665,6 +1992,10 @@ export class RoomService {
     }
 
     return member;
+  }
+
+  private isTableMember(member: Pick<RoomMember, 'actorType' | 'nickname'>): boolean {
+    return member.actorType === ROOM_ACTOR_TYPE.VIRTUAL && member.nickname === '台板';
   }
 
   private isScoreRecordPlayable(record: RoomScoreRecord): boolean {

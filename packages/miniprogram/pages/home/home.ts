@@ -2,6 +2,7 @@ import { getAccessToken, getGuestToken, saveActorIdentity } from '../../utils/id
 import { RequestError } from '../../utils/request';
 import { createRoom, getRoomHistory, joinRoom, RoomHistoryItem } from '../../utils/room';
 import { fontSizeBehavior } from '../../behaviors/font-size';
+import { buildInviteEntryUrl, safeDecodeInviteParam } from '../../utils/invite-entry';
 import { buildRoomTagMap, RoomTag } from '../../utils/tags';
 
 interface HomePreviewMember {
@@ -292,15 +293,19 @@ Page({
       return;
     }
 
-    const joinCodeDigits = Array.from({ length: 6 }, (_, index) => shareRoomCode[index] || '');
-    this.setData({
-      joinDialogVisible: true,
-      joinRoomCode: shareRoomCode,
-      joinCodeDigits,
-      joinCodeFocus: false,
-      autoJoinTriedCode: shareRoomCode,
-    }, () => {
-      this.attemptJoinRoom(shareRoomCode, 'auto');
+    const roomType = String(options.roomType || '').trim();
+    const normalizedRoomType = roomType === 'SINGLE' || roomType === 'POOL' || roomType === 'MULTI'
+      ? roomType
+      : 'MULTI';
+
+    wx.navigateTo({
+      url: buildInviteEntryUrl({
+        roomCode: shareRoomCode,
+        inviterName: safeDecodeInviteParam(options.inviterName),
+        roomName: safeDecodeInviteParam(options.roomName),
+        roomType: normalizedRoomType as 'MULTI' | 'SINGLE' | 'POOL',
+        shareSource: options.shareSource,
+      }),
     });
   },
 
@@ -646,7 +651,7 @@ Page({
       timeText,
       durationText: `${item.durationMinutes} 分钟`,
       myScoreText: `${item.myScore > 0 ? '+' : ''}${item.myScore}`,
-      previewMembers: item.members.slice(0, 2).map((member) => ({
+      previewMembers: item.members.map((member) => ({
         id: member.id,
         nickname: member.nickname,
         avatar: member.avatar,
@@ -665,7 +670,7 @@ Page({
       roomType: item.roomType || 'MULTI',
       status: item.status,
       statusText: item.status === 'IN_PROGRESS' ? '进行中' : '已结束',
-      members: item.members.slice(0, 6).map((member) => ({
+      members: item.members.map((member) => ({
         id: member.id,
         nickname: member.nickname,
         avatar: member.avatar,
