@@ -51,6 +51,6 @@
         </label>
       </checkbox-group>
     </view>
-    <text class="footer-tip">未注册手机号登录后将自动创建账号</text>
+    <text class="footer-tip">首次登录会先完善头像和昵称，方便牌桌里快速认人</text>
   </view>
 </view>

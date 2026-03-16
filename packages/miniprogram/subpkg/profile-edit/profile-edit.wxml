@@ -1,9 +1,33 @@
 <page-meta page-style="{{pageFontStyle}}" />
-<view class="edit-page">
-  <common-top-bar title="编辑资料" bind:back="goBack" />
+<view class="edit-page {{isOnboarding ? 'is-onboarding' : ''}}">
+  <common-top-bar
+    title="{{topBarTitle}}"
+    showBack="{{!isOnboarding}}"
+    bind:back="goBack"
+  />
 
   <scroll-view class="edit-scroll" scroll-y>
-    <view class="avatar-section">
+    <view wx:if="{{isOnboarding}}" class="hero-card">
+      <view class="hero-badge">首次登录</view>
+      <text class="hero-title">先装点你的牌桌名片</text>
+      <text class="hero-desc">授权头像和昵称后，朋友进房时一眼就能认出你，记分也更顺手。</text>
+      <view class="hero-steps">
+        <view class="hero-step">
+          <text class="hero-step-index">1</text>
+          <text class="hero-step-text">点一下头像，授权使用你的微信头像</text>
+        </view>
+        <view class="hero-step">
+          <text class="hero-step-index">2</text>
+          <text class="hero-step-text">点击昵称输入框，可直接选用微信昵称</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="avatar-panel">
+      <view class="section-head">
+        <text class="section-title">头像</text>
+        <text class="section-tip">{{avatarTempPath || userInfo.avatar ? '头像已就位' : '请先授权头像'}}</text>
+      </view>
       <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
         <view class="avatar-shell">
           <view class="avatar-ring">
@@ -12,13 +36,13 @@
           <view class="camera-btn"><view class="icon icon-camera"></view></view>
         </view>
       </button>
-      <text class="hint">点击更换头像</text>
+      <text class="hint">{{isOnboarding ? '点击头像完成微信头像授权' : '点击更换头像'}}</text>
     </view>
 
-    <view class="form-group">
-      <view class="label-row">
-        <text class="label">昵称</text>
-        <text class="quick-link" bindtap="focusNickname">点击输入时可选微信昵称</text>
+    <view class="form-card">
+      <view class="section-head">
+        <text class="section-title">昵称</text>
+        <text class="section-tip">输入时可直接选择微信昵称</text>
       </view>
       <view class="input-box">
         <input
@@ -35,56 +59,58 @@
       </view>
     </view>
 
-    <view class="form-group">
-      <text class="label">性别</text>
-      <view class="gender-row">
-        <view class="gender-card male {{userInfo.gender === 1 ? 'active' : ''}}" data-val="1" bindtap="setGender">
-          <view class="icon icon-male"></view>
-          <text>男</text>
-        </view>
-        <view class="gender-card female {{userInfo.gender === 2 ? 'active' : ''}}" data-val="2" bindtap="setGender">
-          <view class="icon icon-female"></view>
-          <text>女</text>
-        </view>
-      </view>
-    </view>
-
-    <view class="form-group">
-      <view class="label-row">
-        <text class="label">称号</text>
-        <text class="all">查看全部</text>
+    <view class="form-card">
+      <view class="section-head">
+        <text class="section-title">顺手补充</text>
+        <text class="section-tip">这些信息可稍后再改</text>
       </view>
 
-      <view class="title-grid">
-        <view class="title-item on {{userInfo.title === '小财神' ? 'active' : ''}}" data-val="小财神" bindtap="setTitle">
-          <view class="icon-wrap gold"><view class="icon icon-trophy"></view></view>
-          <view class="txt">
-            <text class="name">小财神</text>
-            <text class="desc">当前佩戴</text>
+      <view class="sub-group">
+        <text class="sub-label">性别</text>
+        <view class="gender-row">
+          <view class="gender-card male {{userInfo.gender === 1 ? 'active' : ''}}" data-val="1" bindtap="setGender">
+            <view class="icon icon-male"></view>
+            <text>男</text>
           </view>
-          <view class="icon icon-check" wx:if="{{userInfo.title === '小财神'}}"></view>
+          <view class="gender-card female {{userInfo.gender === 2 ? 'active' : ''}}" data-val="2" bindtap="setGender">
+            <view class="icon icon-female"></view>
+            <text>女</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="sub-group title-group">
+        <view class="section-head compact">
+          <text class="sub-label">称号</text>
+          <text class="mini-tip">当前只开放基础称号</text>
         </view>
 
-        <view class="title-item lock" data-val="常胜将军" bindtap="setTitle">
-          <view class="icon-wrap red"><view class="icon icon-fire"></view></view>
-          <view class="txt"><text class="name">常胜将军</text><text class="desc">需胜率60%</text></view>
-        </view>
+        <view class="title-grid">
+          <view class="title-item on {{userInfo.title === '小财神' ? 'active' : ''}}" data-val="小财神" bindtap="setTitle">
+            <view class="icon-wrap gold"><view class="icon icon-trophy"></view></view>
+            <view class="txt">
+              <text class="name">小财神</text>
+              <text class="desc">开局讨个好彩头</text>
+            </view>
+            <view class="icon icon-check" wx:if="{{userInfo.title === '小财神'}}"></view>
+          </view>
 
-        <view class="title-item lock" data-val="运气王" bindtap="setTitle">
-          <view class="icon-wrap purple"><view class="icon icon-star"></view></view>
-          <view class="txt"><text class="name">运气王</text><text class="desc">暂未解锁</text></view>
-        </view>
-
-        <view class="title-item lock" data-val="至尊VIP" bindtap="setTitle">
-          <view class="icon-wrap blue"><view class="icon icon-diamond"></view></view>
-          <view class="txt"><text class="name">至尊VIP</text><text class="desc">会员专属</text></view>
+          <view class="title-item lock" data-val="常胜将军" bindtap="setTitle">
+            <view class="icon-wrap red"><view class="icon icon-fire"></view></view>
+            <view class="txt">
+              <text class="name">常胜将军</text>
+              <text class="desc">需后续战绩解锁</text>
+            </view>
+          </view>
         </view>
       </view>
     </view>
+
+    <text wx:if="{{isOnboarding}}" class="footer-note">完成后会直接进入首页，之后也可以在“我的”里继续修改资料。</text>
 
     <button class="save" bindtap="handleSave" loading="{{saving}}" disabled="{{saving}}">
       <view class="icon icon-save"></view>
-      <text>保存修改</text>
+      <text>{{submitText}}</text>
     </button>
   </scroll-view>
 </view>

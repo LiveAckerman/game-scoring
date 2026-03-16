@@ -2,19 +2,58 @@ import { clearGuestIdentity, getAccessToken, getGuestProfile } from '../../utils
 import { request, RequestError } from '../../utils/request';
 import { getVersionSummary } from '../../utils/version';
 import { fontSizeBehavior, buildStyle } from '../../behaviors/font-size';
+import { relaunchProfileSetup, shouldForceProfileSetup } from '../../utils/profile';
+
+type ProfileStatsScope = 'ALL' | 'YEAR' | 'MONTH';
+
+interface ProfileStatsMonthOption {
+  key?: string;
+  year: number;
+  month: number;
+  label: string;
+}
+
+interface ProfileStatsFilter {
+  scope: ProfileStatsScope;
+  year: number | null;
+  month: number | null;
+  label: string;
+  availableYears: number[];
+  availableMonths: ProfileStatsMonthOption[];
+}
 
 interface ProfileInfo {
   id: number;
   nickname: string;
   avatar: string;
+  profileSetupCompleted: boolean;
   gender: number;
   title: string;
   totalGames: number;
   wins: number;
   winRate: string;
+  statsFilter: ProfileStatsFilter;
 }
+
 const SHARE_PROMO_IMAGE = '/assets/images/share-promo.jpg';
 const FONT_LABELS: Record<string, string> = { small: '小', medium: '中（默认）', large: '大' };
+const DEFAULT_STATS_FILTER: ProfileStatsFilter = {
+  scope: 'ALL',
+  year: null,
+  month: null,
+  label: '全部数据',
+  availableYears: [],
+  availableMonths: [],
+};
+
+const buildDefaultStatsFilter = (): ProfileStatsFilter => ({
+  scope: DEFAULT_STATS_FILTER.scope,
+  year: DEFAULT_STATS_FILTER.year,
+  month: DEFAULT_STATS_FILTER.month,
+  label: DEFAULT_STATS_FILTER.label,
+  availableYears: [],
+  availableMonths: [],
+});
 
 Page({
   behaviors: [fontSizeBehavior],
@@ -25,6 +64,10 @@ Page({
     showQrPopup: false,
     fontLabel: '中（默认）',
     versionSummary: '',
+    showStatsFilterDialog: false,
+    statsFilterDraftScope: 'ALL' as ProfileStatsScope,
+    statsFilterDraftYear: null as number | null,
+    statsFilterDraftMonthKey: '',
   },
 
   onLoad() {
@@ -35,6 +78,10 @@ Page({
 
   onShow() {
     (this as any)._applyFontSize();
+    if (shouldForceProfileSetup()) {
+      relaunchProfileSetup();
+      return;
+    }
     this.fetchUserInfo();
   },
 
@@ -59,20 +106,15 @@ Page({
     if (getAccessToken()) {
       try {
         const userInfo = await request<ProfileInfo>({
-          url: '/user/profile',
+          url: this.buildProfileRequestUrl(),
         });
-        wx.setStorageSync('userInfo', userInfo);
-        const app = getApp<IAppOption>();
-        app.globalData.userInfo = {
-          id: userInfo.id,
-          nickname: userInfo.nickname,
-          avatar: userInfo.avatar,
-          gender: userInfo.gender,
-          title: userInfo.title,
-          totalGames: userInfo.totalGames,
-          wins: userInfo.wins,
-        };
-        this.setData({ userInfo, isGuest: false, showLoginCard: false });
+        const normalizedProfile = this.normalizeProfileInfo(userInfo);
+        this.persistProfileCache(normalizedProfile);
+        this.setData({
+          userInfo: normalizedProfile,
+          isGuest: false,
+          showLoginCard: false,
+        });
         return;
       } catch (err) {
         const requestError = err as RequestError;
@@ -91,6 +133,7 @@ Page({
               userInfo: cachedLoginProfile,
               isGuest: false,
               showLoginCard: false,
+              showStatsFilterDialog: false,
             });
             return;
           }
@@ -105,14 +148,17 @@ Page({
           id: guest.id,
           nickname: guest.nickname,
           avatar: '',
+          profileSetupCompleted: true,
           gender: 0,
           title: '游客玩家',
           totalGames: 0,
           wins: 0,
           winRate: '--',
+          statsFilter: buildDefaultStatsFilter(),
         },
         isGuest: true,
         showLoginCard: false,
+        showStatsFilterDialog: false,
       });
       return;
     }
@@ -121,7 +167,23 @@ Page({
       userInfo: null,
       isGuest: false,
       showLoginCard: true,
+      showStatsFilterDialog: false,
     });
+  },
+
+  buildProfileRequestUrl() {
+    const currentFilter = this.data.userInfo?.statsFilter || buildDefaultStatsFilter();
+    const scope = currentFilter.scope || 'ALL';
+
+    if (scope === 'YEAR' && currentFilter.year) {
+      return `/user/profile?scope=YEAR&year=${currentFilter.year}`;
+    }
+
+    if (scope === 'MONTH' && currentFilter.year && currentFilter.month) {
+      return `/user/profile?scope=MONTH&year=${currentFilter.year}&month=${currentFilter.month}`;
+    }
+
+    return '/user/profile';
   },
 
   goToLogin() {
@@ -145,11 +207,53 @@ Page({
       id: source.id,
       nickname: source.nickname || `玩家${source.id}`,
       avatar: source.avatar || '',
+      profileSetupCompleted: Boolean(source.profileSetupCompleted),
       gender: source.gender || 0,
       title: source.title || '小财神',
       totalGames: source.totalGames || 0,
       wins: source.wins || 0,
       winRate: winRateValue,
+      statsFilter: buildDefaultStatsFilter(),
+    };
+  },
+
+  normalizeProfileInfo(profile: ProfileInfo): ProfileInfo {
+    return {
+      ...profile,
+      statsFilter: {
+        ...buildDefaultStatsFilter(),
+        ...(profile.statsFilter || {}),
+        availableYears: Array.isArray(profile.statsFilter?.availableYears)
+          ? [...profile.statsFilter.availableYears]
+          : [],
+        availableMonths: Array.isArray(profile.statsFilter?.availableMonths)
+          ? profile.statsFilter.availableMonths.map((item) => ({
+            key: `${Number(item.year)}-${String(Number(item.month)).padStart(2, '0')}`,
+            year: Number(item.year),
+            month: Number(item.month),
+            label: item.label || `${item.year}年${String(item.month).padStart(2, '0')}月`,
+          }))
+          : [],
+      },
+    };
+  },
+
+  persistProfileCache(profile: ProfileInfo) {
+    const app = getApp<IAppOption>();
+    if (profile.statsFilter.scope !== 'ALL') {
+      return;
+    }
+
+    wx.setStorageSync('userInfo', profile);
+    app.globalData.userInfo = {
+      id: profile.id,
+      nickname: profile.nickname,
+      avatar: profile.avatar,
+      profileSetupCompleted: profile.profileSetupCompleted,
+      gender: profile.gender,
+      title: profile.title,
+      totalGames: profile.totalGames,
+      wins: profile.wins,
     };
   },
 
@@ -170,7 +274,7 @@ Page({
 
     wx.showActionSheet({
       itemList: labels,
-      success: (res) => {
+      success: (res: WechatMiniprogram.ShowActionSheetSuccessCallbackResult) => {
         const selected = levels[res.tapIndex];
         app.globalData.fontSizeLevel = selected;
         wx.setStorageSync('fontSizeLevel', selected);
@@ -181,6 +285,140 @@ Page({
         wx.showToast({ title: `已切换为${FONT_LABELS[selected]}字体`, icon: 'none' });
       },
     });
+  },
+
+  openStatsFilterDialog() {
+    if (!getAccessToken() || !this.data.userInfo) {
+      wx.showToast({ title: '登录后可按时间筛选统计', icon: 'none' });
+      return;
+    }
+
+    const currentFilter = this.data.userInfo.statsFilter || buildDefaultStatsFilter();
+    this.setData({
+      showStatsFilterDialog: true,
+      statsFilterDraftScope: currentFilter.scope || 'ALL',
+      statsFilterDraftYear: currentFilter.year,
+      statsFilterDraftMonthKey: currentFilter.year && currentFilter.month
+        ? `${currentFilter.year}-${String(currentFilter.month).padStart(2, '0')}`
+        : '',
+    });
+  },
+
+  closeStatsFilterDialog() {
+    this.setData({ showStatsFilterDialog: false });
+  },
+
+  selectStatsFilterScope(e: WechatMiniprogram.CustomEvent) {
+    const scope = String(e.currentTarget.dataset.scope || 'ALL') as ProfileStatsScope;
+    const currentFilter = this.data.userInfo?.statsFilter || buildDefaultStatsFilter();
+
+    if (scope === 'ALL') {
+      this.setData({
+        statsFilterDraftScope: 'ALL',
+        statsFilterDraftYear: null,
+        statsFilterDraftMonthKey: '',
+      });
+      return;
+    }
+
+    if (scope === 'YEAR') {
+      const nextYear = this.data.statsFilterDraftYear
+        || currentFilter.year
+        || currentFilter.availableYears[0]
+        || null;
+      this.setData({
+        statsFilterDraftScope: 'YEAR',
+        statsFilterDraftYear: nextYear,
+        statsFilterDraftMonthKey: '',
+      });
+      return;
+    }
+
+    const fallbackMonth = currentFilter.availableMonths[0];
+    const nextMonthKey = this.data.statsFilterDraftMonthKey
+      || (currentFilter.year && currentFilter.month
+        ? `${currentFilter.year}-${String(currentFilter.month).padStart(2, '0')}`
+        : fallbackMonth
+          ? `${fallbackMonth.year}-${String(fallbackMonth.month).padStart(2, '0')}`
+          : '');
+
+    this.setData({
+      statsFilterDraftScope: 'MONTH',
+      statsFilterDraftYear: this.data.statsFilterDraftYear || currentFilter.year || fallbackMonth?.year || null,
+      statsFilterDraftMonthKey: nextMonthKey,
+    });
+  },
+
+  selectStatsFilterYear(e: WechatMiniprogram.CustomEvent) {
+    const year = Number(e.currentTarget.dataset.year || 0) || null;
+    this.setData({ statsFilterDraftYear: year });
+  },
+
+  selectStatsFilterMonth(e: WechatMiniprogram.CustomEvent) {
+    const monthKey = String(e.currentTarget.dataset.monthKey || '');
+    if (!monthKey) {
+      return;
+    }
+    this.setData({ statsFilterDraftMonthKey: monthKey });
+  },
+
+  async applyStatsFilter() {
+    if (!this.data.userInfo) {
+      return;
+    }
+
+    const currentFilter = this.data.userInfo.statsFilter || buildDefaultStatsFilter();
+    const nextScope = this.data.statsFilterDraftScope || 'ALL';
+    let nextYear: number | null = null;
+    let nextMonth: number | null = null;
+
+    if (nextScope === 'YEAR') {
+      nextYear = this.data.statsFilterDraftYear;
+      if (!nextYear) {
+        wx.showToast({ title: '请选择统计年份', icon: 'none' });
+        return;
+      }
+    }
+
+    if (nextScope === 'MONTH') {
+      const monthOption = currentFilter.availableMonths.find(
+        (item: ProfileStatsMonthOption) => item.key === this.data.statsFilterDraftMonthKey,
+      );
+      if (!monthOption) {
+        wx.showToast({ title: '请选择统计月份', icon: 'none' });
+        return;
+      }
+      nextYear = monthOption.year;
+      nextMonth = monthOption.month;
+    }
+
+    this.setData({
+      showStatsFilterDialog: false,
+      userInfo: {
+        ...this.data.userInfo,
+        statsFilter: {
+          ...currentFilter,
+          scope: nextScope,
+          year: nextYear,
+          month: nextMonth,
+          label: this.buildStatsFilterLabel(nextScope, nextYear, nextMonth),
+        },
+      },
+    });
+
+    await this.fetchUserInfo();
+  },
+
+  buildStatsFilterLabel(scope: ProfileStatsScope, year: number | null, month: number | null) {
+    if (scope === 'YEAR' && year) {
+      return `${year}年`;
+    }
+
+    if (scope === 'MONTH' && year && month) {
+      return `${year}年${String(month).padStart(2, '0')}月`;
+    }
+
+    return '全部数据';
   },
 
   // ---- 物料码弹窗 ----
@@ -233,7 +471,7 @@ Page({
       wx.showModal({
         title: '发现游客数据',
         content: `检测到 ${res.guestGames} 场游客对局数据，是否导入到当前账号？`,
-        success: async (modalRes) => {
+        success: async (modalRes: WechatMiniprogram.ShowModalSuccessCallbackResult) => {
           if (!modalRes.confirm) return;
           wx.showLoading({ title: '导入中...' });
           try {

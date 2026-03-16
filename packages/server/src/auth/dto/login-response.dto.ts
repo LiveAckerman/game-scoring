@@ -7,11 +7,15 @@ export class LoginResponseDto {
   @ApiProperty({ description: '是否为新用户' })
   isNewUser: boolean;
 
+  @ApiProperty({ description: '是否需要先完善头像和昵称' })
+  needsProfileSetup: boolean;
+
   @ApiProperty({ description: '用户信息' })
   userInfo: {
     id: number;
     nickname: string;
     avatar: string;
+    profileSetupCompleted: boolean;
     gender: number;
     title: string;
     totalGames: number;

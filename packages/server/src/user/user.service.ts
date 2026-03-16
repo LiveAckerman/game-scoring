@@ -1,11 +1,36 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { User } from './entities/user.entity';
 import { RoomMember, ROOM_ACTOR_TYPE } from '../room/entities/room-member.entity';
 import { GuestUser } from '../guest/entities/guest-user.entity';
 import { PoolRecord, Room, RoomScoreRecord } from '../room/entities';
-import { UpdateProfileDto } from './dto';
+import {
+  PROFILE_STATS_SCOPE,
+  ProfileStatsQueryDto,
+  ProfileStatsScope,
+  UpdateProfileDto,
+} from './dto';
+
+interface ProfileStatsMembership {
+  score: number;
+  roomCreatedAt: Date;
+}
+
+interface ProfileStatsMonthOption {
+  year: number;
+  month: number;
+  label: string;
+}
+
+interface ProfileStatsFilterMeta {
+  scope: ProfileStatsScope;
+  year: number | null;
+  month: number | null;
+  label: string;
+  availableYears: number[];
+  availableMonths: ProfileStatsMonthOption[];
+}
 
 @Injectable()
 export class UserService {
@@ -29,9 +54,13 @@ export class UserService {
   /**
    * 获取用户资料（含胜率计算）
    */
-  async getProfile(userId: number) {
+  async getProfile(userId: number, query: ProfileStatsQueryDto = {}) {
     const user = await this.findById(userId);
-    const { totalGames, wins } = await this.buildProfileStats(userId);
+    if (!user.profileSetupCompleted && this.hasCompletedProfile(user.nickname, user.avatar)) {
+      user.profileSetupCompleted = true;
+      await this.userRepository.save(user);
+    }
+    const { totalGames, wins, filter } = await this.buildProfileStats(userId, query);
     const winRate = totalGames > 0
       ? Math.round((wins / totalGames) * 100)
       : 0;
@@ -40,11 +69,13 @@ export class UserService {
       id: user.id,
       nickname: user.nickname,
       avatar: user.avatar,
+      profileSetupCompleted: user.profileSetupCompleted,
       gender: user.gender,
       title: user.title,
       totalGames,
       wins,
       winRate: `${winRate}%`,
+      statsFilter: filter,
       createdAt: user.createdAt,
     };
   }
@@ -55,10 +86,11 @@ export class UserService {
   async updateProfile(userId: number, updateDto: UpdateProfileDto) {
     const user = await this.findById(userId);
 
-    if (updateDto.nickname !== undefined) user.nickname = updateDto.nickname;
-    if (updateDto.avatar !== undefined) user.avatar = updateDto.avatar;
+    if (updateDto.nickname !== undefined) user.nickname = updateDto.nickname.trim();
+    if (updateDto.avatar !== undefined) user.avatar = updateDto.avatar.trim();
     if (updateDto.gender !== undefined) user.gender = updateDto.gender;
     if (updateDto.title !== undefined) user.title = updateDto.title;
+    user.profileSetupCompleted = this.hasCompletedProfile(user.nickname, user.avatar);
 
     await this.userRepository.save(user);
 
@@ -375,18 +407,120 @@ export class UserService {
     return normalizedName.slice(0, 2);
   }
 
-  private async buildProfileStats(userId: number): Promise<{ totalGames: number; wins: number }> {
-    const memberships = await this.dataSource.getRepository(RoomMember).find({
-      where: {
-        actorType: ROOM_ACTOR_TYPE.USER,
-        actorRefId: userId,
-      },
-      select: ['score'],
+  private hasCompletedProfile(nickname?: string, avatar?: string): boolean {
+    return Boolean(String(nickname || '').trim() && String(avatar || '').trim());
+  }
+
+  private async buildProfileStats(
+    userId: number,
+    query: ProfileStatsQueryDto,
+  ): Promise<{ totalGames: number; wins: number; filter: ProfileStatsFilterMeta }> {
+    const memberships = await this.dataSource.getRepository(RoomMember)
+      .createQueryBuilder('member')
+      .innerJoin('member.room', 'room')
+      .where('member.actorType = :actorType', { actorType: ROOM_ACTOR_TYPE.USER })
+      .andWhere('member.actorRefId = :userId', { userId })
+      .select([
+        'member.score AS score',
+        'room.createdAt AS roomCreatedAt',
+      ])
+      .orderBy('room.createdAt', 'DESC')
+      .getRawMany<{ score: number | string; roomCreatedAt: string | Date }>();
+
+    const normalizedMemberships = memberships
+      .map<ProfileStatsMembership | null>((membership) => {
+        const roomCreatedAt = new Date(membership.roomCreatedAt);
+        if (Number.isNaN(roomCreatedAt.getTime())) {
+          return null;
+        }
+
+        return {
+          score: Number(membership.score || 0),
+          roomCreatedAt,
+        };
+      })
+      .filter((membership): membership is ProfileStatsMembership => Boolean(membership));
+
+    const availableYearsSet = new Set<number>();
+    const availableMonthsMap = new Map<string, ProfileStatsMonthOption>();
+
+    for (const membership of normalizedMemberships) {
+      const year = membership.roomCreatedAt.getFullYear();
+      const month = membership.roomCreatedAt.getMonth() + 1;
+      availableYearsSet.add(year);
+
+      const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+      if (!availableMonthsMap.has(monthKey)) {
+        availableMonthsMap.set(monthKey, {
+          year,
+          month,
+          label: `${year}年${String(month).padStart(2, '0')}月`,
+        });
+      }
+    }
+
+    const availableYears = Array.from(availableYearsSet).sort((a, b) => b - a);
+    const availableMonths = Array.from(availableMonthsMap.values()).sort((a, b) => {
+      if (a.year !== b.year) {
+        return b.year - a.year;
+      }
+      return b.month - a.month;
+    });
+
+    const scope = query.scope || PROFILE_STATS_SCOPE.ALL;
+    const year = query.year ?? null;
+    const month = query.month ?? null;
+
+    if (scope === PROFILE_STATS_SCOPE.YEAR && !year) {
+      throw new BadRequestException('按年统计时必须传 year');
+    }
+
+    if (scope === PROFILE_STATS_SCOPE.MONTH && (!year || !month)) {
+      throw new BadRequestException('按月统计时必须同时传 year 和 month');
+    }
+
+    const filteredMemberships = normalizedMemberships.filter((membership) => {
+      const membershipYear = membership.roomCreatedAt.getFullYear();
+      const membershipMonth = membership.roomCreatedAt.getMonth() + 1;
+
+      if (scope === PROFILE_STATS_SCOPE.YEAR) {
+        return membershipYear === year;
+      }
+
+      if (scope === PROFILE_STATS_SCOPE.MONTH) {
+        return membershipYear === year && membershipMonth === month;
+      }
+
+      return true;
     });
 
     return {
-      totalGames: memberships.length,
-      wins: memberships.filter((member) => member.score > 0).length,
+      totalGames: filteredMemberships.length,
+      wins: filteredMemberships.filter((membership) => membership.score > 0).length,
+      filter: {
+        scope,
+        year,
+        month,
+        label: this.buildProfileStatsFilterLabel(scope, year, month),
+        availableYears,
+        availableMonths,
+      },
     };
+  }
+
+  private buildProfileStatsFilterLabel(
+    scope: ProfileStatsScope,
+    year: number | null,
+    month: number | null,
+  ): string {
+    if (scope === PROFILE_STATS_SCOPE.YEAR && year) {
+      return `${year}年`;
+    }
+
+    if (scope === PROFILE_STATS_SCOPE.MONTH && year && month) {
+      return `${year}年${String(month).padStart(2, '0')}月`;
+    }
+
+    return '全部数据';
   }
 }

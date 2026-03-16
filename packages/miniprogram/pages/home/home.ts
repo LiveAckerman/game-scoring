@@ -4,6 +4,7 @@ import { createRoom, getRoomHistory, joinRoom, RoomHistoryItem } from '../../uti
 import { fontSizeBehavior } from '../../behaviors/font-size';
 import { buildInviteEntryUrl, safeDecodeInviteParam } from '../../utils/invite-entry';
 import { buildRoomTagMap, RoomTag } from '../../utils/tags';
+import { relaunchProfileSetup, shouldForceProfileSetup } from '../../utils/profile';
 
 interface HomePreviewMember {
   id: number;
@@ -82,6 +83,10 @@ Page({
 
   onShow() {
     (this as any)._applyFontSize();
+    if (shouldForceProfileSetup()) {
+      relaunchProfileSetup();
+      return;
+    }
     this.loadRecentRooms({ useCache: true });
   },
 

@@ -1,6 +1,7 @@
 {
   "navigationStyle": "custom",
   "usingComponents": {
-    "common-top-bar": "/components/common-top-bar/common-top-bar"
+    "common-top-bar": "/components/common-top-bar/common-top-bar",
+    "common-dialog": "/components/common-dialog/common-dialog"
   }
 }

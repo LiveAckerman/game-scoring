@@ -25,6 +25,10 @@ export class User {
   @Column({ length: 512, default: '' })
   avatar: string;
 
+  @ApiProperty({ description: '是否已完成资料设置' })
+  @Column({ default: false })
+  profileSetupCompleted: boolean;
+
   @ApiProperty({ description: '性别: 0-未知 1-男 2-女', required: false })
   @Column({ default: 0 })
   gender: number;

@@ -1,12 +1,15 @@
 import { getAccessToken } from './identity';
 import { request } from './request';
+import { saveUserInfo } from './profile';
 
 interface LoginResult {
   token: string;
+  needsProfileSetup: boolean;
   userInfo: {
     id: number;
     nickname: string;
     avatar: string;
+    profileSetupCompleted: boolean;
     gender: number;
     title: string;
     totalGames: number;
@@ -28,10 +31,9 @@ export const login = () => {
 
             // 存储 Token 和用户信息
             wx.setStorageSync('token', data.token);
-            wx.setStorageSync('userInfo', data.userInfo);
             const app = getApp<IAppOption>();
             app.globalData.token = data.token;
-            app.globalData.userInfo = data.userInfo;
+            saveUserInfo(data.userInfo);
 
             resolve(data);
           } catch (err) {

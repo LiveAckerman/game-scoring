@@ -5,6 +5,7 @@ interface AppUserInfo {
   id: number;
   nickname: string;
   avatar: string;
+  profileSetupCompleted: boolean;
   gender: number;
   title: string;
   totalGames: number;

@@ -9,6 +9,7 @@ import {
   RoomTag,
   setRoomTagIds,
 } from '../../utils/tags';
+import { relaunchProfileSetup, shouldForceProfileSetup } from '../../utils/profile';
 
 interface RecordMemberView {
   id: number;
@@ -82,6 +83,10 @@ Page({
 
   onShow() {
     (this as any)._applyFontSize();
+    if (shouldForceProfileSetup()) {
+      relaunchProfileSetup();
+      return;
+    }
     this.syncAvailableTags();
     this.loadRecords({ useCache: true });
   },

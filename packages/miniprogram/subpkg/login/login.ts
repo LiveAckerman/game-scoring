@@ -1,5 +1,6 @@
 import { login } from '../../utils/auth';
 import { fontSizeBehavior } from '../../behaviors/font-size';
+import { relaunchProfileSetup } from '../../utils/profile';
 
 Page({
   behaviors: [fontSizeBehavior],
@@ -29,8 +30,12 @@ Page({
     wx.showLoading({ title: '登录中...' });
 
     try {
-      await login();
+      const result = await login();
       wx.hideLoading();
+      if (result.needsProfileSetup) {
+        relaunchProfileSetup();
+        return;
+      }
       wx.switchTab({
         url: '/pages/home/home'
       });

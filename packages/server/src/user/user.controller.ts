@@ -25,7 +25,7 @@ import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import { UserService } from './user.service';
-import { UpdateProfileDto } from './dto';
+import { ProfileStatsQueryDto, UpdateProfileDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 const UPLOAD_DIR = join(process.cwd(), 'uploads', 'avatars');
@@ -47,8 +47,8 @@ export class UserController {
   })
   @ApiResponse({ status: 200, description: '获取成功' })
   @ApiResponse({ status: 401, description: '未登录' })
-  async getProfile(@Request() req: any) {
-    return this.userService.getProfile(req.user.id);
+  async getProfile(@Request() req: any, @Query() query: ProfileStatsQueryDto) {
+    return this.userService.getProfile(req.user.id, query);
   }
 
   @Put('profile')

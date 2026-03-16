@@ -40,6 +40,15 @@
           </view>
         </view>
       </view>
+      <view class="stats-panel-head">
+        <view class="stats-filter-copy">
+          <text class="stats-title">战绩统计</text>
+          <text class="stats-filter-label">{{userInfo.statsFilter.label || '全部数据'}}</text>
+        </view>
+        <view class="stats-setting-btn {{isGuest ? 'disabled' : ''}}" bindtap="openStatsFilterDialog">
+          <view class="icon icon-stats-setting"></view>
+        </view>
+      </view>
       <view class="stats">
         <view class="stat split-r">
           <text class="v">{{userInfo.totalGames}}</text>
@@ -61,7 +70,7 @@
         <view class="service-item" bindtap="goToTagSettings"><view class="box green"><view class="icon icon-tag"></view></view><text>标签设置</text></view>
         <view class="service-item" bindtap="goToSupport"><view class="box blue"><view class="icon icon-help"></view></view><text>使用帮助</text></view>
         <view class="service-item" bindtap="showFontSettings"><view class="box purple"><view class="icon icon-font-service"></view></view><text>字体设置</text></view>
-        <view class="service-item" bindtap="goToSupport"><view class="box teal"><view class="icon icon-support"></view></view><text>联系客服</text></view>
+        <view class="service-item" bindtap="goToSupport"><view class="box teal"><view class="icon icon-support"></view></view><text>使用建议</text></view>
         <view class="service-item" bindtap="showQrCode"><view class="box pink"><view class="icon icon-qr-service"></view></view><text>物料码</text></view>
       </view>
     </view>
@@ -84,6 +93,69 @@
         <button class="popup-close-btn" bindtap="hideQrCode">关闭</button>
       </view>
     </view>
+
+    <common-dialog
+      visible="{{showStatsFilterDialog}}"
+      title="统计维度"
+      showClose="{{true}}"
+      maskClosable="{{true}}"
+      bind:close="closeStatsFilterDialog"
+    >
+      <view class="stats-filter-dialog">
+        <text class="stats-filter-tip">默认展示全部数据，你也可以切换到某一年或某个月查看场次与胜率。</text>
+
+        <view class="stats-scope-row">
+          <view
+            class="stats-scope-chip {{statsFilterDraftScope === 'ALL' ? 'active' : ''}}"
+            data-scope="ALL"
+            bindtap="selectStatsFilterScope"
+          >全部</view>
+          <view
+            class="stats-scope-chip {{statsFilterDraftScope === 'YEAR' ? 'active' : ''}}"
+            data-scope="YEAR"
+            bindtap="selectStatsFilterScope"
+          >按年</view>
+          <view
+            class="stats-scope-chip {{statsFilterDraftScope === 'MONTH' ? 'active' : ''}}"
+            data-scope="MONTH"
+            bindtap="selectStatsFilterScope"
+          >按月</view>
+        </view>
+
+        <view wx:if="{{statsFilterDraftScope === 'YEAR'}}" class="stats-option-block">
+          <text class="stats-option-title">选择年份</text>
+          <view wx:if="{{userInfo.statsFilter.availableYears.length > 0}}" class="stats-option-grid">
+            <view
+              wx:for="{{userInfo.statsFilter.availableYears}}"
+              wx:key="*this"
+              class="stats-option-chip {{statsFilterDraftYear === item ? 'active' : ''}}"
+              data-year="{{item}}"
+              bindtap="selectStatsFilterYear"
+            >{{item}}年</view>
+          </view>
+          <text wx:else class="stats-empty-text">暂无可筛选年份</text>
+        </view>
+
+        <view wx:if="{{statsFilterDraftScope === 'MONTH'}}" class="stats-option-block">
+          <text class="stats-option-title">选择月份</text>
+          <view wx:if="{{userInfo.statsFilter.availableMonths.length > 0}}" class="stats-option-grid month">
+            <view
+              wx:for="{{userInfo.statsFilter.availableMonths}}"
+              wx:key="key"
+              class="stats-option-chip month {{statsFilterDraftMonthKey === item.key ? 'active' : ''}}"
+              data-month-key="{{item.key}}"
+              bindtap="selectStatsFilterMonth"
+            >{{item.label}}</view>
+          </view>
+          <text wx:else class="stats-empty-text">暂无可筛选月份</text>
+        </view>
+      </view>
+
+      <view slot="footer" class="stats-dialog-footer">
+        <button class="stats-dialog-btn ghost" bindtap="closeStatsFilterDialog">取消</button>
+        <button class="stats-dialog-btn" bindtap="applyStatsFilter">应用</button>
+      </view>
+    </common-dialog>
 
     <text class="version">{{versionSummary}}</text>
   </scroll-view>

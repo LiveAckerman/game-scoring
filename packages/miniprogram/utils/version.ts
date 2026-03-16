@@ -1,4 +1,5 @@
 import { request } from './request';
+import { ENV_LABELS, readRuntimeEnvVersion, RuntimeEnvVersion } from './runtime-env';
 
 export interface VersionHistoryItem {
   version: string;
@@ -11,15 +12,6 @@ export interface VersionInfoResponse {
   latestVersion: string;
   history: VersionHistoryItem[];
 }
-
-type EnvVersion = 'develop' | 'trial' | 'release' | 'unknown';
-
-const ENV_LABELS: Record<EnvVersion, string> = {
-  develop: '开发版',
-  trial: '体验版',
-  release: '正式版',
-  unknown: '未知环境',
-};
 
 export const FALLBACK_VERSION_HISTORY: VersionHistoryItem[] = [
   {
@@ -52,18 +44,18 @@ export const FALLBACK_VERSION_HISTORY: VersionHistoryItem[] = [
   },
 ];
 
-const readRuntimeVersion = (): { version: string; envVersion: EnvVersion } => {
+const readRuntimeVersion = (): { version: string; envVersion: RuntimeEnvVersion } => {
   const fallbackVersion = FALLBACK_VERSION_HISTORY[0]?.version || '1.0.0';
 
   try {
     const accountInfo = wx.getAccountInfoSync ? wx.getAccountInfoSync() : null;
     const miniProgram = (accountInfo as { miniProgram?: { version?: string; envVersion?: string } } | null)?.miniProgram;
     const version = String(miniProgram?.version || '').trim() || fallbackVersion;
-    const envVersion = String(miniProgram?.envVersion || '').trim() as EnvVersion;
+    const envVersion = readRuntimeEnvVersion();
 
     return {
       version,
-      envVersion: ENV_LABELS[envVersion] ? envVersion : 'unknown',
+      envVersion,
     };
   } catch (_error) {
     return {

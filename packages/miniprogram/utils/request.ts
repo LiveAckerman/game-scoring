@@ -1,7 +1,14 @@
 import { getAccessToken, getDeviceId, getGuestToken } from './identity';
+import { readRuntimeEnvVersion, RuntimeEnvVersion } from './runtime-env';
 
-// export const API_BASE_URL = 'https://jf.leviackerman.site/api/v1';
-export const API_BASE_URL = 'http://192.168.110.79:9090/api/v1';
+const API_BASE_URL_MAP: Record<RuntimeEnvVersion, string> = {
+  develop: 'http://192.168.110.79:9090/api/v1',
+  trial: 'https://jf.leviackerman.site/api/v1',
+  release: 'https://jf.leviackerman.site/api/v1',
+  unknown: 'http://192.168.110.79:9090/api/v1',
+};
+
+export const API_BASE_URL = API_BASE_URL_MAP[readRuntimeEnvVersion()];
 
 interface RequestOptions {
   url: string;

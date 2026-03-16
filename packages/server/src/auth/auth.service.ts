@@ -16,6 +16,7 @@ interface WxSessionResponse {
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private static readonly DEFAULT_TITLE = '小财神';
 
   constructor(
     @InjectRepository(User)
@@ -53,13 +54,19 @@ export class AuthService {
       user = this.userRepository.create({
         openid,
         sessionKey: session_key,
-        nickname: `玩家${Math.random().toString(36).substring(2, 8)}`,
+        nickname: '',
+        avatar: '',
+        profileSetupCompleted: false,
+        title: AuthService.DEFAULT_TITLE,
       });
       await this.userRepository.save(user);
       this.logger.log(`新用户注册: ${user.id} (openid: ${openid})`);
     } else {
       // 更新 session_key
       user.sessionKey = session_key;
+      if (!user.profileSetupCompleted && this.hasCompletedProfile(user)) {
+        user.profileSetupCompleted = true;
+      }
       await this.userRepository.save(user);
       this.logger.log(`用户登录: ${user.id} (openid: ${openid})`);
     }
@@ -71,10 +78,12 @@ export class AuthService {
     return {
       token,
       isNewUser,
+      needsProfileSetup: !user.profileSetupCompleted,
       userInfo: {
         id: user.id,
         nickname: user.nickname,
         avatar: user.avatar,
+        profileSetupCompleted: user.profileSetupCompleted,
         gender: user.gender,
         title: user.title,
         totalGames: user.totalGames,
@@ -115,5 +124,16 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  private hasCompletedProfile(user: Pick<User, 'nickname' | 'avatar'>): boolean {
+    const nickname = String(user.nickname || '').trim();
+    const avatar = String(user.avatar || '').trim();
+
+    if (!nickname || !avatar) {
+      return false;
+    }
+
+    return !/^玩家[a-z0-9]{6}$/i.test(nickname);
   }
 }
